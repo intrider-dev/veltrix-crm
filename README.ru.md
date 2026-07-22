@@ -46,20 +46,20 @@ Modular monolith выбран потому, что CRM-сценариям пол
 
 ## Фактические измерения
 
-Результаты получены 22 июля 2026 года на документированном dirty working tree; это не tagged-release и не сравнение с конкурентами. Среда, методика, отдельные прогоны, отклонения и оговорки приведены в [performance report](docs/PERFORMANCE.md).
+Результаты получены 22 июля 2026 года. Browser/server performance измерен на коде приложения commit `3b26934`, чистый k6 baseline — на documentation-only descendant `feaffdd`, а bundle size повторно получен из финального working tree после deployment/i18n hardening. Это не tagged-release и не сравнение с конкурентами. Среда, методика, отдельные прогоны, отклонения и оговорки приведены в [performance report](docs/PERFORMANCE.md).
 
 | Метрика | Измеренный результат | Budget / статус |
 | --- | ---: | --- |
-| Initial JS + CSS | 91 782 bytes (89,6 KiB) Brotli | ≤350 KiB — пройден |
+| Initial JS + CSS | 91 712 bytes (89,6 KiB) Brotli | ≤350 KiB — пройден |
 | Lazy AG Grid Community / optional LiveKit | 166,7 / 114,2 KiB Brotli | оба lazy — пройдено |
 | Lighthouse desktop / mobile / accessibility | 100 / 94 / 100 | ≥95 / ≥90 / ≥95 — пройдено |
-| Simulated mobile LCP / CLS | 2,77 s / 0 | ≤2,0 s / ≤0,05 — **LCP не пройден** |
-| Browser interaction / DOM / grid scrolling | 46,5 ms / 710 / 60 FPS | все цели пройдены |
-| Forced-GC heap / retained growth за 20 циклов | 13,26 MiB / 8,15% | обе цели пройдены |
-| 50-VU throughput / error rate | 223,35 operations/s / 0% | median трёх чистых прогонов |
-| Read / write / search p95 | 189,94 / 290,14 / 159,95 ms | read/write **не пройдены**; search пройден |
-| Median peak app / PostgreSQL memory | 73,65 / 305,20 MiB | вместе 378,85 MiB — цель пройдена |
-| Post-E2E idle app memory | 72,65 MiB | ≤96 MiB — пройдено, один snapshot |
+| Simulated mobile LCP / CLS | 2,76 s / 0 | ≤2,0 s / ≤0,05 — **LCP не пройден** |
+| Browser interaction / DOM / grid scrolling | 49,1 ms / 710 / 60 FPS | все цели пройдены |
+| Forced-GC heap / retained growth за 20 циклов | 13,30 MiB / 8,3% | обе цели пройдены |
+| 50-VU throughput / error rate | 222,61 operations/s / 0% | median трёх чистых прогонов |
+| Read / write / search p95 | 189,09 / 283,19 / 176,65 ms | read/write **не пройдены**; search пройден |
+| Median peak app / PostgreSQL memory | 72,14 / 306,10 MiB | вместе 378,24 MiB — цель пройдена |
+| Post-E2E idle app memory | 12,61 MiB | ≤96 MiB — пройдено, один snapshot после 36 min uptime |
 
 Сравнение с коммерческими или open-source CRM не проводилось. [Протокол сравнения](docs/COMPETITOR_BENCHMARK_PROTOCOL.md) намеренно содержит `Not measured`, пока нет воспроизводимых данных.
 

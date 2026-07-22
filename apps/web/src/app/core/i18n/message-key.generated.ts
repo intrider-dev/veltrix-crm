@@ -131,6 +131,7 @@ export type MessageKey =
   | 'chat.cameraOff'
   | 'chat.cameraOn'
   | 'chat.chooseMember'
+  | 'chat.chooseMemberPlaceholder'
   | 'chat.close'
   | 'chat.decline'
   | 'chat.empty'

@@ -43,7 +43,10 @@ flowchart TB
 
 - `serve`: REST, SSE, embedded SPA и bounded background work для single-node профиля;
 - `worker`: тот же job/outbox runtime отдельным масштабируемым процессом;
-- operational commands для migrations и детерминированного seed.
+- `bootstrap`: конечный deployment-шаг, который проверяет checksum миграций, применяет их и при необходимости создаёт локальный development seed;
+- другие operational commands для migrations и детерминированного seed.
+
+Пользовательский PostgreSQL image остаётся производным от закреплённого `postgres:18.4-bookworm`. Wrapper дожидается официальной инициализации БД, запускает ограниченный `bootstrap` от локального пользователя `postgres`, выполняет чистый fast shutdown, удаляет bootstrap-переменные и заменяет себя постоянным процессом PostgreSQL как PID 1. Healthcheck проверяет уже финальный listener. Master key приложения и provider secrets никогда не передаются PostgreSQL. Поэтому обязательный профиль содержит ровно `app` и `postgres`, а serving-процесс не получает admin URL, пароль роли, auto-migrate flag или demo password.
 
 Production image основан на `scratch`, работает как UID/GID 65532, лишён capabilities и read-only, кроме явных upload/tmp mounts. Angular build копируется в Go embed после gzip/Brotli precompression. Fingerprinted assets получают immutable cache, SPA routes используют fallback на `index.html`, а `/api` никогда не попадает в этот fallback.
 
@@ -51,7 +54,7 @@ Production image основан на `scratch`, работает как UID/GID 
 flowchart LR
   subgraph Required[Обязательный production profile]
     APP[app\n0,5 CPU / 128 MB configured]
-    PG[(postgres\n0,5 CPU / 384 MB configured)]
+    PG[(postgres 18.4\nbootstrap до healthy\n0,5 CPU / 384 MB configured)]
     APP <--> PG
   end
   subgraph Build[Только build stage]
@@ -60,6 +63,7 @@ flowchart LR
     NODE --> GO
   end
   GO --> APP
+  GO -. конечный migration binary .-> PG
 ```
 
 Configured limits не являются измеренным потреблением. См. [`PERFORMANCE.md`](PERFORMANCE.md).

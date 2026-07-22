@@ -145,7 +145,7 @@ Audit events may retain actor, tenant, action, entity, UTC time, request ID, IP/
 
 - Set `APP_ENV=production`, `DEMO_SEED=false`, secure unique DB role passwords, and a random identity encryption key.
 - Terminate TLS correctly; enable secure cookies and HSTS only after HTTPS is guaranteed.
-- Let the pinned PostgreSQL-derived container complete its finite bootstrap before readiness; never inject administrator credentials, role passwords, automatic-migration flags, or demo credentials into the request-serving process.
+- Let the pinned PostgreSQL-derived container complete its finite bootstrap before readiness; never inject administrator credentials, role passwords, automatic-migration flags, or demo credentials into the request-serving process. Never pass the application master-encryption/provider secrets into PostgreSQL; the steady database PID 1 must run after bootstrap variables are scrubbed.
 - Restrict PostgreSQL and optional service ports to private networks; do not publish MinIO/Ollama/Mailpit in production by default.
 - Mount uploads/backups with least privilege, capacity monitoring, and encryption policy.
 - Configure reverse-proxy request/rate/connection limits and preserve request IDs without trusting spoofed forwarding headers.

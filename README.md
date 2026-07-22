@@ -46,20 +46,20 @@ The application uses a modular monolith because its workflows benefit from trans
 
 ## Measured evidence
 
-These values were measured on 2026-07-22 from the documented dirty working tree and are not presented as a tagged-release or competitor claim. Full environment, method, per-run results, misses, and qualifications are in [the performance report](docs/PERFORMANCE.md).
+These values were measured on 2026-07-22. Browser/server performance used application commit `3b26934`; the clean k6 baseline used documentation-only descendant `feaffdd`; bundle size was regenerated from the final working tree after deployment/i18n hardening. They are not presented as a tagged-release or competitor claim. Full environment, method, per-run results, misses, and qualifications are in [the performance report](docs/PERFORMANCE.md).
 
 | Metric | Measured result | Budget / status |
 | --- | ---: | --- |
-| Initial JS + CSS | 91,782 bytes (89.6 KiB) Brotli | ≤350 KiB — pass |
+| Initial JS + CSS | 91,712 bytes (89.6 KiB) Brotli | ≤350 KiB — pass |
 | Lazy AG Grid Community / optional LiveKit | 166.7 / 114.2 KiB Brotli | both lazy — pass |
 | Lighthouse desktop / mobile / accessibility | 100 / 94 / 100 | ≥95 / ≥90 / ≥95 — pass |
-| Simulated mobile LCP / CLS | 2.77 s / 0 | ≤2.0 s / ≤0.05 — **LCP miss** |
-| Browser interaction / DOM / grid scrolling | 46.5 ms / 710 / 60 FPS | all targets pass |
-| Forced-GC heap / 20-cycle retained growth | 13.26 MiB / 8.15% | both targets pass |
-| 50-VU throughput / error rate | 223.35 operations/s / 0% | median of 3 clean runs |
-| Read / write / search p95 | 189.94 / 290.14 / 159.95 ms | read/write **miss**; search passes |
-| Median peak app / PostgreSQL memory | 73.65 / 305.20 MiB | combined 378.85 MiB — pass aspiration |
-| Post-E2E idle app memory | 72.65 MiB | ≤96 MiB — pass, single snapshot |
+| Simulated mobile LCP / CLS | 2.76 s / 0 | ≤2.0 s / ≤0.05 — **LCP miss** |
+| Browser interaction / DOM / grid scrolling | 49.1 ms / 710 / 60 FPS | all targets pass |
+| Forced-GC heap / 20-cycle retained growth | 13.30 MiB / 8.3% | both targets pass |
+| 50-VU throughput / error rate | 222.61 operations/s / 0% | median of 3 clean runs |
+| Read / write / search p95 | 189.09 / 283.19 / 176.65 ms | read/write **miss**; search passes |
+| Median peak app / PostgreSQL memory | 72.14 / 306.10 MiB | combined 378.24 MiB — pass aspiration |
+| Post-E2E idle app memory | 12.61 MiB | ≤96 MiB — pass, single snapshot after 36 min uptime |
 
 No comparison with a commercial or open-source CRM has been measured. The [competitor protocol](docs/COMPETITOR_BENCHMARK_PROTOCOL.md) intentionally starts with `Not measured` values.
 

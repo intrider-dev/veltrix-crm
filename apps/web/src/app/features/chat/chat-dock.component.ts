@@ -170,7 +170,7 @@ import { CallSessionService } from './call-session.service';
                 [value]="selectedMemberId()"
                 (change)="selectedMemberId.set(selectValue($event))"
               >
-                <option value="">—</option>
+                <option value="">{{ i18n.t('chat.chooseMemberPlaceholder') }}</option>
                 @for (member of availableMembers(); track member.id) {
                   <option [value]="member.userId">{{ member.displayName }}</option>
                 }

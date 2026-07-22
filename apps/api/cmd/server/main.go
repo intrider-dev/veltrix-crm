@@ -39,7 +39,14 @@ func run(arguments []string, logger *slog.Logger) error {
 		command = arguments[0]
 		arguments = arguments[1:]
 	}
-	cfg, err := config.Load()
+	var cfg config.Config
+	var err error
+	switch command {
+	case "bootstrap", "migrate", "seed":
+		cfg, err = config.LoadBootstrap()
+	default:
+		cfg, err = config.Load()
+	}
 	if err != nil {
 		return fmt.Errorf("load configuration: %w", err)
 	}

@@ -73,6 +73,31 @@ type Config struct {
 	ShutdownTimeout          time.Duration
 }
 
+// LoadBootstrap reads only the finite migration/seed configuration. Keeping
+// this path separate from Load prevents application encryption and provider
+// secrets from being colocated with the PostgreSQL runtime merely to apply
+// schema migrations.
+func LoadBootstrap() (Config, error) {
+	cfg := Config{
+		Environment:      value("APP_ENV", "development"),
+		DatabaseAdminURL: strings.TrimSpace(os.Getenv("DATABASE_ADMIN_URL")),
+		AppDBPassword:    os.Getenv("APP_DB_PASSWORD"),
+		DemoEmail:        value("DEMO_EMAIL", "admin@demo.local"),
+		DemoPassword:     value("DEMO_PASSWORD", "Demo123!"),
+	}
+	var err error
+	if cfg.DemoSeed, err = boolValue("DEMO_SEED", cfg.Environment == "development"); err != nil {
+		return Config{}, err
+	}
+	if cfg.DatabaseAdminURL == "" || cfg.AppDBPassword == "" {
+		return Config{}, errors.New("DATABASE_ADMIN_URL and APP_DB_PASSWORD are required for bootstrap")
+	}
+	if strings.EqualFold(cfg.Environment, "production") && cfg.DemoSeed {
+		return Config{}, errors.New("DEMO_SEED must be false in production")
+	}
+	return cfg, nil
+}
+
 func Load() (Config, error) {
 	cfg := Config{
 		Environment:           value("APP_ENV", "development"),

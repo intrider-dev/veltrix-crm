@@ -101,7 +101,7 @@ test("a development user can accept a one-time workspace invitation", async ({
   await expect
     .poll(() => memberSelect.locator("option").count(), { timeout: 15_000 })
     .toBeGreaterThan(1);
-  await memberSelect.selectOption({ index: 1 });
+  await memberSelect.selectOption({ label: `Invited ${suffix}` });
   await chat.getByRole("button", { name: "Create", exact: true }).click();
 
   const message = `Hello from ${suffix}`;
@@ -112,5 +112,43 @@ test("a development user can accept a one-time workspace invitation", async ({
   await expect(
     chat.getByTitle("Calls are not configured").first(),
   ).toBeDisabled();
+
+  // Verify the persisted conversation from the recipient's own authorized
+  // session, then send a reply and verify it from the owner session. This
+  // proves bidirectional access without sharing a browser session or token.
+  await context.clearCookies();
+  await page.goto("/login");
+  await page.locator('input[autocomplete="username"]').fill(email);
+  await page.locator('input[autocomplete="current-password"]').fill(password);
+  await page.locator('button[type="submit"]').click();
+  await expect(page).toHaveURL(/\/dashboard$/);
+  await page
+    .getByRole("button", { name: "Open team chat", exact: true })
+    .click();
+  const recipientChat = page.getByRole("dialog", { name: "Team chat" });
+  await expect(recipientChat).toBeVisible();
+  const recipientConversation = recipientChat.locator(
+    ".conversation-list > button",
+  );
+  await expect(recipientConversation).toHaveCount(1);
+  await recipientConversation.click();
+  await expect(recipientChat.locator(".message-list")).toContainText(message);
+  const reply = `Reply from ${suffix}`;
+  await recipientChat.getByPlaceholder("Message").fill(reply);
+  await recipientChat.getByRole("button", { name: "Send", exact: true }).click();
+  await expect(recipientChat.locator(".message-list")).toContainText(reply);
+
+  await context.clearCookies();
+  await loginWithCredentials(page);
+  await page
+    .getByRole("button", { name: "Open team chat", exact: true })
+    .click();
+  const ownerChat = page.getByRole("dialog", { name: "Team chat" });
+  const ownerConversation = ownerChat
+    .locator(".conversation-list > button")
+    .filter({ hasText: `Invited ${suffix}` });
+  await expect(ownerConversation).toHaveCount(1);
+  await ownerConversation.click();
+  await expect(ownerChat.locator(".message-list")).toContainText(reply);
   assertNoBrowserErrors();
 });

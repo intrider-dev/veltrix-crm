@@ -20,12 +20,13 @@ All notable changes will be documented in this file. The format follows [Keep a 
 - Rebranded the centrally configured product and repository paths to VeltrixCRM, added the vector product mark, and kept feature code free of scattered brand literals.
 - Added deal list/Kanban/Gantt views, projects/tasks, resource and stage ACLs, departments, assignments/watchers, calendar audiences, chat, optional LiveKit calls, and personal corporate mail as complete database-backed vertical slices.
 - Unified Material controls, corrected chat/contact/company layout regressions, and made the scrollable Kanban keyboard-focusable.
+- Fixed the zoneless direct-chat member selector so the Create action reacts immediately, localized its placeholder, and expanded production-browser acceptance to calendar creation, all deal views, projects, and bidirectional owner/invited-user messaging.
 - Split stored dashboard summaries from stage-filtered fallback aggregation and bounded the authorized global-search plan after reproducible performance regressions.
 
 ### Security
 
 - Added application guards plus negative PostgreSQL tests for export/search/activity/stage/chat/call isolation, checksummed migrations, and fenced PostgreSQL job leasing/retry behavior.
-- Moved migration/demo credentials into a one-shot setup container; the steady non-root scratch app has no privileged database environment or Node.js runtime.
+- Moved migration/demo credentials into a bootstrap wrapper derived from the pinned PostgreSQL image. The base profile now retains exactly PostgreSQL plus the non-root scratch app; privileged database credentials never enter the app container, the application encryption key never enters PostgreSQL, bootstrap variables are scrubbed before the final database process, and Node.js is absent at runtime.
 
 - CI policy definitions include forced generated-state checks, forbidden dependency checks, `govulncheck`, production `pnpm audit`, license review, CodeQL, Trivy, and an SPDX SBOM.
 

@@ -35,7 +35,8 @@ Last updated: 2026-07-22
 - Passed the complete 102-test Playwright matrix on the final production image across desktop, tablet, and mobile, including CRUD, import/export, automation, audit, tenant isolation, accessibility, dark theme, PWA behavior, chat/toolbar layout regressions, and real screenshot capture.
 - Completed the final three-clean-run 50-VU baseline after two additional SQL optimization iterations, plus bundle, Lighthouse, browser heap/DOM/interaction/FPS, startup, and Docker resource measurements. All misses and method qualifications are recorded in `PERFORMANCE.md`.
 - Verified the scratch runtime is non-root and contains no Node.js artifact; dependency audit has zero production advisories and `govulncheck` found no reachable symbol/package vulnerability.
-- Extended the production-browser acceptance flow to create a workspace-visible calendar event, exercise Kanban/List/Gantt deal modes, create a project, and exchange a real direct-chat message between two invited users. The chat recipient selector now uses explicit signal state, so its Create action updates correctly in zoneless Angular.
+- Extended the production-browser acceptance flow to create a workspace-visible calendar event, exercise Kanban/List/Gantt deal modes, create a project, and exchange real direct-chat messages between the owner and an invited user. The chat recipient selector now uses explicit signal state, so its Create action updates correctly in zoneless Angular.
+- Separated finite database bootstrap configuration from serving configuration: the PostgreSQL container never receives the application encryption key, scrubs bootstrap variables before its final `postgres` PID 1, uses clean fast shutdown for the pre-readiness transition, and keeps manual migrations in a fresh one-shot image without recreating the live database container.
 
 ## Current phase
 
@@ -89,12 +90,21 @@ Phase 5 - verified pre-release handoff with explicit roadmap gaps.
 | 2026-07-22 | `docker export -o output/runtime-image.tar ...` plus runtime config inspection | Valid scratch filesystem; non-root `65532:65532`; no Node.js/npm/pnpm artifact |
 | 2026-07-22 | final `pnpm check` after the Kanban focus correction and evidence updates | Passed: formatter/lint/vet, 966 EN/RU keys, Go tests, 30 frontend files/82 tests, strict typecheck, production bundle and embedded binary |
 | 2026-07-22 | final serial `pnpm test:integration` against PostgreSQL 18.4 | All packages passed through migration `000035`, including search/export/stage/activity/chat/call tenant negatives and worker queue semantics |
-| 2026-07-22 | `pnpm benchmark` after two additional SQL optimization iterations | Three clean 50-VU runs retained; 223.35 ops/s, 0% errors, search/resources passed, read/write p95 missed; wrapper correctly returned non-zero |
 | 2026-07-22 | `pnpm test:e2e` against the rebuilt final production image | 102/102 passed in 2.5 minutes; WCAG scan and layout-regression coverage included |
 | 2026-07-22 | `pnpm audit --prod --audit-level high --json` and pinned `govulncheck@v1.6.0 ./...` | 0 production advisories; 0 reachable/package vulnerabilities |
 | 2026-07-22 | clean-volume and existing-volume Compose/runtime inspection | exactly `postgres + app`; bootstrap-before-readiness; ledger `35/0`; demo user `1`; app UID/GID `65532:65532`; privileged app env count 0; Node/npm entrypoints absent |
 | 2026-07-22 | final `pnpm check` after stage-role and zoneless chat-selector corrections | Passed: formatter/lint/vet, 966 EN/RU keys, strict typecheck, Go tests, 31 frontend files/84 tests, production bundle and embedded binary |
 | 2026-07-22 | final serial `pnpm test:integration` and expanded `pnpm test:e2e` | All real-PostgreSQL packages passed through migration `000035`; 102/102 browser tests passed with calendar creation, project creation, all three deal views, two-user chat messaging, WCAG, responsive layout, PWA, and tenant isolation |
+| 2026-07-22 | three browser-performance runs and Lighthouse on application commit `3b26934` | Browser budgets passed with zero errors; desktop/mobile Lighthouse 100/94 performance and 100/100 accessibility; mobile LCP miss retained |
+| 2026-07-22 | clean `scripts/benchmark.ps1 -Profile baseline -Runs 3` from commit `feaffdd` | Three clean 50-VU summaries retained; 222.61 ops/s, 0% errors, search/resources passed, read/write p95 missed; wrapper correctly returned non-zero |
+| 2026-07-22 | final `pnpm audit --prod --audit-level high --json` and pinned `govulncheck@v1.6.0 ./...` | 0 production advisories; 0 reachable/package vulnerabilities, one non-reachable module advisory retained |
+| 2026-07-22 | final runtime inspection and `docker stats --no-stream` | app is read-only UID/GID `65532:65532`, drops all capabilities, has no Node/npm executable, and recorded 12.61 MiB idle RSS after 36 min uptime |
+| 2026-07-22 | final `pnpm check` after bootstrap-secret and chat-placeholder corrections | Passed: formatter/lint/vet, 967 complete EN/RU keys, strict typecheck, Go tests, 31 frontend files/84 tests, production bundle and embedded binary |
+| 2026-07-22 | final serial `pnpm test:integration` against PostgreSQL 18.4 | All real-PostgreSQL packages passed through migration `000035`, including tenant/RLS negative suites |
+| 2026-07-22 | clean-volume Compose bootstrap and existing-volume restart | Exactly `postgres + app`; ledger 35 and demo user 1; no recovery; final PID 1 is PostgreSQL; application encryption key absent from DB service/process |
+| 2026-07-22 | `scripts/migrate.ps1` against a running database | Passed with the PostgreSQL container ID and `StartedAt` unchanged across fresh-image one-shot migration |
+| 2026-07-22 | final `pnpm test:e2e` against the rebuilt production image at `:18081` | 102/102 passed in 2.7 minutes; owner/invited-user bidirectional chat, WCAG, responsive layout, screenshots, PWA, and tenant isolation included |
+| 2026-07-22 | independent security and maintainability re-review | No remaining Critical/High security or maintainability blockers after bootstrap/migration hardening; product-scope roadmap gaps remain explicit |
 
 ## Known limitations
 
@@ -107,7 +117,7 @@ Phase 5 - verified pre-release handoff with explicit roadmap gaps.
 - `go test -race` is unavailable in the current Windows Go environment because CGO is disabled. CI runs the race detector on Linux; that hosted result is not yet available.
 - Trivy is unavailable locally. The pinned container-scan workflow exists, but no local/hosted Trivy result is claimed.
 - `govulncheck` found no reachable vulnerability; it still reports module-level GO-2026-5932 in unmaintained `golang.org/x/crypto/openpgp`, which the application does not import and for which no upstream fix is available.
-- Simulated mobile LCP (2.77 s) misses the 2.0 s target; 50-VU median read p95 (189.94 ms) and write p95 (290.14 ms) miss the 150/250 ms targets after two additional documented SQL optimization iterations.
+- Simulated mobile LCP (2.76 s) misses the 2.0 s target; 50-VU median read p95 (189.09 ms) and write p95 (283.19 ms) miss the 150/250 ms targets after two additional documented SQL optimization iterations.
 - The 100-VU stretch scenario and two-browser LiveKit media E2E are not measured.
 - Hosted GitHub Actions have not run because no push is authorized.
 
@@ -116,18 +126,18 @@ Phase 5 - verified pre-release handoff with explicit roadmap gaps.
 | Metric | Value | Evidence/status |
 | --- | --- | --- |
 | Deterministic small seed | 1,000 contacts; 250 companies; 500 deals; 5,000 activities; 2.684 s including `go run` startup | Local PostgreSQL 18.4 run on 2026-07-21; setup evidence, not a serving-performance claim |
-| Frontend initial JS + CSS | 91,782 B Brotli (89.6 KiB) | Current production build; target met |
-| Lazy AG Grid / optional LiveKit chunks | 170,685 B / 116,990 B Brotli | Both lazy; AG Grid Community only |
-| Largest ordinary lazy app feature | 21,065 B Brotli (20.6 KiB) | Target met |
+| Frontend initial JS + CSS | 91,712 B Brotli (89.6 KiB) | Current production build; target met |
+| Lazy AG Grid / optional LiveKit chunks | 170,706 B / 116,990 B Brotli | Both lazy; AG Grid Community only |
+| Largest ordinary lazy app feature | 21,041 B Brotli (20.5 KiB) | Target met |
 | External font requests | 0 | Current bundle scan |
 | Lighthouse desktop/mobile performance | 100 / 94 | Both performance-score targets met |
 | Lighthouse accessibility | 100 / 100 | Target met |
-| Mobile LCP / CLS | 2,771.49 ms / 0 | LCP missed; CLS met |
-| Browser interaction / DOM / scrolling | 46.5 ms / 710 / 60 FPS | Medians or stable value across 3 optimized runs; targets met |
-| Browser heap / retained growth | 13.26 MiB / 8.15% | Median of 3 optimized runs; targets met |
-| Baseline k6 throughput / errors | 223.35 ops/s / 0% | Median of 3 clean 50-VU runs |
-| Baseline read/write/search p95 | 189.94 / 290.14 / 159.95 ms | Read/write missed; search met |
-| Baseline overall p95 / p99 | 192.89 / 213.61 ms | Median report |
-| Baseline peak app / PostgreSQL memory | 73.65 / 305.20 MiB | Median peaks; combined 378.85 MiB |
-| Post-E2E idle app / PostgreSQL memory | 72.65 / 151.1 MiB | Single snapshot; app idle target met |
+| Mobile LCP / CLS | 2,762.41 ms / 0 | LCP missed; CLS met |
+| Browser interaction / DOM / scrolling | 49.1 ms / 710 / 60 FPS | Medians or stable value across 3 final runs; targets met |
+| Browser heap / retained growth | 13.30 MiB / 8.3% | Median of 3 final runs; targets met |
+| Baseline k6 throughput / errors | 222.61 ops/s / 0% | Median of 3 clean 50-VU runs |
+| Baseline read/write/search p95 | 189.09 / 283.19 / 176.65 ms | Read/write missed; search met |
+| Baseline overall p95 / p99 | 191.59 / 206.95 ms | Median report |
+| Baseline peak app / PostgreSQL memory | 72.14 / 306.10 MiB | Median peaks; combined 378.24 MiB |
+| Post-E2E idle app / PostgreSQL memory | 12.61 / 59.74 MiB | Single snapshot after 36 min uptime; app idle target met |
 | Readiness | approximately 221 ms | Single log-delta observation; target met |

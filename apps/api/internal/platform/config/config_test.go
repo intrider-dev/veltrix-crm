@@ -17,6 +17,39 @@ func TestLoadStorageDefaultsToLocal(t *testing.T) {
 	}
 }
 
+func TestLoadBootstrapDoesNotRequireApplicationEncryptionKey(t *testing.T) {
+	t.Setenv("APP_ENV", "production")
+	t.Setenv("DATABASE_ADMIN_URL", "postgres://admin@postgres/crm")
+	t.Setenv("APP_DB_PASSWORD", "app-password")
+	t.Setenv("DEMO_SEED", "false")
+	t.Setenv("IDENTITY_ENCRYPTION_KEY_BASE64", "")
+	t.Setenv("IDENTITY_ENCRYPTION_KEY_ID", "")
+
+	cfg, err := LoadBootstrap()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.IdentityKeyBase64 != "" || cfg.IdentityKeyID != "" {
+		t.Fatalf("bootstrap loaded application encryption configuration: %+v", cfg)
+	}
+}
+
+func TestLoadBootstrapRejectsProductionDemoSeedAndMissingCredentials(t *testing.T) {
+	t.Setenv("APP_ENV", "production")
+	t.Setenv("DATABASE_ADMIN_URL", "postgres://admin@postgres/crm")
+	t.Setenv("APP_DB_PASSWORD", "app-password")
+	t.Setenv("DEMO_SEED", "true")
+	if _, err := LoadBootstrap(); err == nil || !strings.Contains(err.Error(), "DEMO_SEED") {
+		t.Fatalf("error = %v, want production seed rejection", err)
+	}
+
+	t.Setenv("DEMO_SEED", "false")
+	t.Setenv("DATABASE_ADMIN_URL", "")
+	if _, err := LoadBootstrap(); err == nil || !strings.Contains(err.Error(), "DATABASE_ADMIN_URL") {
+		t.Fatalf("error = %v, want missing bootstrap credentials", err)
+	}
+}
+
 func TestLoadRequiresCompleteS3Configuration(t *testing.T) {
 	setMinimumEnvironment(t)
 	t.Setenv("STORAGE_BACKEND", "s3")

@@ -12,6 +12,7 @@
   "cameraOff": "Выключить камеру",
   "cameraOn": "Включить камеру",
   "chooseMember": "Выберите коллегу",
+  "chooseMemberPlaceholder": "Выберите коллегу из списка",
   "close": "Закрыть чат",
   "empty": "Диалогов пока нет.",
   "emptyMessages": "Начните разговор.",

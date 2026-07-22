@@ -12,6 +12,7 @@
   "cameraOff": "Camera off",
   "cameraOn": "Camera on",
   "chooseMember": "Choose a colleague",
+  "chooseMemberPlaceholder": "Select a colleague",
   "close": "Close chat",
   "empty": "No conversations yet.",
   "emptyMessages": "Start the conversation.",

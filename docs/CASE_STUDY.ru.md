@@ -80,7 +80,7 @@ RxJS остаётся для cancellable queries, SSE и Angular integration. Д
 - Fingerprinted output заранее gzip/Brotli-compressed и встраивается в Go.
 - Angular budgets и отдельный emitted-asset scanner проверяют initial/lazy thresholds.
 
-Production build от 2026-07-22 содержит 91 681 bytes (89,5 KiB) initial JS+CSS Brotli, 170 801 bytes (166,8 KiB) в lazy AG Grid Community chunk и не содержит ссылок на внешние шрифты. Optional LiveKit client вынесен в отдельный lazy chunk 116 990 bytes (114,2 KiB). Это measurement dirty working tree, не tagged release. Evidence и методика: [`PERFORMANCE.md`](PERFORMANCE.md).
+Финальный production build от 2026-07-22 содержит 91 712 bytes (89,6 KiB) initial JS+CSS Brotli, 170 706 bytes (166,7 KiB) в lazy AG Grid Community chunk и не содержит ссылок на внешние шрифты. Optional LiveKit client вынесен в отдельный lazy chunk 116 990 bytes (114,2 KiB). Serving-performance evidence использует application commit `3b26934`, а bundle повторно собран после финального deployment/i18n hardening; это не tagged release. Evidence и методика: [`PERFORMANCE.md`](PERFORMANCE.md).
 
 ## 9. Tenant isolation
 
@@ -109,10 +109,10 @@ SSE использует durable rows для bounded `Last-Event-ID` replay и i
 | Evidence | Результат |
 | --- | --- |
 | Initial/lazy bundle | 89,6 KiB initial; 166,7 KiB lazy AG Grid; применимые цели пройдены |
-| Lighthouse | desktop/mobile performance 100/94; accessibility 100/100; mobile LCP 2,77 s не проходит цель 2,0 s |
-| Browser heap/retention/table FPS | 13,26 MiB / 8,15% / 60 FPS medians; цели пройдены |
-| k6 baseline | 223,35 ops/s, 0% errors; read/write/search p95 189,94/290,14/159,95 ms; read/write-цели не пройдены |
-| Container memory/startup | median peak app/PostgreSQL 73,65/305,20 MiB; readiness около 221 ms |
+| Lighthouse | desktop/mobile performance 100/94; accessibility 100/100; mobile LCP 2,76 s не проходит цель 2,0 s |
+| Browser heap/retention/table FPS | 13,30 MiB / 8,3% / 60 FPS medians; цели пройдены |
+| k6 baseline | 222,61 ops/s, 0% errors; read/write/search p95 189,09/283,19/176,65 ms; read/write-цели не пройдены |
+| Container memory/startup | median peak app/PostgreSQL 72,14/306,10 MiB; readiness около 221 ms |
 | k6 100-VU stretch / competitor data | Not measured |
 
 Полный протокол: [`BENCHMARK_METHODOLOGY.md`](BENCHMARK_METHODOLOGY.md).
@@ -158,7 +158,7 @@ Codex работал напрямую в локальном repository по mast
 
 ## 17. Известные ограничения
 
-- Simulated mobile LCP 2,77 s при target 2,0 s; median read p95 для 50 VU — 189,94 ms при target 150 ms, write p95 — 290,14 ms при target 250 ms. Все отклонения явно сохранены после двух дополнительных SQL-итераций.
+- Simulated mobile LCP 2,76 s при target 2,0 s; median read p95 для 50 VU — 189,09 ms при target 150 ms, write p95 — 283,19 ms при target 250 ms. Все отклонения явно сохранены после двух дополнительных SQL-итераций.
 - 100-VU stretch и two-browser LiveKit media E2E не измерены.
 - Trivy локально недоступен; pinned CI workflow настроен, но результат не заявляется.
 - GitHub Actions определены, но hosted workflow run не выполнялся.

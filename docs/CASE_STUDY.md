@@ -80,7 +80,7 @@ Zoneless mode does not make an application fast by itself. Browser timing, DOM s
 - Fingerprinted output is precompressed with gzip and Brotli before embedding in Go.
 - Angular budgets and an independent emitted-asset scanner fail the hard initial threshold and flag oversized ordinary lazy features.
 
-The 2026-07-22 production build reports 91,782 bytes (89.6 KiB) initial JS+CSS Brotli, a 170,685-byte (166.7 KiB) lazy AG Grid Community chunk, and no external font reference. The optional LiveKit client is a separate 116,990-byte (114.2 KiB) lazy chunk. These are dirty-working-tree measurements, not tagged-release values. Evidence and method: [`PERFORMANCE.md`](PERFORMANCE.md).
+The final 2026-07-22 production build reports 91,712 bytes (89.6 KiB) initial JS+CSS Brotli, a 170,706-byte (166.7 KiB) lazy AG Grid Community chunk, and no external font reference. The optional LiveKit client is a separate 116,990-byte (114.2 KiB) lazy chunk. Serving-performance evidence uses application commit `3b26934`; the bundle was regenerated after final deployment/i18n hardening. These are not tagged-release values. Evidence and method: [`PERFORMANCE.md`](PERFORMANCE.md).
 
 ## 9. Tenant isolation
 
@@ -109,10 +109,10 @@ Actual state at the date of this case study:
 | Evidence | Result |
 | --- | --- |
 | Initial/lazy bundle | 89.6 KiB initial; 166.7 KiB lazy AG Grid; applicable targets pass |
-| Lighthouse | desktop/mobile performance 100/94; accessibility 100/100; mobile LCP 2.77 s misses the 2.0 s target |
-| Browser heap/retention/table FPS | 13.26 MiB / 8.15% / 60 FPS medians; targets pass |
-| k6 baseline | 223.35 ops/s, 0% errors; read/write/search p95 189.94/290.14/159.95 ms; read/write targets miss |
-| Container memory/startup | median peak app/PostgreSQL 73.65/305.20 MiB; readiness approximately 221 ms |
+| Lighthouse | desktop/mobile performance 100/94; accessibility 100/100; mobile LCP 2.76 s misses the 2.0 s target |
+| Browser heap/retention/table FPS | 13.30 MiB / 8.3% / 60 FPS medians; targets pass |
+| k6 baseline | 222.61 ops/s, 0% errors; read/write/search p95 189.09/283.19/176.65 ms; read/write targets miss |
+| Container memory/startup | median peak app/PostgreSQL 72.14/306.10 MiB; readiness approximately 221 ms |
 | k6 100-VU stretch / competitor data | Not measured |
 
 The complete protocol and metadata requirements are in [`BENCHMARK_METHODOLOGY.md`](BENCHMARK_METHODOLOGY.md).
@@ -162,7 +162,7 @@ Verification is deliberately separated by evidence type:
 
 ## 17. Known limitations
 
-- Simulated mobile LCP is 2.77 seconds against a 2.0-second target; the 50-VU read p95 median is 189.94 ms against 150 ms and write p95 is 290.14 ms against 250 ms. All remain explicit misses after two additional SQL optimization iterations.
+- Simulated mobile LCP is 2.76 seconds against a 2.0-second target; the 50-VU read p95 median is 189.09 ms against 150 ms and write p95 is 283.19 ms against 250 ms. All remain explicit misses after two additional SQL optimization iterations.
 - The 100-VU stretch and two-browser LiveKit media E2E are not measured.
 - Trivy was unavailable locally; the pinned CI workflow is configured but its result is not claimed.
 - GitHub Actions have been defined but not proven by a hosted workflow run.
