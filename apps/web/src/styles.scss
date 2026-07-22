@@ -1,0 +1,297 @@
+@use '@angular/material' as mat;
+
+$system-font:
+  system-ui,
+  -apple-system,
+  BlinkMacSystemFont,
+  'Segoe UI',
+  sans-serif;
+
+:root {
+  @include mat.theme(
+    (
+      color: (
+        theme-type: color-scheme,
+        primary: mat.$azure-palette,
+        tertiary: mat.$cyan-palette,
+      ),
+      typography: (
+        plain-family: $system-font,
+        brand-family: $system-font,
+      ),
+      density: 0,
+    )
+  );
+  --brand: #3657c8;
+  --on-brand: #ffffff;
+  --brand-soft: color-mix(in srgb, var(--brand) 11%, transparent);
+  --surface-canvas: light-dark(#f7f8fb, #0d1119);
+  --surface-raised: light-dark(#ffffff, #151b25);
+  --surface-subtle: light-dark(#f1f3f8, #1b2330);
+  --surface-selected: light-dark(#e9edfa, #202c45);
+  --text: light-dark(#172033, #edf1f7);
+  --text-muted: light-dark(#58647a, #aab5c7);
+  --text-faint: light-dark(#697386, #8895aa);
+  --border: light-dark(#dfe3eb, #2a3444);
+  --danger: light-dark(#b42318, #ff8a80);
+  --danger-surface: light-dark(#fff0ee, #351d20);
+  --focus: color-mix(in srgb, var(--brand) 38%, transparent);
+  --shadow-lg: 0 1rem 3rem rgb(19 30 54 / 10%);
+  --shadow-xl: 0 1.5rem 5rem rgb(4 9 20 / 28%);
+  --control-height: 2.5rem;
+  --control-radius: 0.625rem;
+  --control-inline-padding: 0.75rem;
+  --control-icon-size: 1.125rem;
+  --page-gap: 1.25rem;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  color-scheme: light;
+  font-family: $system-font;
+  font-synthesis: none;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --brand: #8ba3ff;
+  --on-brand: #0d1119;
+}
+:root[data-density='compact'] {
+  --control-height: 2.1rem;
+  --page-gap: 0.85rem;
+}
+* {
+  box-sizing: border-box;
+}
+html {
+  min-width: 20rem;
+  background: var(--surface-canvas);
+}
+body {
+  min-height: 100dvh;
+  margin: 0;
+  color: var(--text);
+  background: var(--surface-canvas);
+  font-family: $system-font;
+  -webkit-font-smoothing: antialiased;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+input[type='search']::-webkit-search-cancel-button,
+input[type='search']::-webkit-search-decoration {
+  appearance: none;
+}
+.mat-mdc-button-base .mdc-button__label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+}
+.mat-mdc-button-base app-icon {
+  flex: 0 0 auto;
+  vertical-align: middle;
+}
+h1,
+h2,
+h3,
+p {
+  overflow-wrap: break-word;
+}
+.skip-link {
+  position: fixed;
+  z-index: 1000;
+  top: 0.5rem;
+  left: 0.5rem;
+  transform: translateY(-180%);
+  padding: 0.65rem 0.9rem;
+  border-radius: 0.4rem;
+  color: white;
+  background: var(--brand);
+}
+.skip-link:focus {
+  transform: translateY(0);
+}
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+.page {
+  display: grid;
+  gap: var(--page-gap);
+  max-width: 90rem;
+  margin-inline: auto;
+}
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  min-width: 0;
+}
+.page-header h1 {
+  margin: 0;
+  font-size: clamp(1.55rem, 3vw, 2rem);
+  line-height: 1.15;
+  letter-spacing: -0.035em;
+}
+.page-header p {
+  margin: 0.35rem 0 0;
+  color: var(--text-muted);
+}
+.panel {
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface-raised);
+}
+.empty-state {
+  display: grid;
+  min-height: 14rem;
+  place-items: center;
+  padding: 2rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+.skeleton {
+  min-height: 1rem;
+  border-radius: 0.35rem;
+  background: linear-gradient(
+    100deg,
+    var(--surface-subtle) 20%,
+    var(--surface-selected) 45%,
+    var(--surface-subtle) 70%
+  );
+  background-size: 240% 100%;
+  animation: skeleton 1.2s linear infinite;
+}
+.error-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
+  border-radius: 0.6rem;
+  color: var(--danger);
+  background: var(--danger-surface);
+}
+.feature-toolbar {
+  display: flex;
+  align-items: end;
+  gap: 0.65rem;
+  padding: 0.65rem;
+}
+.feature-toolbar .grow {
+  flex: 1;
+}
+.native-field {
+  display: grid;
+  gap: 0.3rem;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+.native-field input,
+.native-field select {
+  min-height: var(--control-height);
+  padding: 0 var(--control-inline-padding);
+  border: 1px solid var(--border);
+  border-radius: var(--control-radius);
+  color: var(--text);
+  background: var(--surface-raised);
+}
+.native-field select,
+.crm-native-select {
+  appearance: none;
+  padding-inline-end: 2.35rem;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
+    linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
+  background-position:
+    calc(100% - 1rem) 50%,
+    calc(100% - 0.72rem) 50%;
+  background-size:
+    0.3rem 0.3rem,
+    0.3rem 0.3rem;
+  background-repeat: no-repeat;
+}
+.native-field input:focus-visible,
+.native-field select:focus-visible,
+.crm-native-select:focus-visible {
+  border-color: var(--brand);
+  outline: 3px solid var(--focus);
+  outline-offset: 1px;
+}
+.feature-form {
+  display: grid;
+  align-items: start;
+  gap: 0.75rem;
+}
+.form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+.list-skeleton {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+}
+.list-skeleton .skeleton {
+  min-height: 4rem;
+}
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.65rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  color: var(--brand);
+  background: var(--brand-soft);
+  font-size: 0.7rem;
+}
+@keyframes skeleton {
+  to {
+    background-position-x: -240%;
+  }
+}
+@media (max-width: 600px) {
+  .page-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .page-header > button {
+    width: 100%;
+  }
+  .feature-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+@media (forced-colors: active) {
+  :focus-visible {
+    outline: 2px solid CanvasText !important;
+  }
+}

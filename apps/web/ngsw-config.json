@@ -1,0 +1,32 @@
+{
+  "$schema": "../../node_modules/@angular/service-worker/config/schema.json",
+  "index": "/index.html",
+  "assetGroups": [
+    {
+      "name": "app-shell",
+      "installMode": "prefetch",
+      "resources": {
+        "files": [
+          "/favicon.ico",
+          "/index.html",
+          "/manifest.webmanifest",
+          "/icons/*.svg",
+          "/*.css",
+          "/*.js"
+        ]
+      }
+    },
+    {
+      "name": "localization-catalogs",
+      "installMode": "lazy",
+      "updateMode": "prefetch",
+      "resources": {
+        "files": ["/i18n/**/*.json"]
+      },
+      "cacheQueryOptions": {
+        "ignoreSearch": true
+      }
+    }
+  ],
+  "navigationUrls": ["/**", "!/**/*.*", "!/api/**"]
+}

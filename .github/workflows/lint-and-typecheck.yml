@@ -1,0 +1,37 @@
+name: lint-and-typecheck
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lint-typecheck-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Lint, typecheck, and generated state
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Set up project
+        uses: ./.github/actions/setup-project
+
+      - name: Regenerate contracts and catalogs
+        run: pnpm generate:contracts
+
+      - name: Verify generated files are committed
+        run: git diff --exit-code -- .
+
+      - name: Lint all workspaces
+        run: pnpm lint
+
+      - name: Typecheck the frontend
+        run: pnpm typecheck

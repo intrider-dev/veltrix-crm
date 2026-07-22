@@ -1,0 +1,19 @@
+{
+  "add": "Add lead",
+  "company": "Company",
+  "convert": "Convert",
+  "createTitle": "New lead",
+  "empty": "No leads match these filters.",
+  "jobTitle": "Job title",
+  "loadMore": "Load more leads",
+  "noDetails": "No contact details",
+  "search": "Search leads",
+  "source": "Source",
+  "stage": "Stage",
+  "status.all": "All statuses",
+  "status.converted": "Converted",
+  "status.disqualified": "Disqualified",
+  "status.new": "New",
+  "status.qualified": "Qualified",
+  "subtitle": "Qualify prospects and turn them into contacts without duplicate data entry."
+}

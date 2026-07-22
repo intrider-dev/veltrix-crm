@@ -1,0 +1,226 @@
+.company-list {
+  overflow: hidden;
+}
+.company-list > a,
+.trash-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 0.8rem;
+  min-height: 4.4rem;
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  text-decoration: none;
+}
+.company-list > a:last-child {
+  border: 0;
+}
+.company-list > a:hover,
+.company-list > a:focus-visible {
+  background: var(--surface-subtle);
+  outline: none;
+}
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.75rem;
+}
+.mode-switch {
+  display: flex;
+  padding: 0.2rem;
+  border-radius: 0.55rem;
+  background: var(--surface-subtle);
+}
+.mode-switch .selected {
+  color: var(--brand);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-sm);
+}
+.search-field {
+  min-width: min(19rem, 100%);
+  margin-left: auto;
+}
+.compact-select {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 9rem;
+}
+.compact-select > span {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+}
+.compact-select select {
+  min-height: 2.55rem;
+  padding: 0 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 0.45rem;
+  color: var(--text);
+  background: var(--surface-raised);
+  font: inherit;
+}
+.compact-select select:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+.saved-view-select {
+  min-width: 11rem;
+}
+.company-summary {
+  min-width: 0;
+}
+.company-summary strong,
+.company-summary small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.trash-row time {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+.load-more {
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+}
+.danger-action {
+  color: var(--danger);
+}
+.company-mark {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.55rem;
+  color: var(--brand);
+  background: var(--brand-soft);
+  font-weight: 750;
+}
+.company-list strong,
+.company-list small {
+  display: block;
+}
+.company-list small {
+  margin-top: 0.2rem;
+  color: var(--text-muted);
+}
+.company-status {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+.list-skeleton {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+}
+.list-skeleton > div {
+  min-height: 3rem;
+}
+.drawer-scrim {
+  position: fixed;
+  z-index: 70;
+  inset: 0;
+  border: 0;
+  background: rgb(4 9 20 / 38%);
+}
+.create-drawer {
+  position: fixed;
+  z-index: 80;
+  inset: 0 0 0 auto;
+  width: min(31rem, 100%);
+  overflow: auto;
+  padding: 1rem;
+  border-left: 1px solid var(--border);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-xl);
+}
+.create-drawer > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+.create-drawer h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+.create-drawer form {
+  display: grid;
+}
+.drawer-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+.form-error {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  border-radius: 0.4rem;
+  color: var(--danger);
+  background: var(--danger-surface);
+}
+.small-dialog {
+  position: fixed;
+  z-index: 90;
+  inset: 50% auto auto 50%;
+  width: min(28rem, calc(100% - 2rem));
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.8rem;
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-xl);
+  transform: translate(-50%, -50%);
+}
+.small-dialog h2 {
+  margin: 0 0 1rem;
+  font-size: 1.15rem;
+}
+.small-dialog form {
+  display: grid;
+}
+button {
+  transition: transform 140ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+button:active {
+  transform: scale(0.98);
+}
+@media (max-width: 900px) {
+  .toolbar {
+    flex-wrap: wrap;
+  }
+  .search-field {
+    order: 2;
+    width: 100%;
+    margin-left: 0;
+  }
+}
+@media (max-width: 640px) {
+  .toolbar,
+  .mode-switch {
+    align-items: stretch;
+  }
+  .toolbar {
+    flex-direction: column;
+  }
+  .mode-switch > button {
+    flex: 1;
+  }
+  .company-list > a,
+  .trash-row {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+  .company-status,
+  .trash-row time {
+    grid-column: 2;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  button {
+    transition: none;
+  }
+  button:active {
+    transform: none;
+  }
+}

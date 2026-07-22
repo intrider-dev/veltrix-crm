@@ -1,0 +1,16 @@
+{
+  "activity.add": "Добавить дело",
+  "activity.body": "Описание",
+  "activity.call": "Звонок",
+  "activity.complete": "Выполнить",
+  "activity.due": "Срок",
+  "activity.meeting": "Встреча",
+  "activity.note": "Заметка",
+  "activity.priority": "Приоритет",
+  "activity.task": "Задача",
+  "activity.timeline": "История взаимодействий",
+  "activity.title": "Заголовок",
+  "priority.high": "Высокий",
+  "priority.low": "Низкий",
+  "priority.normal": "Обычный"
+}

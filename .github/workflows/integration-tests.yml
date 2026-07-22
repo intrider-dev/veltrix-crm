@@ -1,0 +1,81 @@
+name: integration-tests
+
+on:
+  pull_request:
+    paths:
+      - "apps/api/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/integration-tests.yml"
+      - ".github/actions/setup-project/**"
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: integration-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  postgres:
+    name: PostgreSQL 18 migrations, seed, and RLS tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:18.4-bookworm
+        env:
+          POSTGRES_DB: veltrix_crm
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres_ci_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d veltrix_crm"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    env:
+      APP_ENV: test
+      APP_DEFAULT_LOCALE: en
+      APP_SUPPORTED_LOCALES: en,ru
+      DATABASE_URL: postgres://veltrix_app:veltrix_ci_password@127.0.0.1:5432/veltrix_crm?sslmode=disable
+      DATABASE_ADMIN_URL: postgres://postgres:postgres_ci_password@127.0.0.1:5432/veltrix_crm?sslmode=disable
+      DATABASE_DISPATCHER_URL: postgres://veltrix_dispatcher:veltrix_ci_password@127.0.0.1:5432/veltrix_crm?sslmode=disable
+      APP_DB_PASSWORD: veltrix_ci_password
+      AUTO_MIGRATE: "false"
+      DEMO_SEED: "false"
+      SESSION_COOKIE_SECURE: "false"
+      TEST_DATABASE_URL: postgres://veltrix_app:veltrix_ci_password@127.0.0.1:5432/veltrix_crm?sslmode=disable
+      TEST_DATABASE_ADMIN_URL: postgres://postgres:postgres_ci_password@127.0.0.1:5432/veltrix_crm?sslmode=disable
+      TEST_APP_DB_PASSWORD: veltrix_ci_password
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Set up project
+        uses: ./.github/actions/setup-project
+
+      - name: Apply migrations
+        run: go run ./apps/api/cmd/server migrate
+
+      - name: Load deterministic small seed
+        run: pnpm seed:small
+
+      - name: Run PostgreSQL integration tests
+        run: pnpm test:integration
+
+      - name: Capture PostgreSQL logs
+        if: always()
+        run: docker logs "${{ job.services.postgres.id }}" > postgres.log 2>&1 || true
+
+      - name: Upload PostgreSQL logs
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: integration-postgres-log
+          path: postgres.log
+          if-no-files-found: ignore
+          retention-days: 7

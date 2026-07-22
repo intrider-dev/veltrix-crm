@@ -1,0 +1,19 @@
+{
+  "name": "VeltrixCRM",
+  "short_name": "VeltrixCRM",
+  "description": "A resource-conscious, multi-tenant Sales CRM with reproducible performance evidence.",
+  "id": "/",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f7f8fb",
+  "theme_color": "#4657d5",
+  "icons": [
+    {
+      "src": "/icons/veltrix-mark.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

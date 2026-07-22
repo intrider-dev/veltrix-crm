@@ -1,0 +1,56 @@
+package app
+
+import "github.com/go-chi/chi/v5"
+
+// registerAdvancedSalesRoutes keeps the public sales surface in one auditable
+// place. Static collection routes are registered before resource parameters so
+// words such as "trash" can never be interpreted as identifiers.
+func (application *Application) registerAdvancedSalesRoutes(router chi.Router) {
+	router.Get("/assignment-subjects", application.listAssignmentSubjects)
+	router.Get("/pipelines", application.listPipelinesAdvanced)
+	router.Post("/pipelines", application.createPipelineAdvanced)
+	router.Get("/pipelines/{pipelineId}", application.getPipelineAdvanced)
+	router.Put("/pipelines/{pipelineId}", application.updatePipelineAdvanced)
+	router.Delete("/pipelines/{pipelineId}", application.deletePipelineAdvanced)
+	router.Post("/pipelines/{pipelineId}/stages", application.createPipelineStageAdvanced)
+	router.Put("/pipelines/{pipelineId}/stages/order", application.reorderPipelineStages)
+	router.Get("/pipelines/{pipelineId}/stages/{stageId}/deals", application.listKanbanStageDeals)
+	router.Put("/pipeline-stages/{stageId}", application.updatePipelineStageAdvanced)
+	router.Delete("/pipeline-stages/{stageId}", application.deletePipelineStageAdvanced)
+	router.Get("/lead-stages", application.listLeadStages)
+	router.Post("/lead-stages", application.createLeadStage)
+	router.Put("/lead-stages/{stageId}", application.updateLeadStage)
+	router.Delete("/lead-stages/{stageId}", application.deleteLeadStage)
+
+	router.Get("/leads", application.listLeadsAdvanced)
+	router.Post("/leads", application.createLeadAdvanced)
+	router.Get("/leads/trash", application.listLeadTrash)
+	router.Get("/leads/{leadId}", application.getLeadAdvanced)
+	router.Put("/leads/{leadId}", application.updateLeadAdvanced)
+	router.Delete("/leads/{leadId}", application.deleteLeadAdvanced)
+	router.Post("/leads/{leadId}/restore", application.restoreLeadAdvanced)
+	router.Post("/leads/{leadId}/convert", application.convertLeadAdvanced)
+	router.Patch("/leads/{leadId}/stage", application.moveLeadStage)
+	router.Get("/leads/{leadId}/assignments", application.listLeadAssignments)
+	router.Put("/leads/{leadId}/assignments", application.replaceLeadAssignments)
+
+	router.Get("/deals", application.listDealsFull)
+	router.Post("/deals", application.createDeal)
+	router.Get("/deals/trash", application.listDealTrash)
+	router.Get("/deals/{dealId}", application.getDealAdvanced)
+	router.Put("/deals/{dealId}", application.updateDealAdvanced)
+	router.Delete("/deals/{dealId}", application.deleteDealAdvanced)
+	router.Post("/deals/{dealId}/restore", application.restoreDealAdvanced)
+	router.Patch("/deals/{dealId}/outcome", application.setDealOutcomeAdvanced)
+	router.Patch("/deals/{dealId}/stage", application.moveDeal)
+	router.Get("/deals/{dealId}/history", application.listDealStageHistoryAdvanced)
+	router.Get("/deals/{dealId}/assignments", application.listDealAssignments)
+	router.Put("/deals/{dealId}/assignments", application.replaceDealAssignments)
+	router.Get("/deals/{dealId}/line-items", application.listDealLineItems)
+	router.Post("/deals/{dealId}/line-items", application.createDealLineItem)
+	router.Put("/deals/{dealId}/line-items/{itemId}", application.updateDealLineItem)
+	router.Delete("/deals/{dealId}/line-items/{itemId}", application.deleteDealLineItem)
+	router.Get("/deals/{dealId}/participants", application.listDealParticipants)
+	router.Put("/deals/{dealId}/participants", application.upsertDealParticipant)
+	router.Delete("/deals/{dealId}/participants/{contactId}", application.deleteDealParticipant)
+}

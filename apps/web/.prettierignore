@@ -1,0 +1,5 @@
+dist/
+.angular/
+coverage/
+public/i18n/**/*.json
+src/app/core/i18n/message-key.generated.ts

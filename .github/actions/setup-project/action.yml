@@ -1,0 +1,45 @@
+name: Setup project toolchain
+description: Install the pinned Node.js, pnpm, Go, and workspace dependencies used by CI.
+
+inputs:
+  install-dependencies:
+    description: Install dependencies from the frozen pnpm lockfile.
+    required: false
+    default: "true"
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Node.js
+      uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      with:
+        node-version: 24.15.0
+        check-latest: false
+
+    - name: Set up Go
+      uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+      with:
+        go-version: 1.26.5
+        check-latest: false
+        cache: true
+        cache-dependency-path: apps/api/go.sum
+
+    - name: Activate the pinned pnpm release
+      shell: bash
+      run: |
+        corepack enable
+        corepack prepare pnpm@11.15.1 --activate
+        pnpm config set store-dir "${RUNNER_TEMP}/pnpm-store"
+
+    - name: Restore pnpm store
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ runner.temp }}/pnpm-store
+        key: ${{ runner.os }}-${{ runner.arch }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ runner.arch }}-pnpm-
+
+    - name: Install workspace dependencies
+      if: inputs.install-dependencies == 'true'
+      shell: bash
+      run: pnpm install --frozen-lockfile

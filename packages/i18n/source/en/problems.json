@@ -1,0 +1,14 @@
+{
+  "problem.auth.permissionDenied": "You do not have permission to perform this action.",
+  "problem.auth.required": "Sign in to continue.",
+  "problem.conflict": "This action conflicts with the current state.",
+  "problem.generic": "Something went wrong. Request ID: {requestId}",
+  "problem.idempotencyConflict": "This request key was already used for different data.",
+  "problem.network": "The server could not be reached. Check your connection and try again.",
+  "problem.notFound": "The requested resource was not found.",
+  "problem.rateLimited": "Too many requests. Try again in a moment.",
+  "problem.securityRejected": "This request was rejected by the security policy.",
+  "problem.unavailable": "This service is temporarily unavailable.",
+  "problem.validation": "Check the highlighted fields.",
+  "problem.versionConflict": "This record changed. Review the latest version and try again."
+}

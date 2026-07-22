@@ -1,0 +1,13 @@
+{
+  "dashboard.activity": "Recent activity",
+  "dashboard.dealsByStage": "Deals by stage",
+  "dashboard.emptyActivity": "No activity in this period.",
+  "dashboard.lost": "Lost deals",
+  "dashboard.openPipeline": "Open pipeline",
+  "dashboard.overdue": "Overdue tasks",
+  "dashboard.period.30d": "Last 30 days",
+  "dashboard.period.7d": "Last 7 days",
+  "dashboard.title": "Dashboard",
+  "dashboard.weighted": "Weighted forecast",
+  "dashboard.won": "Won deals"
+}

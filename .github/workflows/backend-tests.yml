@@ -1,0 +1,51 @@
+name: backend-tests
+
+on:
+  pull_request:
+    paths:
+      - "apps/api/**"
+      - "go.work"
+      - "go.work.sum"
+      - ".github/workflows/backend-tests.yml"
+      - ".github/actions/setup-project/**"
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Go unit tests and race detector
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Set up project toolchain
+        uses: ./.github/actions/setup-project
+        with:
+          install-dependencies: "false"
+
+      - name: Verify modules
+        run: go -C apps/api mod verify
+
+      - name: Run static analysis
+        run: go vet ./apps/api/...
+
+      - name: Run tests with race detection
+        run: go test -race -count=1 -covermode=atomic -coverprofile=apps/api/coverage.out ./apps/api/...
+
+      - name: Upload backend coverage
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: backend-coverage
+          path: apps/api/coverage.out
+          if-no-files-found: ignore
+          retention-days: 14

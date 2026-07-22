@@ -1,0 +1,289 @@
+.deal-details {
+  display: grid;
+  gap: 1rem;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: fit-content;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+
+.deal-hero {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+}
+
+.deal-mark {
+  display: grid;
+  place-items: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 0.9rem;
+  color: var(--brand);
+  background: var(--brand-soft);
+}
+
+.eyebrow {
+  margin: 0 0 0.25rem;
+  color: var(--brand);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.deal-hero h1 {
+  margin: 0;
+  font-size: 1.7rem;
+  letter-spacing: -0.04em;
+}
+
+.deal-hero p:last-child {
+  margin: 0.3rem 0 0;
+  color: var(--text-muted);
+}
+
+.status {
+  padding: 0.35rem 0.65rem;
+  border-radius: 2rem;
+  color: var(--brand);
+  background: var(--brand-soft);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.status.won {
+  color: var(--success, #087a55);
+  background: color-mix(in srgb, var(--success, #087a55) 12%, transparent);
+}
+
+.status.lost {
+  color: var(--danger);
+  background: var(--danger-surface);
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: minmax(22rem, 0.85fr) minmax(26rem, 1.15fr);
+  align-items: start;
+  gap: 1rem;
+}
+
+.side-stack {
+  display: grid;
+  gap: 1rem;
+}
+
+.edit-panel > header,
+.collection-panel > header,
+.timeline-panel > header {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+h2,
+h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.edit-panel > form,
+.outcome-panel {
+  display: grid;
+  padding: 1rem;
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.native-field {
+  display: grid;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.native-field select,
+.inline-form input {
+  min-height: 2.55rem;
+  padding: 0 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 0.45rem;
+  color: var(--text);
+  background: var(--surface-raised);
+}
+
+.actions,
+.outcome-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.outcome-panel {
+  gap: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.collection-panel ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.collection-panel li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.collection-panel li a {
+  color: inherit;
+  font-weight: 650;
+}
+
+.collection-panel li span:last-child {
+  color: var(--text-muted);
+}
+
+.inline-form {
+  display: grid;
+  grid-template-columns: minmax(8rem, 1fr) 5rem 8rem auto;
+  gap: 0.5rem;
+  padding: 0.75rem;
+}
+
+.participant-form {
+  grid-template-columns: minmax(12rem, 1fr) minmax(8rem, 0.6fr) auto;
+}
+
+.timeline-panel {
+  grid-column: 1 / -1;
+}
+
+.task-form {
+  display: grid;
+  grid-template-columns: 1fr minmax(14rem, 0.45fr) auto;
+  align-items: start;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.timeline {
+  margin: 0;
+  padding: 0.6rem 1rem 1rem;
+  list-style: none;
+}
+
+.timeline li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1rem 1fr;
+  gap: 0.75rem;
+  padding: 0.7rem 0;
+}
+
+.timeline li:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  top: 1.5rem;
+  bottom: -0.5rem;
+  left: 0.26rem;
+  border-left: 1px solid var(--border);
+}
+
+.dot {
+  z-index: 1;
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-top: 0.25rem;
+  border-radius: 50%;
+  background: var(--brand);
+}
+
+.history-dot {
+  background: var(--text-faint);
+}
+
+.timeline article header,
+.timeline article footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.timeline article header span,
+.timeline time {
+  color: var(--text-faint);
+  font-size: 0.72rem;
+}
+
+.timeline p {
+  margin: 0.35rem 0;
+  color: var(--text-muted);
+}
+
+.form-error,
+.conflict {
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  color: var(--danger);
+  background: var(--danger-surface);
+}
+
+.conflict {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.hero-skeleton {
+  min-height: 6rem;
+}
+
+.body-skeleton {
+  min-height: 28rem;
+}
+
+@media (max-width: 1000px) {
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .timeline-panel {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 680px) {
+  .deal-hero {
+    grid-template-columns: auto 1fr;
+  }
+
+  .status {
+    grid-column: 1 / -1;
+    width: fit-content;
+  }
+
+  .field-grid,
+  .task-form,
+  .inline-form,
+  .participant-form {
+    grid-template-columns: 1fr;
+  }
+}

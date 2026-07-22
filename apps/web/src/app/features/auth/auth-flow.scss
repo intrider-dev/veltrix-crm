@@ -1,0 +1,110 @@
+:host {
+  display: block;
+  min-height: 100dvh;
+  background: var(--surface-canvas);
+}
+
+.auth-flow {
+  display: grid;
+  min-height: 100dvh;
+  place-items: center;
+  padding: clamp(1rem, 4vw, 3rem);
+}
+
+.auth-card {
+  width: min(100%, 32rem);
+  padding: 0.5rem;
+  border-color: var(--border);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-lg);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.75rem 1rem 0.2rem;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.brand-mark {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border-radius: 0.55rem;
+  color: white;
+  background: var(--brand);
+}
+
+mat-card-header {
+  padding: 1rem 1rem 1.25rem;
+}
+
+mat-card-title {
+  font-size: 1.45rem;
+  letter-spacing: -0.025em;
+}
+
+mat-card-subtitle {
+  margin-top: 0.4rem;
+  line-height: 1.45;
+}
+
+form {
+  display: grid;
+  gap: 0.15rem;
+}
+
+mat-form-field,
+.submit {
+  width: 100%;
+}
+
+.native-field {
+  margin-bottom: 1rem;
+}
+
+.submit {
+  min-height: 2.9rem;
+  margin-top: 0.45rem;
+  transition: transform 140ms var(--ease-out);
+}
+
+.submit:active {
+  transform: scale(0.98);
+}
+
+.form-error,
+.success-panel,
+.token-warning {
+  margin: 0.35rem 0 0.75rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 0.5rem;
+}
+
+.form-error,
+.token-warning {
+  border-left: 3px solid var(--danger);
+  color: var(--danger);
+  background: var(--danger-surface);
+}
+
+.success-panel {
+  color: var(--brand);
+  background: var(--brand-soft);
+  line-height: 1.5;
+}
+
+.footer-link {
+  display: flex;
+  justify-content: center;
+  margin-top: 0.55rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .submit {
+    transition: none;
+  }
+}

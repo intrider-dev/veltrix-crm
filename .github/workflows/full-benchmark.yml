@@ -1,0 +1,79 @@
+name: full-benchmark
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: Benchmark profile to execute
+        required: true
+        default: baseline
+        type: choice
+        options:
+          - baseline
+          - stretch
+          - both
+      runs:
+        description: Independent measured runs per profile
+        required: true
+        default: "3"
+        type: choice
+        options:
+          - "3"
+          - "5"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: full-benchmark
+  cancel-in-progress: false
+
+jobs:
+  benchmark:
+    name: ${{ inputs.profile }} benchmark (${{ inputs.runs }} runs)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - name: Check out source
+        id: checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Record runner environment
+        run: |
+          mkdir -p benchmarks/results
+          {
+            date --utc --iso-8601=seconds
+            git rev-parse HEAD
+            uname -a
+            lscpu
+            free -h
+            docker version
+            docker compose version
+          } > benchmarks/results/runner-environment.txt
+
+      - name: Run baseline profile
+        if: >-
+          always() && steps.checkout.outcome == 'success' &&
+          (inputs.profile == 'baseline' || inputs.profile == 'both')
+        run: bash scripts/benchmark.sh baseline "${{ inputs.runs }}"
+
+      - name: Run stretch profile
+        if: >-
+          always() && steps.checkout.outcome == 'success' &&
+          (inputs.profile == 'stretch' || inputs.profile == 'both')
+        run: bash scripts/benchmark.sh stretch "${{ inputs.runs }}"
+
+      - name: Upload raw benchmark evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: full-benchmark-${{ inputs.profile }}-${{ github.run_id }}
+          path: benchmarks/results
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Stop benchmark environment
+        if: always()
+        run: >-
+          docker compose --project-name veltrix-crm-benchmark --profile benchmark
+          down --volumes --remove-orphans

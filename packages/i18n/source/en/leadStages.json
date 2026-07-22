@@ -1,0 +1,18 @@
+{
+  "add": "Add stage",
+  "category": "Lifecycle category",
+  "category.converted": "Converted",
+  "category.disqualified": "Disqualified",
+  "category.new": "New",
+  "category.qualified": "Qualified",
+  "color": "Color",
+  "create": "New lead stage",
+  "created": "Lead stage created.",
+  "default": "Default",
+  "deleted": "Lead stage deleted.",
+  "edit": "Edit lead stage",
+  "empty": "No lead stages are configured.",
+  "subtitle": "Use custom stage names while stable lifecycle categories keep reports and automations compatible.",
+  "title": "Lead stages",
+  "updated": "Lead stage updated."
+}

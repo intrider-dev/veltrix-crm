@@ -1,0 +1,406 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
+import type { ElementRef } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  HostListener,
+  Injector,
+  computed,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MatButtonModule } from '@angular/material/button';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatSelectModule } from '@angular/material/select';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { productConfig } from '@veltrix-crm/product-config';
+import {
+  Subject,
+  catchError,
+  debounceTime,
+  distinctUntilChanged,
+  filter,
+  of,
+  switchMap,
+  tap,
+} from 'rxjs';
+
+import { ApiClient } from '../core/api/api-client.service';
+import type { SearchResult } from '../core/api/api.types';
+import { AuthStore } from '../core/auth/auth.store';
+import { Permissions, type Permission } from '../core/auth/permissions';
+import type { AppMessageKey } from '../core/i18n/app-message-key';
+import { I18nService } from '../core/i18n/i18n.service';
+import { NetworkStatusService } from '../core/network/network-status.service';
+import { NotificationRealtimeService } from '../core/notifications/notification-realtime.service';
+import { WorkspaceStore } from '../core/workspace/workspace.store';
+import { ChatDockComponent } from '../features/chat/chat-dock.component';
+import { focusAfterNextRender } from '../shared/a11y/focus-after-render';
+import { BrandLogoComponent } from '../shared/brand/brand-logo.component';
+import { ToastViewportComponent } from '../shared/feedback/toast-viewport.component';
+import { IconComponent, type IconName } from '../shared/icon/icon.component';
+
+interface NavItem {
+  readonly path: string;
+  readonly key: AppMessageKey;
+  readonly icon: IconName;
+  readonly exact?: boolean;
+  readonly permission?: Permission;
+}
+
+@Component({
+  selector: 'app-shell',
+  imports: [
+    CdkTrapFocus,
+    ChatDockComponent,
+    BrandLogoComponent,
+    IconComponent,
+    MatButtonModule,
+    MatMenuModule,
+    MatSelectModule,
+    RouterLink,
+    RouterLinkActive,
+    RouterOutlet,
+    ToastViewportComponent,
+  ],
+  template: `
+    <a class="skip-link" href="#main-content">{{ i18n.t('common.app.skipToContent') }}</a>
+    <div class="shell" [class.nav-collapsed]="collapsed()" [class.mobile-open]="mobileOpen()">
+      <header class="topbar">
+        <button
+          mat-icon-button
+          type="button"
+          class="mobile-menu"
+          (click)="mobileOpen.set(true)"
+          [attr.aria-label]="i18n.t('web.shell.openNavigation')"
+        >
+          <app-icon name="menu" />
+        </button>
+        <a routerLink="/dashboard" class="wordmark" [attr.aria-label]="product.productName">
+          <app-brand-logo />
+        </a>
+
+        @if (workspace.active(); as activeWorkspace) {
+          <mat-select
+            class="workspace-select"
+            [value]="activeWorkspace.id"
+            [disabled]="workspaceSwitching()"
+            (selectionChange)="switchWorkspace($event.value)"
+            [attr.aria-label]="i18n.t('common.nav.workspace')"
+          >
+            @for (item of workspace.workspaces(); track item.id) {
+              <mat-option [value]="item.id">{{ item.name }}</mat-option>
+            }
+          </mat-select>
+        } @else {
+          <a mat-stroked-button routerLink="/workspace/new" class="workspace-empty">
+            {{ i18n.t('settings.settings.newWorkspace') }}
+          </a>
+        }
+
+        <button
+          type="button"
+          class="global-search"
+          (click)="openCommandPalette()"
+          [attr.aria-label]="i18n.t('web.search.label')"
+        >
+          <app-icon name="search" />
+          <span>{{ i18n.t('web.shell.searchPlaceholder') }}</span>
+          <kbd>{{ i18n.t('web.shell.commandShortcut') }}</kbd>
+        </button>
+
+        <button
+          mat-button
+          type="button"
+          [matMenuTriggerFor]="accountMenu"
+          class="account-button"
+          [attr.aria-label]="
+            i18n.t('web.shell.signedInAs', { name: auth.user()?.displayName ?? '' })
+          "
+        >
+          <span class="avatar" aria-hidden="true">{{ initials() }}</span>
+          <span class="account-name">{{ auth.user()?.displayName }}</span>
+        </button>
+        <mat-menu #accountMenu="matMenu">
+          <button mat-menu-item type="button" routerLink="/settings/security">
+            {{ i18n.t('settings.settings.security') }}
+          </button>
+          <button mat-menu-item type="button" routerLink="/workspace/new">
+            {{ i18n.t('settings.settings.newWorkspace') }}
+          </button>
+          <button mat-menu-item type="button" routerLink="/settings">
+            {{ i18n.t('common.nav.settings') }}
+          </button>
+          <button mat-menu-item type="button" (click)="logout()">
+            {{ i18n.t('auth.logout.submit') }}
+          </button>
+        </mat-menu>
+      </header>
+
+      <aside class="sidebar" [attr.aria-label]="i18n.t('web.shell.navigation')">
+        <div class="mobile-sidebar-title">
+          <app-brand-logo size="small" />
+          <button
+            mat-icon-button
+            type="button"
+            (click)="mobileOpen.set(false)"
+            [attr.aria-label]="i18n.t('web.shell.closeNavigation')"
+          >
+            <app-icon name="close" />
+          </button>
+        </div>
+        <nav>
+          @for (item of visibleNavItems(); track item.path) {
+            <a
+              [routerLink]="item.path"
+              routerLinkActive="active"
+              [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
+              [attr.aria-label]="i18n.t(item.key)"
+            >
+              <app-icon [name]="item.icon" />
+              <span>{{ i18n.t(item.key) }}</span>
+            </a>
+          }
+        </nav>
+        <button
+          type="button"
+          class="collapse-button"
+          (click)="collapsed.set(!collapsed())"
+          [attr.aria-label]="
+            i18n.t(collapsed() ? 'web.shell.expandNavigation' : 'web.shell.collapseNavigation')
+          "
+        >
+          <app-icon name="chevron" /><span>{{ i18n.t('web.shell.collapseNavigation') }}</span>
+        </button>
+      </aside>
+
+      @if (mobileOpen()) {
+        <button
+          class="scrim"
+          type="button"
+          (click)="mobileOpen.set(false)"
+          [attr.aria-label]="i18n.t('web.shell.closeNavigation')"
+        ></button>
+      }
+
+      <main #mainContent id="main-content" tabindex="-1" [attr.aria-busy]="workspaceSwitching()">
+        <router-outlet />
+      </main>
+      @if (!network.online()) {
+        <div class="offline-indicator" role="status" aria-live="polite">
+          {{ i18n.t('pwa.offline') }}
+        </div>
+      }
+    </div>
+
+    <app-toast-viewport />
+    <app-chat-dock />
+
+    @if (commandOpen()) {
+      <section class="palette-backdrop" role="presentation" (mousedown)="closeFromBackdrop($event)">
+        <div
+          class="palette"
+          role="dialog"
+          aria-modal="true"
+          cdkTrapFocus
+          [cdkTrapFocusAutoCapture]="true"
+          [attr.aria-label]="i18n.t('web.shell.commandPalette')"
+        >
+          <label class="palette-search">
+            <span class="visually-hidden">{{ i18n.t('web.search.label') }}</span>
+            <app-icon name="search" />
+            <input
+              #searchInput
+              type="search"
+              autocomplete="off"
+              [placeholder]="i18n.t('web.shell.searchPlaceholder')"
+              (input)="search($event)"
+            />
+            <button
+              mat-icon-button
+              type="button"
+              (click)="closeCommandPalette()"
+              [attr.aria-label]="i18n.t('common.action.close')"
+            >
+              <app-icon name="close" />
+            </button>
+          </label>
+          <div class="palette-results" aria-live="polite">
+            @if (searchPending()) {
+              <p>{{ i18n.t('common.result.loading') }}</p>
+            } @else if (searchQuery().length < 2) {
+              <p>{{ i18n.t('web.search.minimum') }}</p>
+            } @else if (searchResults().length === 0) {
+              <p>{{ i18n.t('web.search.empty') }}</p>
+            } @else {
+              @for (result of searchResults(); track result.entityType + result.entityId) {
+                <a [routerLink]="searchLink(result)" (click)="closeCommandPalette()">
+                  <span class="result-type">{{ i18n.t(entityTypeKey(result.entityType)) }}</span>
+                  <strong>{{ result.title }}</strong>
+                  @if (result.subtitle) {
+                    <small>{{ result.subtitle }}</small>
+                  }
+                </a>
+              }
+            }
+          </div>
+        </div>
+      </section>
+    }
+  `,
+  styleUrl: './app-shell.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class AppShellComponent {
+  readonly auth = inject(AuthStore);
+  readonly i18n = inject(I18nService);
+  readonly network = inject(NetworkStatusService);
+  readonly notifications = inject(NotificationRealtimeService);
+  readonly workspace = inject(WorkspaceStore);
+  readonly permissions = inject(Permissions);
+  readonly product = productConfig;
+  readonly collapsed = signal(false);
+  readonly mobileOpen = signal(false);
+  readonly commandOpen = signal(false);
+  readonly searchPending = signal(false);
+  readonly searchQuery = signal('');
+  readonly searchResults = signal<readonly SearchResult[]>([]);
+  readonly searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
+  readonly mainContent = viewChild<ElementRef<HTMLElement>>('mainContent');
+  readonly workspaceSwitching = signal(false);
+  readonly navItems: readonly NavItem[] = [
+    { path: '/dashboard', key: 'common.nav.dashboard', icon: 'dashboard', exact: true },
+    { path: '/contacts', key: 'common.nav.contacts', icon: 'contact' },
+    { path: '/companies', key: 'common.nav.companies', icon: 'building' },
+    { path: '/leads', key: 'common.nav.leads', icon: 'lead', permission: 'leads.read' },
+    { path: '/deals', key: 'common.nav.deals', icon: 'deal', permission: 'deals.read' },
+    { path: '/projects', key: 'common.nav.projects', icon: 'project' },
+    { path: '/activities', key: 'common.nav.activities', icon: 'activity' },
+    { path: '/calendar', key: 'common.nav.calendar', icon: 'calendar' },
+    {
+      path: '/automations',
+      key: 'common.nav.automations',
+      icon: 'automation',
+      permission: 'settings.write',
+    },
+    { path: '/reports', key: 'common.nav.reports', icon: 'report', permission: 'reports.read' },
+    { path: '/notifications', key: 'common.nav.notifications', icon: 'notification' },
+    { path: '/settings', key: 'common.nav.settings', icon: 'settings', exact: true },
+  ];
+  readonly visibleNavItems = computed(() =>
+    this.navItems.filter((item) => !item.permission || this.permissions.allows(item.permission)),
+  );
+
+  private readonly api = inject(ApiClient);
+  private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly injector = inject(Injector);
+  private readonly searchTerms = new Subject<string>();
+
+  constructor() {
+    this.router.events
+      .pipe(
+        filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+        takeUntilDestroyed(),
+      )
+      .subscribe(() => {
+        this.mobileOpen.set(false);
+        focusAfterNextRender(this.injector, () => this.mainContent()?.nativeElement);
+      });
+    this.searchTerms
+      .pipe(
+        debounceTime(150),
+        distinctUntilChanged(),
+        tap((query) => {
+          this.searchQuery.set(query);
+          this.searchPending.set(query.length >= 2);
+        }),
+        switchMap((query) => {
+          const workspaceId = this.workspace.id();
+          if (query.length < 2 || !workspaceId) return of([]);
+          return this.api.searchStream(workspaceId, query).pipe(catchError(() => of([])));
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((results) => {
+        this.searchResults.set(results);
+        this.searchPending.set(false);
+      });
+  }
+
+  readonly initials = () => {
+    const name = this.auth.user()?.displayName ?? '';
+    return name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join('');
+  };
+
+  @HostListener('document:keydown', ['$event'])
+  onKeydown(event: KeyboardEvent): void {
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+      event.preventDefault();
+      if (this.commandOpen()) this.closeCommandPalette();
+      else this.openCommandPalette();
+    } else if (event.key === 'Escape' && this.commandOpen()) {
+      this.closeCommandPalette();
+    }
+  }
+
+  openCommandPalette(): void {
+    this.commandOpen.set(true);
+    focusAfterNextRender(this.injector, () => this.searchInput()?.nativeElement);
+  }
+
+  closeCommandPalette(): void {
+    this.commandOpen.set(false);
+    this.searchQuery.set('');
+    this.searchResults.set([]);
+  }
+
+  closeFromBackdrop(event: MouseEvent): void {
+    if (event.target === event.currentTarget) this.closeCommandPalette();
+  }
+
+  search(event: Event): void {
+    this.searchTerms.next((event.target as HTMLInputElement).value.trim());
+  }
+
+  async switchWorkspace(workspaceId: string): Promise<void> {
+    if (this.workspaceSwitching() || workspaceId === this.workspace.id()) return;
+    this.workspaceSwitching.set(true);
+    try {
+      // Destroy the current feature before changing tenant context so no old
+      // feature cache or SSE subscription can remain visible under the new label.
+      await this.router.navigateByUrl('/settings', { skipLocationChange: true });
+      await this.workspace.select(workspaceId);
+      this.searchQuery.set('');
+      this.searchResults.set([]);
+      await this.router.navigateByUrl('/dashboard');
+    } finally {
+      this.workspaceSwitching.set(false);
+    }
+  }
+
+  searchLink(result: SearchResult): string {
+    if (result.entityType === 'contact') return `/contacts/${result.entityId}`;
+    if (result.entityType === 'company') return `/companies/${result.entityId}`;
+    if (result.entityType === 'deal') return `/deals/${result.entityId}`;
+    if (result.entityType === 'lead') return '/leads';
+    return '/activities';
+  }
+
+  entityTypeKey(entityType: SearchResult['entityType']): AppMessageKey {
+    return `web.entity.${entityType}` as AppMessageKey;
+  }
+
+  async logout(): Promise<void> {
+    await this.auth.logout();
+    await this.router.navigateByUrl('/login');
+  }
+}

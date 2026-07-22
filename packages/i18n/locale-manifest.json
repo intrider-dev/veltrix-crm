@@ -1,0 +1,9 @@
+{
+  "sourceLocale": "en",
+  "fallbackLocale": "en",
+  "locales": [
+    { "tag": "en", "nativeName": "English", "direction": "ltr", "required": true },
+    { "tag": "ru", "nativeName": "Русский", "direction": "ltr", "required": true }
+  ]
+}
+
