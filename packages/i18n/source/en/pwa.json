@@ -3,5 +3,8 @@
   "draftSaved": "Draft saved on this device.",
   "draftTooLarge": "This draft is too large to store offline.",
   "offline": "Offline — saved drafts remain available.",
-  "storageFull": "Offline draft storage is full. Submit or clear an older draft."
+  "storageFull": "Offline draft storage is full. Submit or clear an older draft.",
+  "updateAvailable": "A new version is ready.",
+  "unrecoverable": "This app version can no longer load required files.",
+  "reload": "Reload"
 }

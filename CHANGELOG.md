@@ -21,6 +21,7 @@ All notable changes will be documented in this file. The format follows [Keep a 
 - Added deal list/Kanban/Gantt views, projects/tasks, resource and stage ACLs, departments, assignments/watchers, calendar audiences, chat, optional LiveKit calls, and personal corporate mail as complete database-backed vertical slices.
 - Unified Material controls, corrected chat/contact/company layout regressions, and made the scrollable Kanban keyboard-focusable.
 - Moved the password-recovery action below the password field, preserved logical keyboard order, and prevented the product name from breaking inside the word at compact desktop widths.
+- Added explicit PWA version handling: ready builds reload automatically on authentication routes and use a persistent localized reload toast inside the CRM shell, avoiding silent stale app-shell sessions after deployment.
 - Fixed the zoneless direct-chat member selector so the Create action reacts immediately, localized its placeholder, and expanded production-browser acceptance to calendar creation, all deal views, projects, and bidirectional owner/invited-user messaging.
 - Split stored dashboard summaries from stage-filtered fallback aggregation and bounded the authorized global-search plan after reproducible performance regressions.
 

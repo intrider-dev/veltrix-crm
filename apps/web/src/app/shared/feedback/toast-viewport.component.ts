@@ -20,6 +20,11 @@ import { ToastService, type AppToast } from './toast.service';
         <article class="toast" role="status">
           <p>{{ message(toast) }}</p>
           <div class="actions">
+            @if (toast.action && toast.actionLabelKey) {
+              <button mat-button type="button" (click)="toasts.invokeAction(toast)">
+                {{ label(toast.actionLabelKey) }}
+              </button>
+            }
             @if (toast.href) {
               <a mat-button [routerLink]="toast.href" (click)="toasts.dismiss(toast.id)">
                 {{ i18n.t('notifications.open') }}
@@ -105,5 +110,9 @@ export class ToastViewportComponent {
       }
     }
     return this.i18n.t(toast.messageKey as AppMessageKey, params);
+  }
+
+  label(key: AppMessageKey): string {
+    return this.i18n.t(key);
   }
 }

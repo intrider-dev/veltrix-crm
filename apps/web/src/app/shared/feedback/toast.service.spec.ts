@@ -25,4 +25,27 @@ describe('ToastService', () => {
     vi.advanceTimersByTime(1000);
     expect(service.items()).toEqual([]);
   });
+
+  it('keeps persistent actionable items until the action is invoked', () => {
+    vi.useFakeTimers();
+    const service = TestBed.inject(ToastService);
+    const action = vi.fn();
+    service.show(
+      {
+        messageKey: 'test.update',
+        messageParams: {},
+        actionLabelKey: 'pwa.reload',
+        action,
+      },
+      0,
+    );
+
+    vi.runAllTimers();
+    const toast = service.items()[0];
+    if (!toast) throw new Error('Expected the persistent toast to be queued');
+    service.invokeAction(toast);
+
+    expect(action).toHaveBeenCalledOnce();
+    expect(service.items()).toEqual([]);
+  });
 });

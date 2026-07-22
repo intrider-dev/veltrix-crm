@@ -14,6 +14,7 @@ import { routes } from './app.routes';
 import { I18nService } from './core/i18n/i18n.service';
 import { AppearanceStore } from './core/preferences/appearance.store';
 import { apiInterceptor } from './core/api/api.interceptor';
+import { AppUpdateService } from './core/pwa/app-update.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -26,6 +27,7 @@ export const appConfig: ApplicationConfig = {
       registrationStrategy: 'registerWhenStable:30000',
     }),
     provideAppInitializer(() => inject(I18nService).initialize()),
+    provideAppInitializer(() => inject(AppUpdateService).start()),
     provideAppInitializer(() => void inject(AppearanceStore)),
   ],
 };
