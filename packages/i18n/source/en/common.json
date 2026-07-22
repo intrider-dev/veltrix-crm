@@ -44,5 +44,6 @@
   "status.active": "Active",
   "status.completed": "Completed",
   "status.inactive": "Inactive",
-  "status.open": "Open"
+  "status.open": "Open",
+  "validation.name": "Enter a name between 1 and 200 characters."
 }

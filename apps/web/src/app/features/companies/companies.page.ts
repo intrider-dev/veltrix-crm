@@ -1,12 +1,13 @@
 import { A11yModule } from '@angular/cdk/a11y';
 import type { OnDestroy, OnInit } from '@angular/core';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { FormField, form, required } from '@angular/forms/signals';
+import { FormField, form, maxLength, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { Router, RouterLink } from '@angular/router';
 
+import { apiErrorMessage } from '../../core/api/api-error-message';
 import type { CreateCompany, SavedView } from '../../core/api/api.types';
 import { Permissions } from '../../core/auth/permissions';
 import type { AppMessageKey } from '../../core/i18n/app-message-key';
@@ -36,7 +37,7 @@ import { CompaniesStore } from './companies.store';
           <p>{{ i18n.plural('common.resultCount', visibleCount()) }}</p>
         </div>
         @if (permissions.allows('records.create')) {
-          <button mat-flat-button type="button" (click)="createOpen.set(true)">
+          <button mat-flat-button type="button" (click)="openCreate()">
             <app-icon name="add" />{{ i18n.t('common.action.add') }}
           </button>
         }
@@ -236,7 +237,7 @@ import { CompaniesStore } from './companies.store';
       <button
         class="drawer-scrim"
         type="button"
-        (click)="createOpen.set(false)"
+        (click)="closeCreate()"
         [attr.aria-label]="i18n.t('common.action.close')"
       ></button>
       <aside
@@ -252,30 +253,69 @@ import { CompaniesStore } from './companies.store';
           <button
             mat-icon-button
             type="button"
-            (click)="createOpen.set(false)"
+            (click)="closeCreate()"
             [attr.aria-label]="i18n.t('common.action.close')"
           >
             <app-icon name="close" />
           </button>
         </header>
-        <form (submit)="create($event)">
+        <form (submit)="create($event)" novalidate>
           <mat-form-field appearance="outline">
             <mat-label>{{ i18n.t('common.field.name') }}</mat-label>
-            <input matInput [formField]="companyForm.name" />
+            <input
+              matInput
+              [formField]="companyForm.name"
+              [attr.aria-invalid]="createAttempted() && companyForm.name().invalid()"
+              [attr.aria-describedby]="
+                createAttempted() && companyForm.name().invalid() ? 'company-name-error' : null
+              "
+            />
           </mat-form-field>
+          @if (createAttempted() && companyForm.name().invalid()) {
+            <p class="field-error" id="company-name-error" role="alert">
+              {{ i18n.t('common.validation.name') }}
+            </p>
+          }
           <mat-form-field appearance="outline">
             <mat-label>{{ i18n.t('web.company.domain') }}</mat-label>
-            <input matInput inputmode="url" [formField]="companyForm.domain" />
+            <input
+              matInput
+              inputmode="url"
+              [formField]="companyForm.domain"
+              [attr.aria-invalid]="createAttempted() && companyForm.domain().invalid()"
+              [attr.aria-describedby]="
+                createAttempted() && companyForm.domain().invalid() ? 'company-domain-error' : null
+              "
+            />
           </mat-form-field>
+          @if (createAttempted() && companyForm.domain().invalid()) {
+            <p class="field-error" id="company-domain-error" role="alert">
+              {{ i18n.t('companies.validation.domainLength') }}
+            </p>
+          }
           <mat-form-field appearance="outline">
             <mat-label>{{ i18n.t('web.company.industry') }}</mat-label>
-            <input matInput [formField]="companyForm.industry" />
+            <input
+              matInput
+              [formField]="companyForm.industry"
+              [attr.aria-invalid]="createAttempted() && companyForm.industry().invalid()"
+              [attr.aria-describedby]="
+                createAttempted() && companyForm.industry().invalid()
+                  ? 'company-industry-error'
+                  : null
+              "
+            />
           </mat-form-field>
+          @if (createAttempted() && companyForm.industry().invalid()) {
+            <p class="field-error" id="company-industry-error" role="alert">
+              {{ i18n.t('companies.validation.industryLength') }}
+            </p>
+          }
           @if (createError()) {
             <div class="form-error" role="alert">{{ createError() }}</div>
           }
           <div class="drawer-actions">
-            <button mat-button type="button" (click)="createOpen.set(false)">
+            <button mat-button type="button" (click)="closeCreate()">
               {{ i18n.t('common.action.cancel') }}
             </button>
             <button mat-flat-button type="submit" [disabled]="store.creating()">
@@ -295,10 +335,16 @@ export class CompaniesPage implements OnInit, OnDestroy {
   readonly permissions = inject(Permissions);
   readonly createOpen = signal(false);
   readonly createError = signal<string | null>(null);
+  readonly createAttempted = signal(false);
   readonly saveViewOpen = signal(false);
   readonly selectedViewId = signal('');
   readonly model = signal({ name: '', domain: '', industry: '' });
-  readonly companyForm = form(this.model, (schema) => required(schema.name));
+  readonly companyForm = form(this.model, (schema) => {
+    required(schema.name);
+    maxLength(schema.name, 200);
+    maxLength(schema.domain, 253);
+    maxLength(schema.industry, 120);
+  });
   readonly viewModel = signal({ name: '' });
   readonly viewForm = form(this.viewModel, (schema) => required(schema.name));
   private readonly router = inject(Router);
@@ -376,11 +422,31 @@ export class CompaniesPage implements OnInit, OnDestroy {
     this.viewModel.set({ name: '' });
   }
 
+  openCreate(): void {
+    this.createError.set(null);
+    this.createAttempted.set(false);
+    this.createOpen.set(true);
+  }
+
+  closeCreate(): void {
+    this.createOpen.set(false);
+    this.createError.set(null);
+    this.createAttempted.set(false);
+  }
+
   async create(event: SubmitEvent): Promise<void> {
     event.preventDefault();
     this.createError.set(null);
+    this.createAttempted.set(true);
+    this.model.update((value) => ({
+      name: value.name.trim(),
+      domain: value.domain.trim(),
+      industry: value.industry.trim(),
+    }));
     if (this.companyForm().invalid()) {
-      this.companyForm().markAsTouched();
+      this.companyForm.name().markAsTouched();
+      this.companyForm.domain().markAsTouched();
+      this.companyForm.industry().markAsTouched();
       return;
     }
     const value = this.model();
@@ -391,12 +457,10 @@ export class CompaniesPage implements OnInit, OnDestroy {
     };
     try {
       const company = await this.store.create(body);
-      this.createOpen.set(false);
+      this.closeCreate();
       await this.router.navigate(['/companies', company.id]);
     } catch (error) {
-      this.createError.set(
-        this.i18n.problem(error instanceof Error ? error.message : 'validation'),
-      );
+      this.createError.set(apiErrorMessage(this.i18n, error, 'validation'));
     }
   }
 

@@ -57,6 +57,7 @@
   "sessions.subtitle": "Revoke every session token if a device was lost or account access may be at risk.",
   "sessions.title": "Active sessions",
   "validation.currency": "Enter a three-letter ISO currency code, such as USD.",
+  "validation.emailAlreadyUsed": "An account with this email already exists.",
   "validation.passwordLength": "Use at least 8 characters.",
   "validation.passwordMismatch": "Passwords do not match.",
   "validation.slug": "Use 2–63 lowercase letters, numbers, and single hyphens.",

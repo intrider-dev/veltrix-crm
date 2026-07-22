@@ -57,6 +57,7 @@
   "sessions.subtitle": "Отзовите все токены сеансов, если устройство потеряно или доступ к аккаунту мог быть скомпрометирован.",
   "sessions.title": "Активные сеансы",
   "validation.currency": "Введите трёхбуквенный код валюты ISO, например USD.",
+  "validation.emailAlreadyUsed": "Аккаунт с таким email уже существует.",
   "validation.passwordLength": "Используйте не менее 8 символов.",
   "validation.passwordMismatch": "Пароли не совпадают.",
   "validation.slug": "Используйте 2–63 строчных латинских символа, цифры и одиночные дефисы.",

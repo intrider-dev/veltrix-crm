@@ -19,6 +19,20 @@ describe('I18nService', () => {
         'resultCount.many': '{count} результатов',
         'resultCount.other': '{count} результата',
       },
+      '/i18n/en/auth.json': {
+        'problem.auth.invalidCredentials': 'Email or password is incorrect.',
+      },
+      '/i18n/ru/auth.json': {
+        'problem.auth.invalidCredentials': 'Неверный email или пароль.',
+      },
+      '/i18n/en/problems.json': {
+        'problem.generic': 'Something went wrong. Request ID: {requestId}',
+        'problem.validation': 'Check the highlighted fields.',
+      },
+      '/i18n/ru/problems.json': {
+        'problem.generic': 'Произошла ошибка. ID запроса: {requestId}',
+        'problem.validation': 'Проверьте выделенные поля.',
+      },
     };
     vi.stubGlobal(
       'fetch',
@@ -96,6 +110,21 @@ describe('I18nService', () => {
       hourCycle: 'h23',
     });
     expect(utc).not.toBe(pacific);
+  });
+
+  it('maps stable API problem codes to localized messages', async () => {
+    const service = TestBed.inject(I18nService);
+    await service.initialize();
+
+    expect(service.problem('auth.invalid_credentials', 'request-1')).toBe(
+      'Email or password is incorrect.',
+    );
+    expect(service.problem('validation.failed', 'request-2')).toBe('Check the highlighted fields.');
+
+    await service.setLocale('ru');
+    expect(service.problem('auth.invalid_credentials', 'request-3')).toBe(
+      'Неверный email или пароль.',
+    );
   });
 
   it('retries a catalog after a transient fetch failure', async () => {

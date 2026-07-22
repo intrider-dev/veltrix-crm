@@ -34,17 +34,14 @@ export class ProjectsStore {
     }
   }
 
-  async create(input: ProjectInput): Promise<void> {
+  async create(input: ProjectInput): Promise<boolean> {
     const workspaceId = this.workspace.id();
-    if (!workspaceId) return;
+    if (!workspaceId) return false;
     this.saving.set(true);
-    this.error.set(null);
     try {
       const project = await this.api.createProject(workspaceId, input);
       this.items.update((items) => [project, ...items]);
-    } catch (error) {
-      this.error.set(error);
-      throw error;
+      return true;
     } finally {
       this.saving.set(false);
     }

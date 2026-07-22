@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormField, email, form, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -279,7 +279,13 @@ export class LoginPage {
   readonly i18n = inject(I18nService);
   readonly product = productConfig;
   readonly passwordVisible = signal(false);
-  readonly error = signal<string | null>(null);
+  private readonly problem = signal<{ readonly code: string; readonly requestId: string } | null>(
+    null,
+  );
+  readonly error = computed(() => {
+    const problem = this.problem();
+    return problem ? this.i18n.problem(problem.code, problem.requestId) : null;
+  });
   readonly mfaChallenge = signal<string | null>(null);
   readonly model = signal({ email: '', password: '' });
   readonly mfaModel = signal({ code: '' });
@@ -301,9 +307,10 @@ export class LoginPage {
 
   async submit(event: SubmitEvent): Promise<void> {
     event.preventDefault();
-    this.error.set(null);
+    this.problem.set(null);
     if (this.loginForm().invalid()) {
-      this.loginForm().markAsTouched();
+      this.loginForm.email().markAsTouched();
+      this.loginForm.password().markAsTouched();
       return;
     }
     try {
@@ -316,18 +323,19 @@ export class LoginPage {
       await this.router.navigateByUrl(this.returnUrl);
     } catch (error) {
       const apiError = error instanceof ApiError ? error : null;
-      this.error.set(
-        this.i18n.problem(apiError?.problem?.code ?? 'network', apiError?.problem?.requestId),
-      );
+      this.problem.set({
+        code: apiError?.problem?.code ?? 'network',
+        requestId: apiError?.problem?.requestId ?? '',
+      });
     }
   }
 
   async verifyMFA(event: SubmitEvent): Promise<void> {
     event.preventDefault();
-    this.error.set(null);
+    this.problem.set(null);
     const challengeToken = this.mfaChallenge();
     if (!challengeToken || this.mfaForm().invalid()) {
-      this.mfaForm().markAsTouched();
+      this.mfaForm.code().markAsTouched();
       return;
     }
     try {
@@ -335,15 +343,16 @@ export class LoginPage {
       await this.router.navigateByUrl(this.returnUrl);
     } catch (error) {
       const apiError = error instanceof ApiError ? error : null;
-      this.error.set(
-        this.i18n.problem(apiError?.problem?.code ?? 'network', apiError?.problem?.requestId),
-      );
+      this.problem.set({
+        code: apiError?.problem?.code ?? 'network',
+        requestId: apiError?.problem?.requestId ?? '',
+      });
     }
   }
 
   backToPassword(): void {
     this.mfaChallenge.set(null);
     this.mfaModel.set({ code: '' });
-    this.error.set(null);
+    this.problem.set(null);
   }
 }

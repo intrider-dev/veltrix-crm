@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 
 import { ApiClient } from '../../core/api/api-client.service';
+import { ApiError } from '../../core/api/api-error';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { PasswordResetPage } from './password-reset.page';
 import { RegistrationPage } from './registration.page';
@@ -50,6 +51,42 @@ describe('RegistrationPage', () => {
       locale: 'en',
     });
     expect(page.registered()).toEqual(registered);
+  });
+
+  it('shows an existing-email API validation error next to the email field', async () => {
+    const api = {
+      registerDevelopmentUser: vi.fn().mockRejectedValue(
+        new ApiError(400, {
+          type: '/api/v1/problems/validation',
+          title: 'Check the highlighted fields.',
+          status: 400,
+          code: 'validation.failed',
+          requestId: 'request-1',
+          fieldErrors: [{ pointer: '/email', code: 'validation.email.alreadyUsed' }],
+        }),
+      ),
+    };
+    await TestBed.configureTestingModule({
+      imports: [RegistrationPage],
+      providers: [
+        provideRouter([]),
+        { provide: ApiClient, useValue: api },
+        { provide: I18nService, useValue: i18nStub },
+      ],
+    }).compileComponents();
+    const page = TestBed.createComponent(RegistrationPage).componentInstance;
+    page.model.set({
+      email: 'admin@demo.local',
+      displayName: 'Existing user',
+      password: 'correct-horse',
+      confirmPassword: 'correct-horse',
+      locale: 'en',
+    });
+
+    await page.submit(new SubmitEvent('submit'));
+
+    expect(page.emailServerError()).toBe('identity.validation.emailAlreadyUsed');
+    expect(page.error()).toBeNull();
   });
 });
 

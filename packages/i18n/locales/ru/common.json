@@ -44,5 +44,6 @@
   "status.active": "Активен",
   "status.completed": "Выполнено",
   "status.inactive": "Неактивен",
-  "status.open": "Открыто"
+  "status.open": "Открыто",
+  "validation.name": "Введите название длиной от 1 до 200 символов."
 }

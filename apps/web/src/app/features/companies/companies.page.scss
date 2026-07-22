@@ -118,6 +118,12 @@
   color: var(--danger);
   background: var(--danger-surface);
 }
+.field-error {
+  margin: -0.5rem 0 0.85rem 1rem;
+  color: var(--danger);
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
 .small-dialog {
   position: fixed;
   z-index: 90;

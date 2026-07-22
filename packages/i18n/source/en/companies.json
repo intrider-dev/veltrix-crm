@@ -35,5 +35,7 @@
   "savedViews.title": "Saved view",
   "trash.deletedAt": "Deleted",
   "trash.loadMore": "Load more deleted companies",
-  "trash.restore": "Restore company"
+  "trash.restore": "Restore company",
+  "validation.domainLength": "Use no more than 253 characters for the domain.",
+  "validation.industryLength": "Use no more than 120 characters for the industry."
 }

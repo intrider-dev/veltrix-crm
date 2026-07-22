@@ -10,6 +10,25 @@ type LocaleCatalogs = Readonly<Record<string, Catalog>>;
 
 const eagerNamespaces = ['common', 'auth', 'problems', 'pwa', 'settings', 'web'] as const;
 
+const stableProblemMessages: Readonly<Record<string, AppMessageKey>> = {
+  'internal.error': 'problems.problem.generic',
+  'auth.invalid_credentials': 'auth.problem.auth.invalidCredentials',
+  'auth.required': 'problems.problem.auth.required',
+  'auth.permission_denied': 'problems.problem.auth.permissionDenied',
+  'resource.not_found': 'problems.problem.notFound',
+  'record.version_conflict': 'problems.problem.versionConflict',
+  'request.idempotency_conflict': 'problems.problem.idempotencyConflict',
+  'request.rate_limited': 'problems.problem.rateLimited',
+  'request.security_rejected': 'problems.problem.securityRejected',
+  'resource.conflict': 'problems.problem.conflict',
+  'service.unavailable': 'problems.problem.unavailable',
+  'validation.failed': 'problems.problem.validation',
+  generic: 'problems.problem.generic',
+  network: 'problems.problem.network',
+  validation: 'problems.problem.validation',
+  versionConflict: 'problems.problem.versionConflict',
+};
+
 @Injectable({ providedIn: 'root' })
 export class I18nService {
   private readonly document = inject(DOCUMENT);
@@ -133,6 +152,8 @@ export class I18nService {
   }
 
   problem(code: string, requestId = ''): string {
+    const stableMessage = stableProblemMessages[code];
+    if (stableMessage) return this.t(stableMessage, { requestId });
     const candidates: AppMessageKey[] = [
       `auth.problem.${code}` as AppMessageKey,
       `contacts.problem.${code}` as AppMessageKey,

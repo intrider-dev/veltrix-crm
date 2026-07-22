@@ -91,6 +91,13 @@ mat-form-field,
   background: var(--danger-surface);
 }
 
+.field-error {
+  margin: -0.35rem 0 0.75rem 1rem;
+  color: var(--danger);
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+
 .success-panel {
   color: var(--brand);
   background: var(--brand-soft);

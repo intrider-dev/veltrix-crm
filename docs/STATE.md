@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-07-22
+Last updated: 2026-07-23
 
 ## Completed
 
@@ -39,6 +39,7 @@ Last updated: 2026-07-22
 - Separated finite database bootstrap configuration from serving configuration: the PostgreSQL container never receives the application encryption key, scrubs bootstrap variables before its final `postgres` PID 1, uses clean fast shutdown for the pre-readiness transition, and keeps manual migrations in a fresh one-shot image without recreating the live database container.
 - Moved the password-recovery action below the password field with logical keyboard order and protected the `VeltrixCRM` wordmark from mid-word wrapping on compact desktop widths.
 - Added explicit Angular Service Worker update handling: authentication routes activate a ready build and reload automatically, while authenticated routes show a persistent localized reload toast so in-progress work is not discarded without consent.
+- Fixed the company/project create dead-end caused by native form validation intercepting submit before Angular: create forms now use explicit Signal Forms validation, trim whitespace, expose localized inline/ARIA-linked errors, retain project API failures inside the drawer, validate project date order before the request, and keep forms open when no workspace is active. Stable RFC Problem codes now map centrally to EN/RU messages; invalid login and duplicate-registration email errors retranslate immediately when the language changes.
 
 ## Current phase
 
@@ -109,6 +110,8 @@ Phase 5 - verified pre-release handoff with explicit roadmap gaps.
 | 2026-07-22 | independent security and maintainability re-review | No remaining Critical/High security or maintainability blockers after bootstrap/migration hardening; product-scope roadmap gaps remain explicit |
 | 2026-07-22 | login-page frontend checks and production layout regression | Web lint, 31 files/84 unit tests, production build, and 13 Playwright setup/desktop/tablet/mobile layout tests passed; real screenshot inspected |
 | 2026-07-22 | PWA stale-build correction on rebuilt production image at `:18081` | Web lint, 32 files/87 unit tests, production bundle report, and 14 Playwright layout/PWA tests passed; the persistent-browser reproduction advanced from stale hashed chunks to the current login shell |
+| 2026-07-23 | final `pnpm check` after create-flow and error-localization fixes | Passed: formatter, lint, vet, 977 complete EN/RU keys, strict typecheck, all Go tests, 32 frontend files/89 tests, production bundle report, precompression, and embedded Go binary build |
+| 2026-07-23 | production image rebuild plus real Playwright CLI checks at `http://127.0.0.1:18081` | Invalid login and duplicate-email registration rendered the correct EN/RU alerts and retranslated in place; empty company/project names exposed ARIA-linked inline errors; reversed project dates stayed in the drawer; valid company/project records persisted after reload and were then cleaned up |
 
 ## Known limitations
 
@@ -124,15 +127,16 @@ Phase 5 - verified pre-release handoff with explicit roadmap gaps.
 - Simulated mobile LCP (2.76 s) misses the 2.0 s target; 50-VU median read p95 (189.09 ms) and write p95 (283.19 ms) miss the 150/250 ms targets after two additional documented SQL optimization iterations.
 - The 100-VU stretch scenario and two-browser LiveKit media E2E are not measured.
 - Hosted GitHub Actions have not run because no push is authorized.
+- Registration maps the known duplicate-email field error inline. Unrecognized backend field-error codes on company/project creation fall back to the localized form-level validation message rather than guessing a field-specific translation.
 
 ## Actual measured metrics
 
 | Metric | Value | Evidence/status |
 | --- | --- | --- |
 | Deterministic small seed | 1,000 contacts; 250 companies; 500 deals; 5,000 activities; 2.684 s including `go run` startup | Local PostgreSQL 18.4 run on 2026-07-21; setup evidence, not a serving-performance claim |
-| Frontend initial JS + CSS | 92,243 B Brotli (90.1 KiB) | Current production build; target met |
-| Lazy AG Grid / optional LiveKit chunks | 170,601 B / 116,990 B Brotli | Both lazy; AG Grid Community only |
-| Largest ordinary lazy app feature | 21,044 B Brotli (20.6 KiB) | Target met |
+| Frontend initial JS + CSS | 92,374 B Brotli (90.2 KiB) | Current production build; target met |
+| Lazy AG Grid / optional LiveKit chunks | 170,654 B / 116,990 B Brotli | Both lazy; AG Grid Community only |
+| Largest ordinary lazy app feature | 21,047 B Brotli (20.6 KiB) | Target met |
 | External font requests | 0 | Current bundle scan |
 | Lighthouse desktop/mobile performance | 100 / 94 | Both performance-score targets met |
 | Lighthouse accessibility | 100 / 100 | Target met |

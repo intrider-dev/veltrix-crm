@@ -35,5 +35,7 @@
   "savedViews.title": "Сохранённое представление",
   "trash.deletedAt": "Удалена",
   "trash.loadMore": "Загрузить ещё удалённые компании",
-  "trash.restore": "Восстановить компанию"
+  "trash.restore": "Восстановить компанию",
+  "validation.domainLength": "Домен должен быть не длиннее 253 символов.",
+  "validation.industryLength": "Отрасль должна быть не длиннее 120 символов."
 }

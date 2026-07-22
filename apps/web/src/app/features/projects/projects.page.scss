@@ -93,6 +93,20 @@
 .drawer-actions {
   justify-content: flex-end;
 }
+.form-error {
+  margin-bottom: 1rem;
+  padding: 0.75rem 0.85rem;
+  border-left: 3px solid var(--danger);
+  border-radius: 0.5rem;
+  color: var(--danger);
+  background: var(--danger-surface);
+}
+.field-error {
+  margin: -0.5rem 0 0.85rem 1rem;
+  color: var(--danger);
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
 @media (max-width: 560px) {
   .date-grid {
     align-items: stretch;
