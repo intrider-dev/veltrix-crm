@@ -1,6 +1,6 @@
 # Architecture
 
-Status: implementation architecture, 2026-07-21. Verification status and measured evidence are maintained in [`STATE.md`](STATE.md) and [`PERFORMANCE.md`](PERFORMANCE.md).
+Status: implementation architecture, 2026-07-22. Verification status and measured evidence are maintained in [`STATE.md`](STATE.md) and [`PERFORMANCE.md`](PERFORMANCE.md).
 
 ## Architectural drivers
 
@@ -21,7 +21,9 @@ flowchart TB
   C[Chromium-class browser]
   A[Go application]
   D[(PostgreSQL 18)]
-  M[SMTP / Mailpit\noptional]
+  M[System SMTP / Mailpit\noptional]
+  CM[Corporate IMAP + SMTP\nconfigured per user]
+  LK[LiveKit\noptional, disabled]
   S[S3-compatible storage / MinIO\noptional]
   AI[Ollama- or OpenAI-compatible API\noptional, disabled]
   W[Webhook consumers\nexplicit subscriptions]
@@ -30,6 +32,8 @@ flowchart TB
   C -->|same-origin HTTPS, cookie session| A
   A -->|pgx transactions| D
   A -. configured adapter .-> M
+  A -. bounded TLS adapters .-> CM
+  A -. room-scoped token .-> LK
   A -. configured adapter .-> S
   A -. explicit provider + consent .-> AI
   A -->|HMAC-signed delivery| W
@@ -39,11 +43,14 @@ The base runtime contains only `app` and `postgres`. Dotted integrations are opt
 
 ## Production runtime
 
-One statically compiled Go binary supports three commands:
+One statically compiled Go binary supports four command families:
 
 - `serve`: REST, SSE, embedded SPA, and bounded background work in the default single-node profile;
 - `worker`: the same job/outbox machinery as a separately scalable process;
-- operational commands such as migration and deterministic seeding.
+- `bootstrap`: a finite deployment step that uses migration credentials, validates migration checksums, applies migrations, and optionally creates the local development seed;
+- other operator commands such as deterministic bulk seeding.
+
+The custom PostgreSQL image is still based on the pinned `postgres:18.4-bookworm` image. Its startup wrapper waits for the official image to finish database initialization, runs the finite `bootstrap` command as the local `postgres` user, and exposes database health only after bootstrap succeeds. The migration binary exits before `app` starts. Therefore the base profile creates exactly `app` and `postgres`, while the request-serving process receives no database administrator URL, role password, automatic-migration flag, or demo password.
 
 The production image uses `scratch`, runs as UID/GID 65532, drops capabilities, and is read-only except for explicit upload and temporary mounts. The Angular build is copied into the Go embed tree after gzip/Brotli precompression. Fingerprinted assets can be cached immutably; SPA routes fall back to `index.html`; `/api` paths never use that fallback.
 
@@ -51,7 +58,7 @@ The production image uses `scratch`, runs as UID/GID 65532, drops capabilities, 
 flowchart LR
   subgraph Required[Required production profile]
     APP[app\n0.5 CPU / 128 MB configured]
-    PG[(postgres\n0.5 CPU / 384 MB configured)]
+    PG[(postgres 18.4\nbootstrap before healthy\n0.5 CPU / 384 MB configured)]
     APP <--> PG
   end
   subgraph Build[Build only]
@@ -60,6 +67,7 @@ flowchart LR
     NODE --> GO
   end
   GO --> APP
+  GO -. finite migration binary .-> PG
 ```
 
 Configured limits are not the same as measured resource use. See [`PERFORMANCE.md`](PERFORMANCE.md).
@@ -80,6 +88,7 @@ The source is organized by business capability under `apps/api/internal`. A modu
 | `reporting`     | Dashboard/read models and bounded period aggregations                 |
 | `search`        | Tenant-scoped search documents, FTS and trigram queries               |
 | `files`         | Attachment policy and local/S3-compatible storage ports               |
+| `mailbox`       | Personal encrypted mail accounts, bounded IMAP cache and SMTP send    |
 | `integrations`  | API keys, webhooks, signing, replay and delivery lifecycle            |
 | `audit`         | Append-oriented security and business audit events                    |
 | `localization`  | Workspace content resources/translations and email rendering          |
@@ -120,7 +129,7 @@ Every tenant-owned row includes `workspace_id`; high-volume compound indexes sta
 1. Route, service, permission, and object guards bind the authenticated actor to the workspace.
 2. PostgreSQL enables and forces RLS. `veltrix_app` is non-superuser and `NOBYPASSRLS`; policies compare `workspace_id` to `security.current_workspace_id()`.
 
-The application sets actor and workspace variables with `SET LOCAL` after beginning a transaction. This prevents tenant state from surviving a commit/rollback or leaking through a pooled connection. A separate `veltrix_dispatcher` role can claim global outbox/jobs but has deliberately narrow grants. Schema objects are owned by a `NOLOGIN` migration role.
+The application sets actor and workspace variables with `SET LOCAL` after beginning a transaction. This prevents tenant state from surviving a commit/rollback or leaking through a pooled connection. A separate `veltrix_dispatcher` role can claim global outbox/jobs but has deliberately narrow grants. Schema objects are owned by a `NOLOGIN` migration role. Indexed global search uses another narrow `NOLOGIN` owner that must independently prove active membership and entity/stage/audience visibility before returning a document; it is not a general privileged request path.
 
 Negative integration tests are expected to cover read, search, insert, update, delete, and pooled-connection context leakage with real PostgreSQL. See [ADR 0003](adr/0003-tenant-isolation-and-database-roles.md) and current test evidence in [`STATE.md`](STATE.md).
 

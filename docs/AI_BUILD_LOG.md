@@ -29,16 +29,20 @@ Installed project skill paths:
 | Deployment/quality    | Multi-stage scratch image, Compose profiles, health checks, CI workflows, unit/integration/browser/load scenarios                                                  |
 | Portfolio             | Bilingual README/architecture/case study, performance/methodology, threat model, demo/release guidance                                                             |
 
+Subsequent verified slices added projects/tasks and assignment visibility, direct/group chat with optional LiveKit calls, list/Kanban/Gantt deal views, configurable localized lead/deal stages, per-stage role overlays, calendar audiences, and a personal IMAP/SMTP mailbox. Runtime/browser evidence remains governed by `STATE.md` rather than inferred from source presence.
+
 ## Independent analysis and review
 
 Parallel agents were assigned bounded architecture, performance, security, UX/accessibility, QA, and later implementation/review tasks. The primary agent retained integration responsibility. Parallel agents shared the working tree, so generated/query/router changes required final formatting and combined verification after handoff.
 
 ## Checks and artifacts observed during the build session
 
-- The bundle reporter successfully produced `benchmarks/results/bundle-report.json` on 2026-07-21. It recorded 86,727 initial Brotli bytes and no external font reference in emitted HTML/CSS/JS. Later frontend edits make a release rerun mandatory.
+- The current bundle reporter produced `benchmarks/results/bundle-report.json` on 2026-07-22. It recorded 91,782 initial Brotli bytes, a 170,685-byte lazy AG Grid Community chunk, a 116,990-byte optional lazy LiveKit chunk, and no external font reference.
 - PostgreSQL 18 integration work was run against a local PostgreSQL 18.4 test instance when Docker Desktop was unavailable. A focused RLS isolation suite passed after migration fixes; a workspace-creation test then exposed a separate RLS/context-order issue and triggered a hardening migration/rerun cycle.
-- Go and frontend format/lint/typecheck/unit/build commands were run repeatedly during implementation. Authoritative final command lines and outcomes must be copied to [`STATE.md`](STATE.md) only after the combined tree is stable.
-- Playwright, Lighthouse, k6, production-image resource measurement, and final screenshots are not claimed by this entry without final artifacts.
+- The combined `pnpm check` passed format/lint/vet, complete 966-key EN/RU catalogs, strict TypeScript, Go and Angular tests, the production frontend, precompression, and the embedded Go binary. The serial real-PostgreSQL integration suite also passed through migration `000035`.
+- The final running production-like image passed 102/102 Playwright tests across desktop/tablet/mobile and produced the retained portfolio screenshots under `docs/screenshots/`.
+- Lighthouse, three browser-performance runs, and two generations of three-clean-run 50-VU k6 evidence were executed. The final post-optimization result, including the mobile-LCP and read/write-p95 misses, is in [`PERFORMANCE.md`](PERFORMANCE.md).
+- The scratch runtime export contained no Node.js artifact and used UID/GID `65532:65532`. Production dependency audit reported zero advisories; `govulncheck` found no reachable symbol/package vulnerability.
 
 ## Problems found and corrections made
 
@@ -48,6 +52,12 @@ Parallel agents were assigned bounded architecture, performance, security, UX/ac
 - Docker Desktop's WSL engine returned HTTP 500 and an RCU stall. The build did not fabricate Docker metrics; a local pinned PostgreSQL server was used only for database tests until Docker recovered.
 - Parallel Go edits temporarily caused formatting/type mismatches. The final combined formatter/tests are an explicit delivery gate.
 - A dated bundle result was not labeled release-final after later source changes.
+- Internal mailbox persistence states initially differed from the public OpenAPI vocabulary; explicit mapping tests now keep database workflow states out of the client contract.
+- The chat composer, company/contact toolbars, select chevrons, button icon alignment, field spacing, and segmented controls were inconsistent. A shared Material component layer was applied and the updated layouts were exercised in the final browser matrix.
+- RLS caused a broad global-search query to avoid the FTS index and scan roughly 300,000 documents. A membership-checked tenant-bound function restored the indexed plan. A later dashboard statement planned/JIT-compiled an unused stage-authorized fallback and caused a measurable full-suite regression; the stored-summary and fallback paths were split, then migration `000035` precomputed search authorization facts and bounded candidates. Two diagnostic reruns and a final three-run baseline retained both improvements and remaining misses without weakening thresholds.
+- The seed runner initially rejected a valid restart after E2E-created rows changed live table counts. The immutable seed ledger contract was separated from mutable live CRM data; unit tests, rebuilt-container restart, and the full browser matrix then passed.
+- Browser heap measurements were initially distorted by lazy/JIT warm-up. The scenario added ten unmeasured warm-up cycles and lifecycle counters; the final three 20-cycle runs measured 8.15%, 5.76%, and 8.16% retained-heap growth.
+- The penultimate browser suite found that the horizontally scrollable Kanban region was not keyboard-focusable in Safari. The production component received a localized accessible name and focus target; the rebuilt final image then passed all 102 browser tests.
 
 ## AI-assisted file inventory
 

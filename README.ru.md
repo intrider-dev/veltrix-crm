@@ -16,8 +16,10 @@ Sales-командам нужны контакты, компании, ворон
 
 - Несколько workspaces, безопасные cookie-сессии, RBAC, приглашения, команды, восстановление пароля и TOTP MFA.
 - Контакты и компании: cursor pagination, теги, custom fields, saved views, bulk operations, поиск дублей, merge, корзина/restore и CSV-процессы.
-- Лиды, настраиваемые pipelines/stages, сделки, история стадий, line items и ограниченная загрузка Kanban.
+- Лиды, настраиваемые воронки и стадии, ролевые правила стадий, сделки, история, позиции и ограниченные режимы список/Kanban/Gantt.
 - Задачи, звонки, встречи, заметки, комментарии, упоминания, напоминания, timeline, календарь/ICS и уведомления.
+- Проекты с группами задач и назначениями; чаты участников с файлами, реакциями, закреплением и опциональными аудио/видеозвонками LiveKit.
+- Ленивый почтовый раздел с зашифрованными персональными учётными данными, ограниченной IMAP-синхронизацией, безопасным текстовым просмотром и SMTP-отправкой.
 - Full-text/trigram-поиск PostgreSQL, аудит, dashboard и отчёты по периоду.
 - Transactional outbox, PostgreSQL job queue с lease/retry/dead-letter, automation, scoped API keys и подписанные webhooks.
 - Потоковые вложения: local storage по умолчанию и optional S3-compatible adapter.
@@ -33,7 +35,7 @@ flowchart LR
   B[Angular 22 SPA\nzoneless, signals, lazy routes]
   A[Один Go binary\nREST + SSE + workers + assets]
   P[(PostgreSQL 18\nRLS + search + jobs + outbox)]
-  O[Опциональные профили\nMailpit / MinIO / Ollama]
+  O[Опциональные профили\nMailpit / MinIO / Ollama / LiveKit]
 
   B -->|same-origin /api/v1| A
   A -->|pgx, bounded pools| P
@@ -44,17 +46,20 @@ Modular monolith выбран потому, что CRM-сценариям пол
 
 ## Фактические измерения
 
-Bundle-отчёт был сформирован 21 июля 2026 года. После него рабочее дерево изменялось, поэтому перед релизом нужна новая сборка; таблица не выдаёт исторический артефакт за release-final результат.
+Результаты получены 22 июля 2026 года на документированном dirty working tree; это не tagged-release и не сравнение с конкурентами. Среда, методика, отдельные прогоны, отклонения и оговорки приведены в [performance report](docs/PERFORMANCE.md).
 
-| Метрика                                 |         Зафиксированное значение |                                                              Budget | Evidence / статус                                                                                                     |
-| --------------------------------------- | -------------------------------: | ------------------------------------------------------------------: | --------------------------------------------------------------------------------------------------------------------- |
-| Initial JS + CSS                        |   86 727 bytes (84,7 KiB) Brotli |                                                    target ≤ 350 KiB | [`benchmarks/results/bundle-report.json`](benchmarks/results/bundle-report.json), историческая сборка рабочего дерева |
-| Lazy AG Grid chunk                      | 158 063 bytes (154,4 KiB) Brotli | документированное lazy-исключение; обычный feature target ≤ 200 KiB | Тот же bundle artifact; route-lazy                                                                                    |
-| Крупнейший обычный lazy feature chunk   |   26 466 bytes (25,8 KiB) Brotli |                                                    target ≤ 200 KiB | Тот же bundle artifact                                                                                                |
-| Ссылки на внешние шрифты                |        scanner не нашёл ни одной |                                                                   0 | Тот же bundle artifact                                                                                                |
-| Lighthouse desktop/mobile/accessibility |                     Not measured |                                                     ≥95 / ≥90 / ≥95 | Нужен запущенный production build                                                                                     |
-| API latency/throughput/error rate       |                     Not measured |                                                        См. методику | Завершённых k6 summary нет                                                                                            |
-| RSS/CPU приложения и PostgreSQL         |                     Not measured |                            idle app RSS ≤96 MB; общий target 512 MB | Docker metrics artifact отсутствует                                                                                   |
+| Метрика | Измеренный результат | Budget / статус |
+| --- | ---: | --- |
+| Initial JS + CSS | 91 782 bytes (89,6 KiB) Brotli | ≤350 KiB — пройден |
+| Lazy AG Grid Community / optional LiveKit | 166,7 / 114,2 KiB Brotli | оба lazy — пройдено |
+| Lighthouse desktop / mobile / accessibility | 100 / 94 / 100 | ≥95 / ≥90 / ≥95 — пройдено |
+| Simulated mobile LCP / CLS | 2,77 s / 0 | ≤2,0 s / ≤0,05 — **LCP не пройден** |
+| Browser interaction / DOM / grid scrolling | 46,5 ms / 710 / 60 FPS | все цели пройдены |
+| Forced-GC heap / retained growth за 20 циклов | 13,26 MiB / 8,15% | обе цели пройдены |
+| 50-VU throughput / error rate | 223,35 operations/s / 0% | median трёх чистых прогонов |
+| Read / write / search p95 | 189,94 / 290,14 / 159,95 ms | read/write **не пройдены**; search пройден |
+| Median peak app / PostgreSQL memory | 73,65 / 305,20 MiB | вместе 378,85 MiB — цель пройдена |
+| Post-E2E idle app memory | 72,65 MiB | ≤96 MiB — пройдено, один snapshot |
 
 Сравнение с коммерческими или open-source CRM не проводилось. [Протокол сравнения](docs/COMPETITOR_BENCHMARK_PROTOCOL.md) намеренно содержит `Not measured`, пока нет воспроизводимых данных.
 
@@ -74,7 +79,7 @@ Copy-Item .env.example .env
 docker compose up --build
 ```
 
-Откройте <http://localhost:8080>. Development-only аккаунт:
+Откройте <http://127.0.0.1:8080>. Development-only аккаунт:
 
 - Email: `admin@demo.local`
 - Password: `Demo123!`

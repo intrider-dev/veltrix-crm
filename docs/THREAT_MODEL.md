@@ -72,7 +72,7 @@ The dispatcher role is a critical boundary: it needs enough global visibility to
 | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | Cross-tenant object access / IDOR                    | Membership and permission guards; object authorization; tenant IDs; forced RLS; non-bypass runtime role; negative integration tests | New tables/routes can omit guards or policy; schema invariant and read/update/delete/search/export tests must remain release gates |
 | Pooled connection leaks tenant context               | `SET LOCAL` only inside transaction; commit/rollback clears settings; pool-leak negative test                                       | A query outside the wrapper or privileged role use can bypass the invariant                                                        |
-| RLS policy/role misconfiguration                     | NOLOGIN owner, `veltrix_app` NOBYPASSRLS, narrow dispatcher grants, migration review                                               | PostgreSQL owner/superuser bypasses RLS; production app must never use admin URL for requests                                      |
+| RLS policy/role misconfiguration                     | NOLOGIN owners, `veltrix_app` NOBYPASSRLS, narrow dispatcher/search grants, migration review, pre-readiness PostgreSQL bootstrap    | PostgreSQL owner/superuser bypasses RLS; database-container credentials remain an operator deployment boundary                     |
 | Privilege escalation through membership/role changes | Permission matrix, owner/admin-only routes, immutable actor/workspace binding, audit                                                | Full authorization-matrix integration coverage and last-owner invariants require continual review                                  |
 | Password cracking                                    | Argon2id with bounded parameters, generic auth errors, rate/backoff controls                                                        | Parameters must be benchmarked on deployment hardware; credential stuffing remains possible                                        |
 | Session theft/fixation                               | Cryptographic tokens, hash-only storage, rotation, expiry, logout/all, HttpOnly/SameSite/Secure production cookies                  | XSS, compromised endpoint, insecure TLS proxy, or stolen browser profile can still act as user                                     |
@@ -95,10 +95,14 @@ The dispatcher role is a critical boundary: it needs enough global visibility to
 | Outbox loss                                          | Domain mutation and outbox row in one transaction; durable dispatcher retries                                                       | Poison payloads can block/retry; observability and controlled repair tooling are required                                          |
 | SSE cross-tenant leak                                | Authenticated workspace route, RLS replay query, workspace-scoped hub, bounded queues                                               | Reconnect and workspace switching need negative browser/integration tests                                                          |
 | SSE/memory denial of service                         | Heartbeat, cancellation cleanup, bounded clients/queues/replay                                                                      | Distributed connection floods need proxy and deployment-level limits                                                               |
-| Search data leak or unsafe snippet                   | Tenant-scoped search documents/RLS, plain text snippets, parameterized FTS/trigram                                                  | Stale index deletion or incorrectly attributed outbox event can retain data; test trash/merge/delete                               |
+| Search data leak or unsafe snippet                   | Narrow NOLOGIN search-function owner; active membership plus entity, stage, audience, and note-visibility checks; plain snippets   | A newly indexed entity needs an explicit authorization branch; stale index deletion still requires trash/merge/delete tests         |
+| Chat/call participant disclosure or identity rewrite | Exact active-conversation membership predicates on chats, messages, reactions, pins, and calls; immutable identity triggers       | Media-provider metadata and future membership-management operations require the same participant checks                             |
 | Audit tampering or secret logging                    | Append-oriented table, restricted grants, safe summaries, request IDs, structured logging/redaction                                 | DB administrators can modify data; cryptographic append verification is not implemented                                            |
 | Brute-force/resource DoS                             | Body/field/rate limits, bounded workers/pools, container PID/memory/CPU limits                                                      | In-process rate state is per replica; edge proxy and multi-replica strategy are operator concerns                                  |
 | Optional external AI data exfiltration               | Disabled default, hidden UI without provider, explicit config/PII consent, timeout/cancel/rate/audit                                | Provider retains/processes data under its own terms; prompt injection and output trust remain risks                                |
+| Mailbox credential theft / cross-user mail disclosure | AES-256-GCM with account/workspace/user-bound AAD; write-only secrets; actor-scoped forced RLS on every mail table; no admin bypass | A compromised application process or encryption key can decrypt configured accounts; key custody and rotation remain operator duties |
+| Mail endpoint SSRF or resource exhaustion             | DNS/IP validation, explicit TLS ports, private-network opt-in, timeouts, bounded connections/pages/messages/MIME/body sizes         | DNS rebinding and provider-specific behavior require continued adversarial testing; corporate private access expands the trust boundary |
+| Mail HTML tracking or script injection                | Only bounded plain text is extracted, cached, and returned; remote HTML and active content are never rendered                     | Plain text may still contain malicious links or social-engineering content                                                         |
 | Supply-chain compromise                              | Exact lockfiles, pinned image tags, Dependabot, audit/govulncheck/CodeQL/Trivy/SBOM workflows, generated-state checks               | Tags can be mutable and scanners incomplete; digest pinning/provenance/signing are future hardening                                |
 | Malicious generated code drift                       | OpenAPI/sqlc generators and clean generated-code CI checks                                                                          | Generator compromise or unreviewed schema semantics remain possible                                                                |
 | Backup theft or destructive restore                  | Backup/restore scripts and operator access boundary                                                                                 | Encryption, off-site retention, restore drills, RPO/RTO and key custody are deployment policy                                      |
@@ -112,6 +116,7 @@ The dispatcher role is a critical boundary: it needs enough global visibility to
 - Workspace role is not accepted from request input; it is resolved from membership.
 - Object operations validate both workspace and entity ownership.
 - API keys carry explicit scopes and workspace identity; a valid but under-scoped key is denied.
+- Mailbox account ownership is resolved from the authenticated actor and is never accepted as request input; owner/admin roles do not bypass personal-mail RLS.
 
 ## Tenant-isolation verification matrix
 
@@ -126,11 +131,13 @@ For two workspaces and two users, automated real-PostgreSQL tests should prove w
 - exploit a reused pool connection after a committed or rolled-back A transaction;
 - insert a tenant-owned row with a mismatched `workspace_id`.
 
+Mailbox tests additionally prove that a second user in the same workspace cannot list, read, update, delete, synchronize, or send through another user's account.
+
 The migration test should also enumerate every table with `workspace_id` and fail if forced RLS or an applicable policy is missing.
 
 ## Data minimization and logging
 
-Application logs should use request ID, stable error code, operation, latency, and safe entity identifiers. They must redact passwords, cookie/session/API/MFA/recovery/reset/invitation/webhook/S3/SMTP/AI secrets; avoid full request/response bodies; and avoid raw notes, contact fields, translation text, CSV rows, and attachment names unless a narrowly documented diagnostic mode is active.
+Application logs should use request ID, stable error code, operation, latency, and safe entity identifiers. They must redact passwords, cookie/session/API/MFA/recovery/reset/invitation/webhook/S3/SMTP/IMAP/mailbox/AI secrets; avoid full request/response bodies; and avoid raw mail subjects/bodies/addresses, notes, contact fields, translation text, CSV rows, and attachment names unless a narrowly documented diagnostic mode is active.
 
 Audit events may retain actor, tenant, action, entity, UTC time, request ID, IP/user agent where lawful, and a safe field-level change summary. Audit is not a secret vault.
 
@@ -138,7 +145,7 @@ Audit events may retain actor, tenant, action, entity, UTC time, request ID, IP/
 
 - Set `APP_ENV=production`, `DEMO_SEED=false`, secure unique DB role passwords, and a random identity encryption key.
 - Terminate TLS correctly; enable secure cookies and HSTS only after HTTPS is guaranteed.
-- Keep admin/migration DB credentials out of the request-serving process where operationally possible.
+- Let the pinned PostgreSQL-derived container complete its finite bootstrap before readiness; never inject administrator credentials, role passwords, automatic-migration flags, or demo credentials into the request-serving process.
 - Restrict PostgreSQL and optional service ports to private networks; do not publish MinIO/Ollama/Mailpit in production by default.
 - Mount uploads/backups with least privilege, capacity monitoring, and encryption policy.
 - Configure reverse-proxy request/rate/connection limits and preserve request IDs without trusting spoofed forwarding headers.

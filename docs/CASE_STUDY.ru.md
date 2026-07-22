@@ -80,7 +80,7 @@ RxJS остаётся для cancellable queries, SSE и Angular integration. Д
 - Fingerprinted output заранее gzip/Brotli-compressed и встраивается в Go.
 - Angular budgets и отдельный emitted-asset scanner проверяют initial/lazy thresholds.
 
-Artifact от 2026-07-21 содержит 86 727 bytes (84,7 KiB) initial JS+CSS Brotli и 158 063 bytes (154,4 KiB) lazy AG Grid. После artifact код менялся, поэтому это исторические measurements, не release-final. Evidence: `benchmarks/results/bundle-report.json` и [`PERFORMANCE.md`](PERFORMANCE.md).
+Production build от 2026-07-22 содержит 91 681 bytes (89,5 KiB) initial JS+CSS Brotli, 170 801 bytes (166,8 KiB) в lazy AG Grid Community chunk и не содержит ссылок на внешние шрифты. Optional LiveKit client вынесен в отдельный lazy chunk 116 990 bytes (114,2 KiB). Это measurement dirty working tree, не tagged release. Evidence и методика: [`PERFORMANCE.md`](PERFORMANCE.md).
 
 ## 9. Tenant isolation
 
@@ -106,14 +106,14 @@ SSE использует durable rows для bounded `Last-Event-ID` replay и i
 
 Фактическое состояние на дату документа:
 
-| Evidence                         | Результат                                                       |
-| -------------------------------- | --------------------------------------------------------------- |
-| Initial/lazy bundle artifact     | Зафиксирован; см. раздел 8 и [`PERFORMANCE.md`](PERFORMANCE.md) |
-| Lighthouse/Web Vitals            | Not measured                                                    |
-| Browser heap/retention/table FPS | Not measured                                                    |
-| k6 baseline/stretch              | Not measured                                                    |
-| Container RSS/CPU/startup        | Not measured                                                    |
-| Competitor data                  | Not measured                                                    |
+| Evidence | Результат |
+| --- | --- |
+| Initial/lazy bundle | 89,6 KiB initial; 166,7 KiB lazy AG Grid; применимые цели пройдены |
+| Lighthouse | desktop/mobile performance 100/94; accessibility 100/100; mobile LCP 2,77 s не проходит цель 2,0 s |
+| Browser heap/retention/table FPS | 13,26 MiB / 8,15% / 60 FPS medians; цели пройдены |
+| k6 baseline | 223,35 ops/s, 0% errors; read/write/search p95 189,94/290,14/159,95 ms; read/write-цели не пройдены |
+| Container memory/startup | median peak app/PostgreSQL 73,65/305,20 MiB; readiness около 221 ms |
+| k6 100-VU stretch / competitor data | Not measured |
 
 Полный протокол: [`BENCHMARK_METHODOLOGY.md`](BENCHMARK_METHODOLOGY.md).
 
@@ -121,10 +121,11 @@ SSE использует durable rows для bounded `Last-Event-ID` replay и i
 
 В build record есть реальные корректировки:
 
-- Ранняя workspace RLS policy содержала неправильно correlated membership expression, а workspace creation задавал tenant context слишком поздно для `INSERT ... RETURNING`. Добавлены security-hardening migration и исправление порядка transaction context; финальный integration result должен быть записан после rerun.
+- Ранняя workspace RLS policy содержала неправильно correlated membership expression, а workspace creation задавал tenant context слишком поздно для `INSERT ... RETURNING`. Добавлены security-hardening migration и исправление порядка transaction context; итоговый real-PostgreSQL suite прошёл.
 - PL/pgSQL custom-field validation сначала использовал невалидную форму `IF CASE`. Выражение исправлено на parenthesized boolean `CASE`, migrations повторно применены на PostgreSQL.
-- Docker Desktop WSL engine на build machine отвечал HTTP 500 и показывал RCU stall. Container metrics не выдумывались; integration work продолжился с pinned local PostgreSQL 18.4. Production-like Compose остался обязательным final gate.
-- Bundle report создан до последующих frontend edits. Он сохранён как датированный факт, но не выдаётся за release result.
+- Docker Desktop WSL engine сначала отвечал HTTP 500 и показывал RCU stall. Measurements не заявлялись до восстановления Docker; затем production-like image, Playwright matrix и resource sampler были выполнены на реальном двухконтейнерном профиле.
+- Первая RLS-safe search shape не позволяла PostgreSQL использовать FTS index и сканировала около 300 000 документов. Tenant-bound membership-checked database function вернула indexed plan. Поздний PL/pgSQL authorization experiment удалён после измерения худшей latency.
+- Restart-проверка обнаружила, что seed ledger сравнивал mutable live CRM counts с исходными seed counts. Проверка сужена до immutable dataset contract, затем app пересобран, перезапущен и финальные 102 browser tests прошли.
 
 ## 14. Trade-offs
 
@@ -148,24 +149,25 @@ Codex работал напрямую в локальном repository по mast
 
 ## 16. Что инженерно проверено
 
-- Существует dated bundle artifact с compressed emitted assets.
-- В source есть Go/Angular unit tests, real-PostgreSQL integration tests, Playwright flows, accessibility scans, k6 scenarios и CI definitions.
+- Текущий dated bundle artifact фиксирует compressed emitted assets.
+- Локально прошли Go/Angular unit tests, все real-PostgreSQL integration suites и Playwright matrix из 102 тестов на desktop/tablet/mobile.
+- Lighthouse, три browser-performance runs, три чистых 50-VU k6 runs, startup/resource sampling и scratch runtime export дали retained local evidence.
 - Migration/schema/runtime-role model доступна прямому review.
 - Наличие test/workflow file не означает pass; authoritative successful commands находятся в [`STATE.md`](STATE.md).
-- Lighthouse, k6, competitor, screenshot, Docker resource и production-container results без artifacts не заявляются.
+- Competitor, 100-VU stretch, hosted-CI и недоступные scanner results не заявляются.
 
 ## 17. Известные ограничения
 
-- Docker восстановился после локального WSL-engine failure; для production-like Compose и resource verification ещё нужны финальные retained artifacts.
-- После текущих source changes нужен release-final frontend bundle rebuild.
-- Lighthouse, browser heap/retention/FPS, k6 и container resource budgets не измерены.
-- Реальных portfolio screenshots пока нет.
+- Simulated mobile LCP 2,77 s при target 2,0 s; median read p95 для 50 VU — 189,94 ms при target 150 ms, write p95 — 290,14 ms при target 250 ms. Все отклонения явно сохранены после двух дополнительных SQL-итераций.
+- 100-VU stretch и two-browser LiveKit media E2E не измерены.
+- Trivy локально недоступен; pinned CI workflow настроен, но результат не заявляется.
 - GitHub Actions определены, но hosted workflow run не выполнялся.
 - Optional AI — security boundary/adapter contract, а не обязательная baseline capability.
+- Mailbox OAuth/background sync/threading и chat typing/presence/voice notes остаются roadmap.
 - Customer research, logos, testimonials и measured competitor results отсутствуют.
 
 ## 18. Roadmap
 
-Следующий evidence-bearing milestone: clean production build на чистой PostgreSQL, small seed, core Playwright journey с чистой console, screenshots, Lighthouse/bundle analysis, три baseline k6 runs с Docker stats и dependency/container security scans. Critical/high findings независимого review исправляются с повтором затронутых checks до release tag.
+Следующий evidence-bearing milestone: исправить findings финального независимого review, улучшить два непройденных performance budget без ослабления scenarios, выполнить 100-VU stretch и two-browser media test, получить hosted CI/Trivy evidence и повторить полный gate на tagged clean commit.
 
 См. [`ROADMAP.md`](../ROADMAP.md), [`DEMO_SCRIPT.md`](DEMO_SCRIPT.md) и [`GITHUB_SETUP.md`](GITHUB_SETUP.md).

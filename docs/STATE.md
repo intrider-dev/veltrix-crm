@@ -26,21 +26,26 @@ Last updated: 2026-07-22
 - Added configurable lead stages and full deal pipeline/stage settings with real create/update/delete/reorder operations, ETags, idempotent creation, system-stage immutability, and lazy EN/RU settings routes.
 - Added responsible and watcher assignments for leads, deals, and activities to individual users or departments, with primary responsibility, version checks, two-layer visibility, targeted SSE, and negative PostgreSQL isolation tests.
 - Connected pipeline, deal-stage, and custom lead-stage names to the workspace translation center. APIs return source `name` plus locale-resolved `displayName`; reads are batch-resolved, source changes invalidate published translations to draft, and deletes remove translation resources transactionally.
+- Added explicit per-role `view`/`enter`/`leave` overlays for lead and deal stages, with owner/admin recovery bypass, atomic audited configuration, RLS/composite tenant keys, database-filtered lists/details/search/Kanban, localized settings UI, and negative PostgreSQL coverage.
+- Added a lazy personal corporate-mail section with encrypted write-only per-user credentials, actor-scoped forced RLS, SSRF-safe TLS/STARTTLS IMAP/SMTP transports, bounded sync/cache/plain-text reading/composition, idempotent send records, EN/RU UI, and unit/integration coverage.
+- Moved outbound mailbox delivery to durable PostgreSQL jobs with stable Message-ID reuse, safe retry/dead-letter states, and an at-most-once ambiguous-outcome boundary; staged manual IMAP sync now performs remote I/O outside tenant transactions and persists failure state.
+- Unified buttons, inputs, selects, search controls, and segmented controls through the shared Material component layer; fixed the duplicated search clear affordance, icon/text alignment, select inset, cramped lead forms, chat composer layout, and contacts/companies toolbars.
+- Rebuilt and started the production-like two-container profile, applied checksummed migrations through `000035`, loaded deterministic seeds, and verified that a restart remains healthy after user-created data changes.
+- Hardened indexed search, chat/call creation and participant visibility, activity audiences, immutable identities, contact export, stage-filtered reports, and worker leasing with real negative PostgreSQL tests. The pinned PostgreSQL-derived container completes bootstrap before readiness; privileged migration credentials never enter the app container.
+- Passed the complete 102-test Playwright matrix on the final production image across desktop, tablet, and mobile, including CRUD, import/export, automation, audit, tenant isolation, accessibility, dark theme, PWA behavior, chat/toolbar layout regressions, and real screenshot capture.
+- Completed the final three-clean-run 50-VU baseline after two additional SQL optimization iterations, plus bundle, Lighthouse, browser heap/DOM/interaction/FPS, startup, and Docker resource measurements. All misses and method qualifications are recorded in `PERFORMANCE.md`.
+- Verified the scratch runtime is non-root and contains no Node.js artifact; dependency audit has zero production advisories and `govulncheck` found no reachable symbol/package vulnerability.
+- Extended the production-browser acceptance flow to create a workspace-visible calendar event, exercise Kanban/List/Gantt deal modes, create a project, and exchange a real direct-chat message between two invited users. The chat recipient selector now uses explicit signal state, so its Create action updates correctly in zoneless Angular.
 
 ## Current phase
 
-Phase 3/4 — implement the personal corporate mailbox, close remaining end-user UI/E2E gaps, then run production-like hardening and measurements.
+Phase 5 - verified pre-release handoff with explicit roadmap gaps.
 
 ## Next actions
 
-1. Implement the personal IMAP/SMTP mailbox slice with per-user encrypted credentials while keeping the base profile at app + PostgreSQL.
-2. Add explicit per-stage transition rules and server-provided object capabilities where resource permissions and assignment visibility are not sufficiently granular.
-3. Complete the optional disabled-by-default AI provider and document its exact verified surface.
-4. Close remaining UI workflows, especially workspace bootstrap pipeline defaults, saved views, contact bulk/import/export, webhook delivery history, and chat presence/voice-message gaps.
-5. Run the full lint/typecheck/unit/integration gates after mailbox generated code stabilizes.
-6. Build and start the scratch production image against a clean Compose PostgreSQL volume; run the complete Playwright flow, including a two-browser call when the optional profile is enabled, and capture genuine screenshots.
-7. Run Lighthouse, final bundle analysis, browser heap/DOM/interaction checks, three baseline k6 runs, Docker resource sampling, and security scans.
-8. Update all reports with retained evidence, run independent reviews, fix high findings, and create logical Conventional Commits.
+1. Run the pinned hosted GitHub Actions, CodeQL, Trivy, SBOM, and Linux race jobs after publication; no hosted result is claimed locally.
+2. Profile the remaining read/write p95 misses with Linux `perf`, PostgreSQL statement statistics, and the documented full-duration workload without weakening thresholds.
+3. Retain optional AI consent UI, extended mailbox/chat capabilities, 100-VU stretch, and two-browser LiveKit media validation as explicit roadmap items.
 
 ## Last successful verification commands
 
@@ -69,19 +74,41 @@ Phase 3/4 — implement the personal corporate mailbox, close remaining end-user
 | 2026-07-22 | targeted Go unit tests for localization, sales, app; then `go test ./...` | Passed after record assignments, resource permissions, configurable stages, and localized domain labels |
 | 2026-07-22 | clean PostgreSQL 18.4 `TestDomainContentTranslationLifecycleOnPostgreSQL` | Passed; published RU resolution, source rename invalidation to draft, and source fallback verified |
 | 2026-07-22 | `pnpm typecheck` and web lint | Passed after pipeline settings, lead/deal permission gates, and `displayName` integration; 893 complete EN/RU keys |
+| 2026-07-22 | clean PostgreSQL 18.4 targeted mailbox/localization/sales integration suites | Passed after migrations `000022`/`000023`; personal-mail user isolation, domain translation lifecycle, and hidden-stage record/search/list behavior verified |
+| 2026-07-22 | `go test ./...` and `go vet ./...` from `apps/api` | Passed after mailbox and stage-role access integration |
+| 2026-07-22 | mailbox delivery/sync unit suite plus real PostgreSQL `TestMailboxUserOnlyRLSCredentialsSyncReadAndSend` | Passed; atomic job creation, stable Message-ID, safe retry state, SMTP success, actor RLS, staged IMAP apply, and persisted sync failure verified |
+| 2026-07-22 | `pnpm typecheck`, web lint, and `pnpm test:web` | Passed before the final mailbox-store unit addition; 29 files/78 tests and 964 complete EN/RU keys |
+| 2026-07-22 | `pnpm check` | Passed: format/lint/vet, 965 EN/RU keys, strict typecheck, Go tests, 30 frontend files/81 tests, production web+embedded binary build, bundle report, and 123 precompressed assets |
+| 2026-07-22 | `pnpm test:integration` with PostgreSQL 18.4 URLs | Passed all real-PostgreSQL suites through migration `000025`, including RLS/tenant negatives, mailbox, calls, chat, and stage ACLs |
+| 2026-07-22 | `pnpm exec playwright test` against `http://127.0.0.1:18081` | 93/93 passed in 2.5 minutes across desktop/tablet/mobile; real screenshots captured |
+| 2026-07-22 | three `benchmarks/browser/measure-performance.mjs` optimized runs | Passed all browser budgets; zero browser errors |
+| 2026-07-22 | `node scripts/run-lighthouse.mjs` | Desktop 100/100 and mobile 94/100 performance/accessibility; mobile LCP budget missed and retained |
+| 2026-07-22 | `pnpm benchmark` | Completed three clean 50-VU runs; search/write/errors/resources passed, read p95 missed; wrapper correctly returned non-zero |
+| 2026-07-22 | `pnpm audit --prod --audit-level high --json` | 0 production dependency advisories |
+| 2026-07-22 | `govulncheck ./...` from `apps/api` | 0 reachable symbol/package vulnerabilities; one non-reachable module advisory documented |
+| 2026-07-22 | `docker export -o output/runtime-image.tar ...` plus runtime config inspection | Valid scratch filesystem; non-root `65532:65532`; no Node.js/npm/pnpm artifact |
+| 2026-07-22 | final `pnpm check` after the Kanban focus correction and evidence updates | Passed: formatter/lint/vet, 966 EN/RU keys, Go tests, 30 frontend files/82 tests, strict typecheck, production bundle and embedded binary |
+| 2026-07-22 | final serial `pnpm test:integration` against PostgreSQL 18.4 | All packages passed through migration `000035`, including search/export/stage/activity/chat/call tenant negatives and worker queue semantics |
+| 2026-07-22 | `pnpm benchmark` after two additional SQL optimization iterations | Three clean 50-VU runs retained; 223.35 ops/s, 0% errors, search/resources passed, read/write p95 missed; wrapper correctly returned non-zero |
+| 2026-07-22 | `pnpm test:e2e` against the rebuilt final production image | 102/102 passed in 2.5 minutes; WCAG scan and layout-regression coverage included |
+| 2026-07-22 | `pnpm audit --prod --audit-level high --json` and pinned `govulncheck@v1.6.0 ./...` | 0 production advisories; 0 reachable/package vulnerabilities |
+| 2026-07-22 | clean-volume and existing-volume Compose/runtime inspection | exactly `postgres + app`; bootstrap-before-readiness; ledger `35/0`; demo user `1`; app UID/GID `65532:65532`; privileged app env count 0; Node/npm entrypoints absent |
+| 2026-07-22 | final `pnpm check` after stage-role and zoneless chat-selector corrections | Passed: formatter/lint/vet, 966 EN/RU keys, strict typecheck, Go tests, 31 frontend files/84 tests, production bundle and embedded binary |
+| 2026-07-22 | final serial `pnpm test:integration` and expanded `pnpm test:e2e` | All real-PostgreSQL packages passed through migration `000035`; 102/102 browser tests passed with calendar creation, project creation, all three deal views, two-user chat messaging, WCAG, responsive layout, PWA, and tenant isolation |
 
 ## Known limitations
 
-- The final OpenAPI-generated state and optional AI implementation are still in progress; the full gate must be repeated after both land.
-- The persisted automation rule model currently accepts the `scheduled` trigger but has no cadence/`next_run_at` producer. This is not claimed as complete and requires an explicit schedule model.
-- Several advanced backend workflows do not yet have complete user-facing SPA/E2E coverage; they are listed under next actions rather than represented as complete UX.
-- Custom roles now support independent lead/deal CRUD and funnel-management grants. Per-stage transition ACLs and generalized server-provided object capabilities remain in progress; current transitions are protected by resource update permission, assignment visibility, optimistic versions, and tenant RLS.
-- Existing pipelines/stages created outside application services (notably deterministic seed SQL) still need a deterministic localization-resource backfill before they appear in the translation center; API display falls back to their source names safely.
+- The optional AI provider boundary exists, but its complete user-facing consent/feature flow remains unverified.
+- Mailbox happy/error flows and a complete custom-role stage-right administration journey are not part of the current browser matrix. Stage-role filtering has focused frontend unit coverage plus negative real-PostgreSQL tests; mailbox transport and RLS have unit/integration coverage but require safe external IMAP/SMTP credentials for a real-provider E2E.
+- Pipelines/stages created by the deterministic seed are registered as localization resources. Records inserted directly outside the application/seed path still require an explicit backfill and safely fall back to source names.
 - Chat currently provides text messages, files, reactions, pins, and optional real audio/video calls. Typing/presence, edit/delete, recorded voice messages, ringtone/device selection/screen sharing, and a two-browser media E2E run are not complete. Call controls stay disabled when no provider is configured.
-- Personal corporate mailbox integration is not implemented. Existing SMTP is only for system notifications/password reset and is not represented as a user mailbox.
-- Calendar audience isolation is implemented and tested, but a final independent review still recommends narrowing the database-level activity UPDATE policy so an assignee cannot use the runtime database role for arbitrary column updates; HTTP application queries already restrict full edits to creator or owner/admin.
+- Personal corporate mail currently supports app-password/basic authentication over TLS/STARTTLS, manual bounded sync, plain-text read, and durable queued SMTP send. Provider OAuth2, background scheduled sync, remote attachment download, drafts/reply/forward/threading, and explicit reconciliation/resend UI for an ambiguous SMTP outcome are not complete. On-demand IMAP body fetch still holds a bounded request transaction; folder/message synchronization and SMTP delivery do not.
+- Calendar audience isolation and database UPDATE guards are implemented and covered by negative PostgreSQL tests.
 - `go test -race` is unavailable in the current Windows Go environment because CGO is disabled. CI runs the race detector on Linux; that hosted result is not yet available.
-- Production image/runtime, Lighthouse, baseline k6, browser heap/scrolling, security scanners, and portfolio screenshots have not yet been rerun after the latest changes.
+- Trivy is unavailable locally. The pinned container-scan workflow exists, but no local/hosted Trivy result is claimed.
+- `govulncheck` found no reachable vulnerability; it still reports module-level GO-2026-5932 in unmaintained `golang.org/x/crypto/openpgp`, which the application does not import and for which no upstream fix is available.
+- Simulated mobile LCP (2.77 s) misses the 2.0 s target; 50-VU median read p95 (189.94 ms) and write p95 (290.14 ms) miss the 150/250 ms targets after two additional documented SQL optimization iterations.
+- The 100-VU stretch scenario and two-browser LiveKit media E2E are not measured.
 - Hosted GitHub Actions have not run because no push is authorized.
 
 ## Actual measured metrics
@@ -89,10 +116,18 @@ Phase 3/4 — implement the personal corporate mailbox, close remaining end-user
 | Metric | Value | Evidence/status |
 | --- | --- | --- |
 | Deterministic small seed | 1,000 contacts; 250 companies; 500 deals; 5,000 activities; 2.684 s including `go run` startup | Local PostgreSQL 18.4 run on 2026-07-21; setup evidence, not a serving-performance claim |
-| Frontend initial JS + CSS | 86,727 B Brotli (84.7 KiB) | Dated pre-final bundle artifact; must be replaced after final build |
-| Lazy AG Grid chunk | 158,063 B Brotli (154.4 KiB) | Dated pre-final bundle artifact; lazy-loaded |
-| Largest ordinary lazy feature | 26,466 B Brotli (25.8 KiB) | Dated pre-final bundle artifact |
-| External font requests | 0 | Pre-final bundle scan |
-| Lighthouse / Web Vitals | Not measured | Final production-like run pending |
-| Baseline k6 p95/p99/throughput/errors | Not measured | Three clean-dataset runs pending |
-| Application/PostgreSQL RSS and CPU | Not measured | Time-series Docker sampling pending |
+| Frontend initial JS + CSS | 91,782 B Brotli (89.6 KiB) | Current production build; target met |
+| Lazy AG Grid / optional LiveKit chunks | 170,685 B / 116,990 B Brotli | Both lazy; AG Grid Community only |
+| Largest ordinary lazy app feature | 21,065 B Brotli (20.6 KiB) | Target met |
+| External font requests | 0 | Current bundle scan |
+| Lighthouse desktop/mobile performance | 100 / 94 | Both performance-score targets met |
+| Lighthouse accessibility | 100 / 100 | Target met |
+| Mobile LCP / CLS | 2,771.49 ms / 0 | LCP missed; CLS met |
+| Browser interaction / DOM / scrolling | 46.5 ms / 710 / 60 FPS | Medians or stable value across 3 optimized runs; targets met |
+| Browser heap / retained growth | 13.26 MiB / 8.15% | Median of 3 optimized runs; targets met |
+| Baseline k6 throughput / errors | 223.35 ops/s / 0% | Median of 3 clean 50-VU runs |
+| Baseline read/write/search p95 | 189.94 / 290.14 / 159.95 ms | Read/write missed; search met |
+| Baseline overall p95 / p99 | 192.89 / 213.61 ms | Median report |
+| Baseline peak app / PostgreSQL memory | 73.65 / 305.20 MiB | Median peaks; combined 378.85 MiB |
+| Post-E2E idle app / PostgreSQL memory | 72.65 / 151.1 MiB | Single snapshot; app idle target met |
+| Readiness | approximately 221 ms | Single log-delta observation; target met |

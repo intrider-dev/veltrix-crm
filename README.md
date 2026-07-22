@@ -16,8 +16,10 @@ No Redis, message broker, or search cluster is required by the base profile.
 
 - Multi-workspace identity, secure cookie sessions, RBAC, invitations, teams, password recovery, and TOTP MFA.
 - Contacts and companies with cursor-driven lists, tags, custom fields, saved views, bulk operations, duplicate merge, trash/restore, and CSV workflows.
-- Leads, configurable pipelines and stages, deals, stage history, line items, and bounded Kanban loading.
+- Leads, configurable pipelines/stages, per-stage role overlays, deals, history, line items, and bounded list/Kanban/Gantt loading.
 - Tasks, calls, meetings, notes, comments, mentions, reminders, timelines, calendar/ICS, and notifications.
+- Projects with task groups and assignments; membership-scoped chat with files, reactions, pins, and optional LiveKit audio/video calls.
+- A lazy personal-mail workspace with encrypted per-user credentials, bounded IMAP sync, safe plain-text reading, and SMTP composition.
 - PostgreSQL full-text/trigram search, audit history, dashboards, and period-based reporting.
 - Transactional outbox, leased PostgreSQL jobs, retry/dead-letter behavior, automations, scoped API keys, and signed webhooks.
 - Streaming attachments with local storage by default and an optional S3-compatible adapter.
@@ -33,7 +35,7 @@ flowchart LR
   B[Angular 22 SPA\nzoneless, signals, lazy routes]
   A[Single Go binary\nREST + SSE + workers + static assets]
   P[(PostgreSQL 18\nRLS + search + jobs + outbox)]
-  O[Optional profiles\nMailpit / MinIO / Ollama]
+  O[Optional profiles\nMailpit / MinIO / Ollama / LiveKit]
 
   B -->|same-origin /api/v1| A
   A -->|pgx, bounded pools| P
@@ -44,17 +46,20 @@ The application uses a modular monolith because its workflows benefit from trans
 
 ## Measured evidence
 
-The table distinguishes a recorded build artifact from release-final measurements. The bundle report was generated on 2026-07-21; subsequent working-tree changes require a fresh build before release.
+These values were measured on 2026-07-22 from the documented dirty working tree and are not presented as a tagged-release or competitor claim. Full environment, method, per-run results, misses, and qualifications are in [the performance report](docs/PERFORMANCE.md).
 
-| Metric                                       |                   Recorded value |                                                       Budget | Evidence / status                                                                                               |
-| -------------------------------------------- | -------------------------------: | -----------------------------------------------------------: | --------------------------------------------------------------------------------------------------------------- |
-| Initial JS + CSS                             |   86,727 bytes (84.7 KiB) Brotli |                                             target ≤ 350 KiB | [`benchmarks/results/bundle-report.json`](benchmarks/results/bundle-report.json), historical working-tree build |
-| Lazy AG Grid chunk                           | 158,063 bytes (154.4 KiB) Brotli | documented lazy exception; ordinary feature target ≤ 200 KiB | Same bundle artifact; route-lazy                                                                                |
-| Largest ordinary lazy feature chunk          |   26,466 bytes (25.8 KiB) Brotli |                                             target ≤ 200 KiB | Same bundle artifact                                                                                            |
-| External font references                     |        0 found by bundle scanner |                                                            0 | Same bundle artifact                                                                                            |
-| Lighthouse desktop/mobile/accessibility      |                     Not measured |                                              ≥95 / ≥90 / ≥95 | Requires a running production build                                                                             |
-| Baseline API latency, throughput, error rate |                     Not measured |                                              See methodology | No completed k6 summary exists                                                                                  |
-| App/PostgreSQL RSS and CPU                   |                     Not measured |                  app idle RSS ≤96 MB; combined target 512 MB | No completed Docker metrics artifact exists                                                                     |
+| Metric | Measured result | Budget / status |
+| --- | ---: | --- |
+| Initial JS + CSS | 91,782 bytes (89.6 KiB) Brotli | ≤350 KiB — pass |
+| Lazy AG Grid Community / optional LiveKit | 166.7 / 114.2 KiB Brotli | both lazy — pass |
+| Lighthouse desktop / mobile / accessibility | 100 / 94 / 100 | ≥95 / ≥90 / ≥95 — pass |
+| Simulated mobile LCP / CLS | 2.77 s / 0 | ≤2.0 s / ≤0.05 — **LCP miss** |
+| Browser interaction / DOM / grid scrolling | 46.5 ms / 710 / 60 FPS | all targets pass |
+| Forced-GC heap / 20-cycle retained growth | 13.26 MiB / 8.15% | both targets pass |
+| 50-VU throughput / error rate | 223.35 operations/s / 0% | median of 3 clean runs |
+| Read / write / search p95 | 189.94 / 290.14 / 159.95 ms | read/write **miss**; search passes |
+| Median peak app / PostgreSQL memory | 73.65 / 305.20 MiB | combined 378.85 MiB — pass aspiration |
+| Post-E2E idle app memory | 72.65 MiB | ≤96 MiB — pass, single snapshot |
 
 No comparison with a commercial or open-source CRM has been measured. The [competitor protocol](docs/COMPETITOR_BENCHMARK_PROTOCOL.md) intentionally starts with `Not measured` values.
 
@@ -74,7 +79,7 @@ Copy-Item .env.example .env
 docker compose up --build
 ```
 
-Open <http://localhost:8080> and use the development-only account:
+Open <http://127.0.0.1:8080> and use the development-only account:
 
 - Email: `admin@demo.local`
 - Password: `Demo123!`

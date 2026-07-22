@@ -1,6 +1,6 @@
 # Dependency inventory and policy
 
-Last reviewed: 2026-07-21. Versions are exact direct versions from `package.json`, `apps/web/package.json`, `apps/api/go.mod`, `Dockerfile`, and `compose.yaml`; transitive versions are pinned by `pnpm-lock.yaml` and `apps/api/go.sum`.
+Last reviewed: 2026-07-22. Versions are exact direct versions from `package.json`, `apps/web/package.json`, `apps/api/go.mod`, `Dockerfile`, and `compose.yaml`; transitive versions are pinned by `pnpm-lock.yaml` and `apps/api/go.sum`.
 
 Licenses below describe the upstream projects at the recorded versions and must be confirmed by the dependency-license CI report before a release. This document is not legal advice.
 
@@ -36,6 +36,10 @@ Frontend dependencies are compiled into static assets; Node.js is not present in
 | --------------------------------- | ----------------: | ----------------------------------------------------------- | ------------ |
 | Go standard library               | Go 1.26 toolchain | HTTP, crypto, JSON, logging, embed, streaming, concurrency  | BSD-3-Clause |
 | `github.com/go-chi/chi/v5`        |             5.3.1 | Small HTTP router/middleware composition                    | MIT          |
+| `github.com/emersion/go-imap`     |             1.2.1 | Bounded IMAP mailbox synchronization transport              | MIT          |
+| `github.com/emersion/go-message`  |            0.18.2 | MIME parsing with plain-text-only extraction                | MIT          |
+| `github.com/emersion/go-sasl`     | v0.0.0-20241020182733-b788ff22d5a6 | SMTP authentication mechanism implementation | MIT          |
+| `github.com/emersion/go-smtp`     |            0.24.0 | Bounded TLS/STARTTLS message submission                     | MIT          |
 | `github.com/golang-jwt/jwt/v5`    |             5.3.1 | Short-lived, room-scoped LiveKit participant token signing  | MIT          |
 | `github.com/google/uuid`          |             1.6.0 | UUID parsing/interop; project generation uses UUIDv7 policy | BSD-3-Clause |
 | `github.com/jackc/pgx/v5`         |            5.10.0 | PostgreSQL driver, pool, transactions, typed values         | MIT          |

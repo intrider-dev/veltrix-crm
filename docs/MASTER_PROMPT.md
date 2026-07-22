@@ -304,3 +304,22 @@ For an unavailable tool record the failed check, exact reason, developer command
 ## 19. Final response
 
 Respond in Russian with: implemented scope, launch, demo credentials, commands, production deployment, actual metrics, met/missed budgets, optimizations, test/security results, README/case/performance/screenshot paths, commits/proposals, Git status, and honest remaining limits. Continue while implementation is possible; stop only at an objective blocker.
+
+## 20. Subsequent product requirements
+
+The user subsequently extended the scope with these requirements. They are part of the product brief and must be implemented and verified with the same evidence standards as the original requirements:
+
+- Make the application multilingual from the start, with a maintainable translation workflow for interface text, validation, server messages, notification content, and workspace-authored translatable content. Provide a language switcher in settings.
+- Support deal presentation as list, Kanban, and Gantt views.
+- Use one polished component language for buttons, selects, inputs, segmented controls, and field groups. Angular Material remains the only universal UI kit; a small shared component/token layer may refine it.
+- Fix the reported UI defects: duplicate clear icon in search, misaligned plus/text inside buttons, native select arrows touching the edge, insufficient padding in the new-lead field container, cramped contacts/companies toolbars, malformed square/circular segmented controls, and the malformed chat creation layout.
+- Deliver transient notifications as accessible toasts while retaining persistent panels for errors that need user action.
+- Add built-in team chat and calls, including a right-side chat dock, instant messages, attachments, voice messages, video/voice calls, emoji reactions, and pinned messages. Where an external maintained real-time media component is used, it must remain optional and must not add required infrastructure to the base deployment.
+- Add custom roles, departments/teams, administrative rights, resource permissions, and stage-level permissions for both deal and lead pipelines.
+- Add projects as permission-controlled task groups. Tasks, leads, and deals support responsible users/departments and watchers; their collaboration threads and attachments are visible only to authorized users.
+- Calendar events must be creatable and support workspace-wide, department, and user audiences.
+- Add a personal corporate mailbox area with per-user mail configuration, inbox/sending, and the expected core mail workflow while keeping secrets encrypted and tenant-isolated.
+- Rebrand the product and repository paths from Velocity/VelocityCRM Lab to the centrally configured `VeltrixCRM` / `veltrix-crm` identity.
+- Create and place a distinctive vector logo whose colors and brand text are controlled through central design/product configuration.
+
+Latest visual feedback specifically identifies the chat creation panel and the contacts/companies filter bars as cramped or geometrically inconsistent. These layouts require responsive regression coverage at desktop, tablet, and mobile viewports.

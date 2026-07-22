@@ -104,7 +104,7 @@ Configured limits describe the test envelope. Actual RSS, startup, CPU, and OOM 
 | Baseline error rate                        | <0.5%                                        |
 | Baseline read/write/search p95             | <150 / <250 / <250 ms                        |
 
-The historical bundle artifact met its applicable build targets. All browser, load, and runtime values remain `Not measured` until their documented scenarios complete.
+The 2026-07-22 working-tree measurements passed bundle, Lighthouse score/accessibility, CLS, interaction, DOM, scrolling, browser heap/retention, search p95, error-rate, startup, idle-app, and combined-memory targets. Three budgets remain red after two additional SQL optimization iterations: simulated mobile LCP was 2.77 s against 2.0 s, median 50-VU read p95 was 189.94 ms against 150 ms, and write p95 was 290.14 ms against 250 ms. Full method and qualifications are in [`PERFORMANCE.md`](PERFORMANCE.md).
 
 ## How this can be disproved
 

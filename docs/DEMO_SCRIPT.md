@@ -9,7 +9,7 @@ cp .env.example .env
 docker compose up --build
 ```
 
-PowerShell uses `Copy-Item .env.example .env`. Wait for both health checks, then open <http://localhost:8080>.
+PowerShell uses `Copy-Item .env.example .env`. Wait for both health checks, then open <http://127.0.0.1:8080>.
 
 Development-only credentials:
 

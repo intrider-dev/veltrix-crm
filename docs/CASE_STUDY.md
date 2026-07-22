@@ -80,7 +80,7 @@ Zoneless mode does not make an application fast by itself. Browser timing, DOM s
 - Fingerprinted output is precompressed with gzip and Brotli before embedding in Go.
 - Angular budgets and an independent emitted-asset scanner fail the hard initial threshold and flag oversized ordinary lazy features.
 
-The recorded 2026-07-21 artifact reports 86,727 bytes (84.7 KiB) initial JS+CSS Brotli and a 158,063-byte (154.4 KiB) lazy AG Grid chunk. Because code changed after that artifact, these are historical working-tree measurements, not release-final values. Evidence: `benchmarks/results/bundle-report.json` and [`PERFORMANCE.md`](PERFORMANCE.md).
+The 2026-07-22 production build reports 91,782 bytes (89.6 KiB) initial JS+CSS Brotli, a 170,685-byte (166.7 KiB) lazy AG Grid Community chunk, and no external font reference. The optional LiveKit client is a separate 116,990-byte (114.2 KiB) lazy chunk. These are dirty-working-tree measurements, not tagged-release values. Evidence and method: [`PERFORMANCE.md`](PERFORMANCE.md).
 
 ## 9. Tenant isolation
 
@@ -106,14 +106,14 @@ The repository defines deterministic datasets and a k6 workload with a one-minut
 
 Actual state at the date of this case study:
 
-| Evidence                         | Result                                                         |
-| -------------------------------- | -------------------------------------------------------------- |
-| Initial/lazy bundle artifact     | Recorded; see section 8 and [`PERFORMANCE.md`](PERFORMANCE.md) |
-| Lighthouse and Web Vitals        | Not measured                                                   |
-| Browser heap/retention/table FPS | Not measured                                                   |
-| k6 baseline/stretch              | Not measured                                                   |
-| Container RSS/CPU/startup        | Not measured                                                   |
-| Competitor data                  | Not measured                                                   |
+| Evidence | Result |
+| --- | --- |
+| Initial/lazy bundle | 89.6 KiB initial; 166.7 KiB lazy AG Grid; applicable targets pass |
+| Lighthouse | desktop/mobile performance 100/94; accessibility 100/100; mobile LCP 2.77 s misses the 2.0 s target |
+| Browser heap/retention/table FPS | 13.26 MiB / 8.15% / 60 FPS medians; targets pass |
+| k6 baseline | 223.35 ops/s, 0% errors; read/write/search p95 189.94/290.14/159.95 ms; read/write targets miss |
+| Container memory/startup | median peak app/PostgreSQL 73.65/305.20 MiB; readiness approximately 221 ms |
+| k6 100-VU stretch / competitor data | Not measured |
 
 The complete protocol and metadata requirements are in [`BENCHMARK_METHODOLOGY.md`](BENCHMARK_METHODOLOGY.md).
 
@@ -121,10 +121,11 @@ The complete protocol and metadata requirements are in [`BENCHMARK_METHODOLOGY.m
 
 The build record includes concrete corrections rather than a fictional straight-line success story:
 
-- An early workspace RLS policy had an incorrectly correlated membership expression, and workspace creation established tenant context too late for `INSERT ... RETURNING`. A security-hardening migration and transaction-order correction were introduced; the final integration result must be recorded after rerun.
+- An early workspace RLS policy had an incorrectly correlated membership expression, and workspace creation established tenant context too late for `INSERT ... RETURNING`. A security-hardening migration and transaction-order correction were introduced and the final real-PostgreSQL suite passed.
 - An initial PL/pgSQL custom-field validation expression used an invalid `IF CASE` shape. It was corrected to a parenthesized boolean `CASE` and migrations were reapplied on real PostgreSQL.
-- Docker Desktop's WSL engine returned an HTTP 500 with an RCU stall on the build machine. The implementation did not claim container metrics; real PostgreSQL integration work continued against a pinned local PostgreSQL 18.4 test server. Production-like Compose remains a required final gate.
-- The bundle report was generated before later frontend feature edits. It is retained as a dated measurement but explicitly cannot serve as the final release number.
+- Docker Desktop's WSL engine initially returned an HTTP 500 with an RCU stall. Measurements were withheld until Docker recovered; the production-like image, Playwright matrix, and resource sampler then ran against the real two-container profile.
+- A first RLS-safe search shape prevented PostgreSQL from using the FTS index and scanned roughly 300,000 documents. A tenant-bound, membership-checked database function restored the indexed plan. A later PL/pgSQL authorization experiment was removed after measuring worse latency.
+- Restart validation exposed that the seed ledger incorrectly compared mutable live CRM row counts with original seed counts. Verification was narrowed to the immutable dataset contract, then the app was rebuilt, restarted, and the final 102-test browser suite passed.
 
 These points are implementation evidence and open verification obligations, not product weaknesses hidden from readers.
 
@@ -152,24 +153,25 @@ This statement describes assisted work, not independent human authorship or prod
 
 Verification is deliberately separated by evidence type:
 
-- A dated bundle artifact exists and records compressed emitted assets.
-- Source includes Go/Angular unit tests, real-PostgreSQL integration tests, Playwright flows, accessibility scans, k6 scenarios, and CI definitions.
+- A current dated bundle artifact records compressed emitted assets.
+- Go/Angular unit tests, all real-PostgreSQL integration suites, and a 102-case desktop/tablet/mobile Playwright matrix passed locally.
+- Lighthouse, three browser-performance runs, three clean 50-VU k6 runs, startup/resource sampling, and a scratch runtime export produced retained local evidence.
 - The migration/schema and runtime role model can be inspected directly.
 - A test or workflow file existing does not mean it passed; authoritative successful commands are recorded in [`STATE.md`](STATE.md).
-- No Lighthouse, k6, competitor, screenshot, Docker resource, or production-container result is claimed without an artifact.
+- No competitor, 100-VU stretch, hosted-CI, or unavailable scanner result is claimed.
 
 ## 17. Known limitations
 
-- Docker recovered after a local WSL-engine failure; production-like Compose and resource verification still need final retained artifacts.
-- Release-final frontend bundles must be rebuilt after current source changes.
-- Lighthouse, browser memory/retention/FPS, k6, and container resource budgets remain unmeasured.
-- Real portfolio screenshots have not been captured.
+- Simulated mobile LCP is 2.77 seconds against a 2.0-second target; the 50-VU read p95 median is 189.94 ms against 150 ms and write p95 is 290.14 ms against 250 ms. All remain explicit misses after two additional SQL optimization iterations.
+- The 100-VU stretch and two-browser LiveKit media E2E are not measured.
+- Trivy was unavailable locally; the pinned CI workflow is configured but its result is not claimed.
 - GitHub Actions have been defined but not proven by a hosted workflow run.
 - Optional AI is a security boundary and adapter contract, not a required baseline feature; provider behavior must be tested against a configured deployment.
+- Mailbox OAuth/background sync/threading and chat typing/presence/voice-note flows remain roadmap work.
 - The project has no customer research, customer logos, testimonials, or measured competitor results.
 
 ## 18. Roadmap
 
-The next evidence-bearing milestone is a clean production build on a clean PostgreSQL database, the small deterministic seed, the core Playwright journey with a clean console, portfolio screenshots, Lighthouse/bundle analysis, three baseline k6 runs with Docker stats, and dependency/container security scans. Critical/high independent review findings must be fixed and affected checks rerun before a release tag.
+The next evidence-bearing milestone is to address final independent-review findings, improve the two missed performance budgets without weakening the scenarios, run the 100-VU stretch and two-browser media test, obtain hosted CI/Trivy evidence, and repeat the complete gate from a tagged clean commit.
 
 See [`ROADMAP.md`](../ROADMAP.md), [`DEMO_SCRIPT.md`](DEMO_SCRIPT.md), and [`GITHUB_SETUP.md`](GITHUB_SETUP.md).
