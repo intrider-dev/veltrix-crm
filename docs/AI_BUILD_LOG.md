@@ -37,7 +37,7 @@ Parallel agents were assigned bounded architecture, performance, security, UX/ac
 
 ## Checks and artifacts observed during the build session
 
-- The current bundle reporter produced `benchmarks/results/bundle-report.json` on 2026-07-22. It recorded 91,712 initial Brotli bytes, a 170,706-byte lazy AG Grid Community chunk, a 116,990-byte optional lazy LiveKit chunk, and no external font reference.
+- The current bundle reporter produced `benchmarks/results/bundle-report.json` on 2026-07-22. It recorded 91,746 initial Brotli bytes, a 170,682-byte lazy AG Grid Community chunk, a 116,990-byte optional lazy LiveKit chunk, and no external font reference.
 - PostgreSQL 18 integration work was run against a local PostgreSQL 18.4 test instance when Docker Desktop was unavailable. A focused RLS isolation suite passed after migration fixes; a workspace-creation test then exposed a separate RLS/context-order issue and triggered a hardening migration/rerun cycle.
 - The combined `pnpm check` passed format/lint/vet, complete 967-key EN/RU catalogs, strict TypeScript, Go and Angular tests, the production frontend, precompression, and the embedded Go binary. The serial real-PostgreSQL integration suite also passed through migration `000035`.
 - The final running production-like image passed 102/102 Playwright tests across desktop/tablet/mobile and produced the retained portfolio screenshots under `docs/screenshots/`.
@@ -62,6 +62,7 @@ Parallel agents were assigned bounded architecture, performance, security, UX/ac
 - The expanded invitation/chat browser flow found that a native member select read only through a template reference did not update a disabled button in zoneless Angular. Explicit signal-backed selection fixed the real interaction, and the two-user message flow then passed in the complete 102-test matrix.
 - A security review found the application master-encryption key colocated with the PostgreSQL bootstrap environment. A narrow `LoadBootstrap` path, secret-free database service configuration, sanitized final `postgres` PID 1, fast bootstrap shutdown, and non-recreating one-shot migration scripts closed the finding. Clean/existing-volume runs and independent re-review found no remaining Critical/High security blocker.
 - The first final E2E rerun on alternate port `18081` correctly rejected its module request because `APP_PUBLIC_URL` still defaulted to `:8080`. Compose now derives its default public URL from `APP_PORT`; the rebuilt image then passed 102/102 tests in 2.7 minutes.
+- Visual inspection of the rebuilt login page moved password recovery below the password control and exposed an adjacent mid-width product-name word break. Local typography containment plus a three-viewport geometric regression fixed both without adding motion or changing the page composition.
 
 ## AI-assisted file inventory
 

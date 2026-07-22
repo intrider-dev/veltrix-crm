@@ -50,7 +50,7 @@ These values were measured on 2026-07-22. Browser/server performance used applic
 
 | Metric | Measured result | Budget / status |
 | --- | ---: | --- |
-| Initial JS + CSS | 91,712 bytes (89.6 KiB) Brotli | ≤350 KiB — pass |
+| Initial JS + CSS | 91,746 bytes (89.6 KiB) Brotli | ≤350 KiB — pass |
 | Lazy AG Grid Community / optional LiveKit | 166.7 / 114.2 KiB Brotli | both lazy — pass |
 | Lighthouse desktop / mobile / accessibility | 100 / 94 / 100 | ≥95 / ≥90 / ≥95 — pass |
 | Simulated mobile LCP / CLS | 2.76 s / 0 | ≤2.0 s / ≤0.05 — **LCP miss** |

@@ -80,7 +80,7 @@ RxJS остаётся для cancellable queries, SSE и Angular integration. Д
 - Fingerprinted output заранее gzip/Brotli-compressed и встраивается в Go.
 - Angular budgets и отдельный emitted-asset scanner проверяют initial/lazy thresholds.
 
-Финальный production build от 2026-07-22 содержит 91 712 bytes (89,6 KiB) initial JS+CSS Brotli, 170 706 bytes (166,7 KiB) в lazy AG Grid Community chunk и не содержит ссылок на внешние шрифты. Optional LiveKit client вынесен в отдельный lazy chunk 116 990 bytes (114,2 KiB). Serving-performance evidence использует application commit `3b26934`, а bundle повторно собран после финального deployment/i18n hardening; это не tagged release. Evidence и методика: [`PERFORMANCE.md`](PERFORMANCE.md).
+Финальный production build от 2026-07-22 содержит 91 746 bytes (89,6 KiB) initial JS+CSS Brotli, 170 682 bytes (166,7 KiB) в lazy AG Grid Community chunk и не содержит ссылок на внешние шрифты. Optional LiveKit client вынесен в отдельный lazy chunk 116 990 bytes (114,2 KiB). Serving-performance evidence использует application commit `3b26934`, а bundle повторно собран после финального deployment/i18n hardening; это не tagged release. Evidence и методика: [`PERFORMANCE.md`](PERFORMANCE.md).
 
 ## 9. Tenant isolation
 

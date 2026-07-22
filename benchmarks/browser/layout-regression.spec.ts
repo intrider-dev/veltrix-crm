@@ -42,6 +42,25 @@ async function expectChildrenContainedAndSeparated(container: Locator) {
   }
 }
 
+test("forgot-password action follows the password field", async ({ context, page }) => {
+  const assertNoBrowserErrors = failOnBrowserErrors(page);
+  await context.clearCookies();
+  await page.goto("/login");
+
+  const password = page.locator('input[autocomplete="current-password"]');
+  const forgot = page.getByRole("link", { name: "Forgot password?", exact: true });
+  await expect(password).toBeVisible();
+  await expect(forgot).toBeVisible();
+  const passwordBox = await password.boundingBox();
+  const forgotBox = await forgot.boundingBox();
+  expect(passwordBox).not.toBeNull();
+  expect(forgotBox).not.toBeNull();
+  expect(forgotBox?.y ?? 0).toBeGreaterThanOrEqual(
+    (passwordBox?.y ?? 0) + (passwordBox?.height ?? 0),
+  );
+  assertNoBrowserErrors();
+});
+
 for (const route of ["/contacts", "/companies"] as const) {
   test(`${route} toolbar keeps controls aligned and inset`, async ({ page }) => {
     const assertNoBrowserErrors = failOnBrowserErrors(page);

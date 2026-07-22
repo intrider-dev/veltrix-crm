@@ -20,6 +20,7 @@ All notable changes will be documented in this file. The format follows [Keep a 
 - Rebranded the centrally configured product and repository paths to VeltrixCRM, added the vector product mark, and kept feature code free of scattered brand literals.
 - Added deal list/Kanban/Gantt views, projects/tasks, resource and stage ACLs, departments, assignments/watchers, calendar audiences, chat, optional LiveKit calls, and personal corporate mail as complete database-backed vertical slices.
 - Unified Material controls, corrected chat/contact/company layout regressions, and made the scrollable Kanban keyboard-focusable.
+- Moved the password-recovery action below the password field, preserved logical keyboard order, and prevented the product name from breaking inside the word at compact desktop widths.
 - Fixed the zoneless direct-chat member selector so the Create action reacts immediately, localized its placeholder, and expanded production-browser acceptance to calendar creation, all deal views, projects, and bidirectional owner/invited-user messaging.
 - Split stored dashboard summaries from stage-filtered fallback aggregation and bounded the authorized global-search plan after reproducible performance regressions.
 

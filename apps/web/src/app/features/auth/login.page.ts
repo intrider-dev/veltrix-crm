@@ -100,10 +100,6 @@ import { BrandLogoComponent } from '../../shared/brand/brand-logo.component';
                 }
               </mat-form-field>
 
-              <a mat-button class="forgot" routerLink="/password-reset">
-                {{ i18n.t('auth.login.forgot') }}
-              </a>
-
               <mat-form-field appearance="outline">
                 <mat-label>{{ i18n.t('auth.login.password') }}</mat-label>
                 <input
@@ -125,6 +121,10 @@ import { BrandLogoComponent } from '../../shared/brand/brand-logo.component';
                   <mat-error>{{ i18n.t('auth.validation.required') }}</mat-error>
                 }
               </mat-form-field>
+
+              <a mat-button class="forgot" routerLink="/password-reset">
+                {{ i18n.t('auth.login.forgot') }}
+              </a>
 
               @if (error()) {
                 <div class="form-error" role="alert">{{ error() }}</div>
@@ -184,6 +184,8 @@ import { BrandLogoComponent } from '../../shared/brand/brand-logo.component';
       font-size: clamp(2.5rem, 6vw, 4.75rem);
       line-height: 0.98;
       letter-spacing: -0.055em;
+      overflow-wrap: normal;
+      word-break: normal;
     }
     .story > p:last-child {
       max-width: 48ch;
@@ -222,7 +224,7 @@ import { BrandLogoComponent } from '../../shared/brand/brand-logo.component';
     }
     .forgot {
       justify-self: end;
-      margin-top: -0.4rem;
+      margin: -0.65rem 0 0.25rem;
     }
     .registration {
       justify-self: center;

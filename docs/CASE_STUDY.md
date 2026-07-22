@@ -80,7 +80,7 @@ Zoneless mode does not make an application fast by itself. Browser timing, DOM s
 - Fingerprinted output is precompressed with gzip and Brotli before embedding in Go.
 - Angular budgets and an independent emitted-asset scanner fail the hard initial threshold and flag oversized ordinary lazy features.
 
-The final 2026-07-22 production build reports 91,712 bytes (89.6 KiB) initial JS+CSS Brotli, a 170,706-byte (166.7 KiB) lazy AG Grid Community chunk, and no external font reference. The optional LiveKit client is a separate 116,990-byte (114.2 KiB) lazy chunk. Serving-performance evidence uses application commit `3b26934`; the bundle was regenerated after final deployment/i18n hardening. These are not tagged-release values. Evidence and method: [`PERFORMANCE.md`](PERFORMANCE.md).
+The final 2026-07-22 production build reports 91,746 bytes (89.6 KiB) initial JS+CSS Brotli, a 170,682-byte (166.7 KiB) lazy AG Grid Community chunk, and no external font reference. The optional LiveKit client is a separate 116,990-byte (114.2 KiB) lazy chunk. Serving-performance evidence uses application commit `3b26934`; the bundle was regenerated after final deployment/i18n hardening. These are not tagged-release values. Evidence and method: [`PERFORMANCE.md`](PERFORMANCE.md).
 
 ## 9. Tenant isolation
 

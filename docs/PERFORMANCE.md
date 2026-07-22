@@ -26,13 +26,13 @@ Raw local artifacts are written under `benchmarks/results/` by the documented sc
 
 ## Frontend bundle
 
-Production output was compressed with Node zlib gzip level 9 and Brotli quality 11. Evidence: `benchmarks/results/bundle-report.json`, generated `2026-07-22T17:11:51.420Z`.
+Production output was compressed with Node zlib gzip level 9 and Brotli quality 11. Evidence: `benchmarks/results/bundle-report.json`, generated `2026-07-22T17:17:17.566Z`.
 
 | Metric | Measured | Target | Status |
 | --- | ---: | ---: | --- |
-| Initial JS + CSS, Brotli | 91,712 B / 89.6 KiB | ≤350 KiB | Pass |
-| Largest ordinary lazy app chunk, Brotli | 21,041 B / 20.5 KiB | ≤200 KiB | Pass |
-| Lazy AG Grid Community chunk, Brotli | 170,706 B / 166.7 KiB | lazy and documented | Pass |
+| Initial JS + CSS, Brotli | 91,746 B / 89.6 KiB | ≤350 KiB | Pass |
+| Largest ordinary lazy app chunk, Brotli | 21,014 B / 20.5 KiB | ≤200 KiB | Pass |
+| Lazy AG Grid Community chunk, Brotli | 170,682 B / 166.7 KiB | lazy and documented | Pass |
 | Optional lazy LiveKit client, Brotli | 116,990 B / 114.2 KiB | optional and lazy | Pass |
 | External font references | 0 | 0 | Pass |
 | Inline event handlers | 0 | 0 | Pass |

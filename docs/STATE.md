@@ -37,6 +37,7 @@ Last updated: 2026-07-22
 - Verified the scratch runtime is non-root and contains no Node.js artifact; dependency audit has zero production advisories and `govulncheck` found no reachable symbol/package vulnerability.
 - Extended the production-browser acceptance flow to create a workspace-visible calendar event, exercise Kanban/List/Gantt deal modes, create a project, and exchange real direct-chat messages between the owner and an invited user. The chat recipient selector now uses explicit signal state, so its Create action updates correctly in zoneless Angular.
 - Separated finite database bootstrap configuration from serving configuration: the PostgreSQL container never receives the application encryption key, scrubs bootstrap variables before its final `postgres` PID 1, uses clean fast shutdown for the pre-readiness transition, and keeps manual migrations in a fresh one-shot image without recreating the live database container.
+- Moved the password-recovery action below the password field with logical keyboard order and protected the `VeltrixCRM` wordmark from mid-word wrapping on compact desktop widths.
 
 ## Current phase
 
@@ -105,6 +106,7 @@ Phase 5 - verified pre-release handoff with explicit roadmap gaps.
 | 2026-07-22 | `scripts/migrate.ps1` against a running database | Passed with the PostgreSQL container ID and `StartedAt` unchanged across fresh-image one-shot migration |
 | 2026-07-22 | final `pnpm test:e2e` against the rebuilt production image at `:18081` | 102/102 passed in 2.7 minutes; owner/invited-user bidirectional chat, WCAG, responsive layout, screenshots, PWA, and tenant isolation included |
 | 2026-07-22 | independent security and maintainability re-review | No remaining Critical/High security or maintainability blockers after bootstrap/migration hardening; product-scope roadmap gaps remain explicit |
+| 2026-07-22 | login-page frontend checks and production layout regression | Web lint, 31 files/84 unit tests, production build, and 13 Playwright setup/desktop/tablet/mobile layout tests passed; real screenshot inspected |
 
 ## Known limitations
 
@@ -126,9 +128,9 @@ Phase 5 - verified pre-release handoff with explicit roadmap gaps.
 | Metric | Value | Evidence/status |
 | --- | --- | --- |
 | Deterministic small seed | 1,000 contacts; 250 companies; 500 deals; 5,000 activities; 2.684 s including `go run` startup | Local PostgreSQL 18.4 run on 2026-07-21; setup evidence, not a serving-performance claim |
-| Frontend initial JS + CSS | 91,712 B Brotli (89.6 KiB) | Current production build; target met |
-| Lazy AG Grid / optional LiveKit chunks | 170,706 B / 116,990 B Brotli | Both lazy; AG Grid Community only |
-| Largest ordinary lazy app feature | 21,041 B Brotli (20.5 KiB) | Target met |
+| Frontend initial JS + CSS | 91,746 B Brotli (89.6 KiB) | Current production build; target met |
+| Lazy AG Grid / optional LiveKit chunks | 170,682 B / 116,990 B Brotli | Both lazy; AG Grid Community only |
+| Largest ordinary lazy app feature | 21,014 B Brotli (20.5 KiB) | Target met |
 | External font requests | 0 | Current bundle scan |
 | Lighthouse desktop/mobile performance | 100 / 94 | Both performance-score targets met |
 | Lighthouse accessibility | 100 / 100 | Target met |
