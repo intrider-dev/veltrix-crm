@@ -113,8 +113,29 @@ func TestCustomRoleEffectivePermissionsOnPostgreSQL(t *testing.T) {
 	if assigned.Role != "sales" {
 		t.Fatalf("compatibility base role=%s, want sales", assigned.Role)
 	}
-	if err := service.WithWorkspace(ctx, member, first, "roles-leads-read", PermissionLeadsRead, func(*WorkspaceTx) error { return nil }); err != nil {
+	if err := service.WithWorkspace(ctx, member, first, "roles-leads-read", PermissionLeadsRead, func(workspace *WorkspaceTx) error {
+		var actorSetting, workspaceSetting string
+		if err := workspace.Tx.QueryRow(ctx, `SELECT current_setting('app.actor_id'), current_setting('app.workspace_id')`).Scan(
+			&actorSetting, &workspaceSetting,
+		); err != nil {
+			return err
+		}
+		if actorSetting != member.UserID.String() || workspaceSetting != first.String() {
+			t.Fatalf("transaction context actor=%q workspace=%q", actorSetting, workspaceSetting)
+		}
+		return nil
+	}); err != nil {
 		t.Fatalf("custom role lead read denied: %v", err)
+	}
+	var leakedActor, leakedWorkspace *string
+	if err := pool.QueryRow(ctx, `
+SELECT NULLIF(current_setting('app.actor_id', true), ''),
+       NULLIF(current_setting('app.workspace_id', true), '')
+`).Scan(&leakedActor, &leakedWorkspace); err != nil {
+		t.Fatal(err)
+	}
+	if leakedActor != nil || leakedWorkspace != nil {
+		t.Fatalf("transaction-local context leaked actor=%v workspace=%v", leakedActor, leakedWorkspace)
 	}
 	if err := service.WithWorkspace(ctx, member, first, "roles-deals-read", PermissionDealsRead, func(*WorkspaceTx) error { return nil }); !errors.Is(err, errx.ErrForbidden) {
 		t.Fatalf("lead-only role deal read error=%v, want forbidden", err)
@@ -166,7 +187,10 @@ func createRoleTestWorkspace(t *testing.T, ctx context.Context, service *Service
 		t.Fatal(err)
 	}
 	created, err := service.CreateWorkspace(ctx, owner, label, CreateWorkspaceRequest{
-		Name: label, Slug: label + "-" + id.String()[0:8], DefaultLocale: "en", Timezone: "UTC", DefaultCurrency: "USD",
+		// A UUIDv7 prefix is time-derived and can repeat across test reruns in the
+		// same database. Keep the full identifier so leaked fixtures cannot turn a
+		// later authorization run into an unrelated slug-validation failure.
+		Name: label, Slug: label + "-" + id.String(), DefaultLocale: "en", Timezone: "UTC", DefaultCurrency: "USD",
 	})
 	if err != nil {
 		t.Fatal(err)

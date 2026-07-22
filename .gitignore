@@ -16,6 +16,7 @@ playwright-report/
 test-results/
 blob-report/
 .playwright-cli/
+output/
 apps/api/tmp/
 apps/api/coverage.out
 benchmarks/results/*

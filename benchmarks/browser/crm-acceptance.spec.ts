@@ -97,6 +97,17 @@ test("company, deal, and task lifecycle is usable end to end", async ({
     secondStage.locator("article.deal-card").filter({ hasText: dealName }),
   ).toBeVisible();
 
+  await page.getByRole("button", { name: "List", exact: true }).click();
+  await expect(page.locator("section.deal-list")).toBeVisible();
+  await expect(page.locator("section.deal-list")).toContainText(dealName);
+  await page.getByRole("button", { name: "Gantt", exact: true }).click();
+  await expect(page.locator("section.gantt")).toBeVisible();
+  await page.getByRole("button", { name: "Kanban", exact: true }).click();
+  await expect(page.locator("section.kanban")).toBeVisible();
+  await expect(
+    secondStage.locator("article.deal-card").filter({ hasText: dealName }),
+  ).toBeVisible();
+
   await page.goto("/activities");
   await waitForAppReady(page);
   const taskName = `Follow up ${suffix}`;
@@ -120,5 +131,34 @@ test("company, deal, and task lifecycle is usable end to end", async ({
     .getByRole("button", { name: "Mark complete", exact: true })
     .click();
   await expect(task).toContainText("Completed");
+
+  await page.goto("/calendar");
+  await waitForAppReady(page);
+  const eventName = `Team event ${suffix}`;
+  await page.getByRole("button", { name: "Add event", exact: true }).click();
+  const eventEditor = page.locator("section.editor");
+  await eventEditor.getByLabel("Title", { exact: true }).fill(eventName);
+  await eventEditor
+    .getByRole("button", { name: "Create", exact: true })
+    .click();
+  await expect(
+    page.locator(".calendar-event").filter({ hasText: eventName }),
+  ).toBeVisible();
+
+  await page.goto("/projects");
+  await waitForAppReady(page);
+  const projectName = `Launch project ${suffix}`;
+  await page.getByRole("button", { name: "New project", exact: true }).click();
+  const projectDialog = page.getByRole("dialog", { name: "Create project" });
+  await projectDialog.getByLabel("Name", { exact: true }).fill(projectName);
+  await projectDialog
+    .getByLabel("Description", { exact: true })
+    .fill("Synthetic project created by the browser acceptance flow.");
+  await projectDialog
+    .getByRole("button", { name: "Create", exact: true })
+    .click();
+  await expect(
+    page.locator("a.project-card").filter({ hasText: projectName }),
+  ).toBeVisible();
   assertNoBrowserErrors();
 });

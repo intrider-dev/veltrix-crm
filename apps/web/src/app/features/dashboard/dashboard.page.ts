@@ -17,7 +17,11 @@ import { DashboardStore } from './dashboard.store';
         <div>
           <h1>{{ i18n.t('dashboard.dashboard.title') }}</h1>
         </div>
-        <div class="period" role="group" [attr.aria-label]="i18n.t('dashboard.dashboard.title')">
+        <div
+          class="period segmented-control"
+          role="group"
+          [attr.aria-label]="i18n.t('dashboard.dashboard.title')"
+        >
           <button mat-button type="button" class="active">
             {{ i18n.t('dashboard.dashboard.period.30d') }}
           </button>

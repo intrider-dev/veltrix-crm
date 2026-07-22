@@ -105,6 +105,13 @@ func (service *Service) CreateLead(
 	if err != nil {
 		return LeadRecord{}, err
 	}
+	resolvedStageID, ok := ids.FromPG(stageID)
+	if !ok {
+		return LeadRecord{}, fmt.Errorf("resolved lead stage has an invalid identifier")
+	}
+	if err := service.RequireLeadStageAccess(ctx, workspace, metadata.WorkspaceID, resolvedStageID, StageAccessEnter); err != nil {
+		return LeadRecord{}, err
+	}
 	row, err := workspace.Queries.CreateLeadAdvanced(ctx, dbgen.CreateLeadAdvancedParams{
 		WorkspaceID: metadata.WorkspaceID.PG(), ID: leadID.PG(), Name: validated.Name,
 		Email: validated.Email, EmailNormalized: nullableNormalized(emailNormalized),
@@ -315,6 +322,24 @@ func (service *Service) ConvertLead(
 	if err != nil {
 		return LeadRecord{}, err
 	}
+	convertedStage, err := workspace.Queries.GetDefaultLeadStageByCategory(ctx, dbgen.GetDefaultLeadStageByCategoryParams{
+		WorkspaceID: metadata.WorkspaceID.PG(), Category: "converted",
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return LeadRecord{}, validation("/stageId", "validation.reference.invalid")
+	}
+	if err != nil {
+		return LeadRecord{}, fmt.Errorf("resolve converted lead stage: %w", err)
+	}
+	convertedStageID, ok := ids.FromPG(convertedStage.ID)
+	if !ok {
+		return LeadRecord{}, fmt.Errorf("converted lead stage has an invalid identifier")
+	}
+	if err := service.RequireLeadStageTransition(
+		ctx, workspace, metadata.WorkspaceID, ids.MustParse(existing.StageID), convertedStageID,
+	); err != nil {
+		return LeadRecord{}, err
+	}
 	row, err := workspace.Queries.MarkLeadConverted(ctx, dbgen.MarkLeadConvertedParams{
 		WorkspaceID: metadata.WorkspaceID.PG(), ID: leadID.PG(),
 		ConvertedContactID: optionalUUID(references.ContactID), ConvertedCompanyID: optionalUUID(references.CompanyID),
@@ -363,6 +388,11 @@ func (service *Service) MoveLeadStage(
 	}
 	if existing.StageID == targetStageID.String() {
 		return existing, nil
+	}
+	if err := service.RequireLeadStageTransition(
+		ctx, workspace, metadata.WorkspaceID, ids.MustParse(existing.StageID), targetStageID,
+	); err != nil {
+		return LeadRecord{}, err
 	}
 	stageID, _, err := service.resolveLeadStage(ctx, workspace, metadata.WorkspaceID, &targetStageID, "")
 	if err != nil {
@@ -476,16 +506,24 @@ func (service *Service) classifyLeadMutation(
 	var currentVersion int64
 	var deleted bool
 	var status string
+	var stageID pgtype.UUID
 	err := workspace.Tx.QueryRow(ctx, `
-		SELECT version, deleted_at IS NOT NULL, status
+		SELECT version, deleted_at IS NOT NULL, status, stage_id
 		FROM sales.leads WHERE workspace_id = $1 AND id = $2`,
 		workspaceID.PG(), leadID.PG(),
-	).Scan(&currentVersion, &deleted, &status)
+	).Scan(&currentVersion, &deleted, &status, &stageID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return errx.ErrNotFound
 	}
 	if err != nil {
 		return fmt.Errorf("classify lead mutation: %w", err)
+	}
+	resolvedStageID, ok := ids.FromPG(stageID)
+	if !ok {
+		return errx.ErrNotFound
+	}
+	if err := service.RequireLeadStageAccess(ctx, workspace, workspaceID, resolvedStageID, StageAccessView); err != nil {
+		return err
 	}
 	if currentVersion != version {
 		return errx.ErrVersionConflict

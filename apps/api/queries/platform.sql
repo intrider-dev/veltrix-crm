@@ -89,24 +89,71 @@ DELETE FROM search.documents
 WHERE workspace_id = $1 AND entity_type = $2 AND entity_id = $3;
 
 -- name: GlobalSearch :many
-WITH query AS (
-  SELECT websearch_to_tsquery('simple', sqlc.arg(search_query)::text) AS tsq
-)
-SELECT entity_type, entity_id, title, subtitle,
-       left(searchable_text, 240) AS snippet,
-       (ts_rank(search_vector, query.tsq) * rank_boost
-         + similarity(searchable_text, sqlc.arg(search_query)))::real AS rank
-FROM search.documents, query
-WHERE workspace_id = sqlc.arg(workspace_id)
-  AND (search_vector @@ query.tsq OR searchable_text % sqlc.arg(search_query))
-ORDER BY rank DESC, title, entity_id
-LIMIT 50;
+SELECT (query_result).entity_type::text AS entity_type,
+       (query_result).entity_id::uuid AS entity_id,
+       (query_result).title::text AS title,
+       (query_result).subtitle::text AS subtitle,
+       (query_result).snippet::text AS snippet,
+       (query_result).rank::real AS rank
+FROM (
+  SELECT search.query_documents(
+    sqlc.arg(workspace_id), sqlc.arg(search_query)::text, 50
+  ) AS query_result
+) AS results;
 
 -- name: GetDashboardSummary :one
 SELECT currency, open_pipeline_minor, weighted_forecast_minor, won_count,
        lost_count, overdue_tasks, deals_by_stage, computed_at, source_version
 FROM reporting.dashboard_summaries
 WHERE workspace_id = $1;
+
+-- name: HasPipelineStageAccessRules :one
+SELECT EXISTS (
+  SELECT 1
+  FROM sales.pipeline_stage_role_access access
+  WHERE access.workspace_id = $1
+);
+
+-- name: GetDashboardSummaryWithStageAccess :one
+WITH visible_deals AS MATERIALIZED (
+  SELECT deal.id, deal.stage_id, deal.amount_minor, deal.status, deal.version
+  FROM sales.deals deal
+  WHERE deal.workspace_id = sqlc.arg(workspace_id)
+    AND deal.deleted_at IS NULL
+    AND sales.pipeline_stage_access_allowed(deal.workspace_id, deal.stage_id, 'view')
+)
+SELECT workspace.default_currency AS currency,
+       COALESCE((SELECT sum(deal.amount_minor) FROM visible_deals deal WHERE deal.status = 'open'), 0)::bigint AS open_pipeline_minor,
+       COALESCE((
+         SELECT sum((deal.amount_minor * stage.probability) / 100)
+         FROM visible_deals deal
+         JOIN sales.pipeline_stages stage
+           ON stage.workspace_id = workspace.id AND stage.id = deal.stage_id
+         WHERE deal.status = 'open'
+       ), 0)::bigint AS weighted_forecast_minor,
+       (SELECT count(*) FROM visible_deals deal WHERE deal.status = 'won')::bigint AS won_count,
+       (SELECT count(*) FROM visible_deals deal WHERE deal.status = 'lost')::bigint AS lost_count,
+       (SELECT count(*) FROM activities.activities activity
+        WHERE activity.workspace_id = workspace.id
+          AND activity.activity_type = 'task'
+          AND activity.status = 'open'
+          AND activity.due_at < now()
+          AND activity.deleted_at IS NULL)::bigint AS overdue_tasks,
+       COALESCE((
+         SELECT jsonb_agg(jsonb_build_object(
+           'stageId', stage.id,
+           'stageName', stage.name,
+           'count', (SELECT count(*) FROM visible_deals deal WHERE deal.stage_id = stage.id AND deal.status = 'open'),
+           'amountMinor', COALESCE((SELECT sum(deal.amount_minor) FROM visible_deals deal WHERE deal.stage_id = stage.id AND deal.status = 'open'), 0)
+         ) ORDER BY stage.position)
+         FROM sales.pipeline_stages stage
+         WHERE stage.workspace_id = workspace.id
+           AND sales.pipeline_stage_access_allowed(stage.workspace_id, stage.id, 'view')
+       ), '[]'::jsonb)::jsonb AS deals_by_stage,
+       now()::timestamptz AS computed_at,
+       COALESCE((SELECT max(deal.version) FROM visible_deals deal), 1)::bigint AS source_version
+FROM tenancy.workspaces workspace
+WHERE workspace.id = sqlc.arg(workspace_id);
 
 -- name: RefreshDashboardSummary :exec
 INSERT INTO reporting.dashboard_summaries (

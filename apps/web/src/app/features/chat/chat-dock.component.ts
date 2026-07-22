@@ -166,7 +166,10 @@ import { CallSessionService } from './call-session.service';
           <section class="new-conversation">
             <label class="native-field"
               ><span>{{ i18n.t('chat.chooseMember') }}</span
-              ><select #memberSelect>
+              ><select
+                [value]="selectedMemberId()"
+                (change)="selectedMemberId.set(selectValue($event))"
+              >
                 <option value="">—</option>
                 @for (member of availableMembers(); track member.id) {
                   <option [value]="member.userId">{{ member.displayName }}</option>
@@ -174,13 +177,13 @@ import { CallSessionService } from './call-session.service';
               </select></label
             >
             <div>
-              <button mat-button type="button" (click)="createOpen.set(false)">
+              <button mat-button type="button" (click)="closeCreate()">
                 {{ i18n.t('common.action.cancel') }}</button
               ><button
                 mat-flat-button
                 type="button"
-                [disabled]="!memberSelect.value || store.sending()"
-                (click)="startDirect(memberSelect.value)"
+                [disabled]="!selectedMemberId() || store.sending()"
+                (click)="startDirect(selectedMemberId())"
               >
                 {{ i18n.t('common.action.create') }}
               </button>
@@ -311,6 +314,7 @@ export class ChatDockComponent implements OnInit {
   readonly callMedia = viewChild<ElementRef<HTMLElement>>('callMedia');
   readonly open = signal(false);
   readonly createOpen = signal(false);
+  readonly selectedMemberId = signal('');
   readonly draft = signal('');
   readonly selectedFile = signal<File | null>(null);
   readonly connectingGrant = signal<CallJoin | null>(null);
@@ -330,12 +334,17 @@ export class ChatDockComponent implements OnInit {
     if (this.open()) void this.store.loadConversations();
   }
   openCreate(): void {
+    this.selectedMemberId.set('');
     this.createOpen.set(true);
     void this.store.loadMembers();
   }
+  closeCreate(): void {
+    this.selectedMemberId.set('');
+    this.createOpen.set(false);
+  }
   async startDirect(userId: string): Promise<void> {
     await this.store.startDirect(userId);
-    this.createOpen.set(false);
+    this.closeCreate();
   }
   callActionDisabled(): boolean {
     return (
@@ -380,6 +389,9 @@ export class ChatDockComponent implements OnInit {
   }
   messageValue(event: Event): string {
     return (event.target as HTMLTextAreaElement).value;
+  }
+  selectValue(event: Event): string {
+    return (event.target as HTMLSelectElement).value;
   }
   conversationName(conversation: ChatConversation): string {
     if (conversation.title) return conversation.title;

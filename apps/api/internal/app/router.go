@@ -62,6 +62,7 @@ func (application *Application) routes() http.Handler {
 				application.registerProjectRoutes(workspace)
 				application.registerChatRoutes(workspace)
 				application.registerCallRoutes(workspace)
+				application.registerMailboxRoutes(workspace)
 				workspace.Get("/dashboard", application.dashboard)
 				workspace.Get("/contacts", application.listContacts)
 				workspace.Post("/contacts", application.createContact)

@@ -11,6 +11,67 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const authorizeWorkspace = `-- name: AuthorizeWorkspace :one
+SELECT membership.workspace_id, membership.id, membership.user_id,
+       membership.role, membership.status, membership.locale_override,
+       membership.timezone_override, membership.created_at,
+       membership.updated_at, membership.role_id,
+       COALESCE(
+         array_agg(permission.permission ORDER BY permission.permission)
+           FILTER (WHERE permission.permission IS NOT NULL),
+         ARRAY[]::text[]
+       )::text[] AS permissions
+FROM tenancy.memberships membership
+LEFT JOIN tenancy.role_permissions permission
+  ON permission.workspace_id = membership.workspace_id
+ AND permission.role_id = membership.role_id
+WHERE membership.workspace_id = $1
+  AND membership.user_id = $2
+  AND membership.status = 'active'
+GROUP BY membership.workspace_id, membership.id, membership.user_id,
+         membership.role, membership.status, membership.locale_override,
+         membership.timezone_override, membership.created_at,
+         membership.updated_at, membership.role_id
+`
+
+type AuthorizeWorkspaceParams struct {
+	WorkspaceID pgtype.UUID `json:"workspace_id"`
+	ActorID     pgtype.UUID `json:"actor_id"`
+}
+
+type AuthorizeWorkspaceRow struct {
+	WorkspaceID      pgtype.UUID        `json:"workspace_id"`
+	ID               pgtype.UUID        `json:"id"`
+	UserID           pgtype.UUID        `json:"user_id"`
+	Role             string             `json:"role"`
+	Status           string             `json:"status"`
+	LocaleOverride   *string            `json:"locale_override"`
+	TimezoneOverride *string            `json:"timezone_override"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
+	RoleID           pgtype.UUID        `json:"role_id"`
+	Permissions      []string           `json:"permissions"`
+}
+
+func (q *Queries) AuthorizeWorkspace(ctx context.Context, arg AuthorizeWorkspaceParams) (AuthorizeWorkspaceRow, error) {
+	row := q.db.QueryRow(ctx, authorizeWorkspace, arg.WorkspaceID, arg.ActorID)
+	var i AuthorizeWorkspaceRow
+	err := row.Scan(
+		&i.WorkspaceID,
+		&i.ID,
+		&i.UserID,
+		&i.Role,
+		&i.Status,
+		&i.LocaleOverride,
+		&i.TimezoneOverride,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.RoleID,
+		&i.Permissions,
+	)
+	return i, err
+}
+
 const countActiveOwners = `-- name: CountActiveOwners :one
 SELECT count(*)
 FROM tenancy.memberships
@@ -237,5 +298,22 @@ type SetTenantContextParams struct {
 
 func (q *Queries) SetTenantContext(ctx context.Context, arg SetTenantContextParams) error {
 	_, err := q.db.Exec(ctx, setTenantContext, arg.WorkspaceID, arg.RequestID)
+	return err
+}
+
+const setWorkspaceContext = `-- name: SetWorkspaceContext :exec
+SELECT set_config('app.actor_id', $1::text, true),
+       set_config('app.workspace_id', $2::text, true),
+       set_config('app.request_id', $3::text, true)
+`
+
+type SetWorkspaceContextParams struct {
+	ActorID     string `json:"actor_id"`
+	WorkspaceID string `json:"workspace_id"`
+	RequestID   string `json:"request_id"`
+}
+
+func (q *Queries) SetWorkspaceContext(ctx context.Context, arg SetWorkspaceContextParams) error {
+	_, err := q.db.Exec(ctx, setWorkspaceContext, arg.ActorID, arg.WorkspaceID, arg.RequestID)
 	return err
 }

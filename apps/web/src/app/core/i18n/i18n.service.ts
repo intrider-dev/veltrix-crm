@@ -26,7 +26,10 @@ export class I18nService {
   readonly supportedLocales = productConfig.supportedLocales;
 
   async initialize(): Promise<void> {
-    await this.loadNamespaces([...eagerNamespaces]);
+    // One unavailable catalog must not leave the entire SPA as a blank custom
+    // element. Load initial namespaces independently, retry transient network
+    // failures once, and let the stable message key act as the final fallback.
+    await Promise.all(eagerNamespaces.map((namespace) => this.loadInitialNamespace(namespace)));
     this.applyDocumentLocale(this.activeLocale());
   }
 
@@ -152,6 +155,21 @@ export class I18nService {
       ),
     );
     return Object.fromEntries(entries);
+  }
+
+  private async loadInitialNamespace(namespace: string): Promise<void> {
+    try {
+      await this.loadNamespaces([namespace]);
+      return;
+    } catch {
+      await new Promise<void>((resolve) => setTimeout(resolve, 150));
+    }
+    try {
+      await this.loadNamespaces([namespace]);
+    } catch {
+      // Bootstrap remains usable with stable message keys. The rejected fetch
+      // is removed from `requests`, so a later feature load can recover it.
+    }
   }
 
   private loadCatalog(locale: SupportedLocale, namespace: string): Promise<Catalog> {

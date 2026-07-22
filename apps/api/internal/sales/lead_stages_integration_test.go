@@ -97,6 +97,42 @@ VALUES ($1,$2,$3,'owner')`, workspaceID.PG(), membershipID.PG(), ownerID.PG()); 
 	if err != nil {
 		t.Fatal(err)
 	}
+	var stagesWithCustom []sales.LeadStageRecord
+	err = tenantService.WithWorkspace(ctx, principal, workspaceID, metadata.RequestID, tenancy.PermissionRecordsRead,
+		func(workspace *tenancy.WorkspaceTx) error {
+			var listErr error
+			stagesWithCustom, listErr = salesService.ListLeadStages(ctx, workspace, workspaceID)
+			return listErr
+		})
+	if err != nil {
+		t.Fatal(err)
+	}
+	order := make([]sales.StageOrderItem, 0, len(stagesWithCustom))
+	for index := len(stagesWithCustom) - 1; index >= 0; index-- {
+		stage := stagesWithCustom[index]
+		order = append(order, sales.StageOrderItem{ID: ids.MustParse(stage.ID), Version: stage.Version})
+	}
+	var reordered []sales.LeadStageRecord
+	err = tenantService.WithWorkspace(ctx, principal, workspaceID, metadata.RequestID, tenancy.PermissionLeadStagesManage,
+		func(workspace *tenancy.WorkspaceTx) error {
+			var reorderErr error
+			reordered, reorderErr = salesService.ReorderLeadStages(ctx, workspace, metadata, order)
+			return reorderErr
+		})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(reordered) != len(stagesWithCustom) || reordered[0].ID != custom.ID {
+		t.Fatalf("reordered first stage=%v, want custom %s", reordered, custom.ID)
+	}
+	err = tenantService.WithWorkspace(ctx, principal, workspaceID, metadata.RequestID, tenancy.PermissionLeadStagesManage,
+		func(workspace *tenancy.WorkspaceTx) error {
+			_, reorderErr := salesService.ReorderLeadStages(ctx, workspace, metadata, order)
+			return reorderErr
+		})
+	if !errors.Is(err, errx.ErrVersionConflict) {
+		t.Fatalf("stale reorder error=%v, want version conflict", err)
+	}
 	customID := ids.MustParse(custom.ID)
 	var lead sales.LeadRecord
 	err = tenantService.WithWorkspace(ctx, principal, workspaceID, metadata.RequestID, tenancy.PermissionRecordsCreate,
@@ -163,8 +199,8 @@ VALUES ($1,$2,$3,'owner')`, workspaceID.PG(), membershipID.PG(), ownerID.PG()); 
 			_, moveErr := salesService.MoveLeadStage(ctx, workspace, metadata, ids.MustParse(lead.ID), ids.MustParse(otherStageID), lead.Version)
 			return moveErr
 		})
-	if !errors.As(err, &validationError) {
-		t.Fatalf("cross-workspace stage move error=%v, want validation error", err)
+	if !errors.Is(err, errx.ErrForbidden) {
+		t.Fatalf("cross-workspace stage move error=%v, want forbidden", err)
 	}
 
 	var historyCount int

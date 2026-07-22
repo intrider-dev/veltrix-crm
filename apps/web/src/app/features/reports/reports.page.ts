@@ -19,7 +19,11 @@ import { ReportsStore } from './reports.store';
           <p>{{ i18n.t('reports.subtitle') }}</p>
         </div>
         @if (permissions.allows('reports.read')) {
-          <div class="segmented" role="group" [attr.aria-label]="i18n.t('reports.period')">
+          <div
+            class="segmented segmented-control"
+            role="group"
+            [attr.aria-label]="i18n.t('reports.period')"
+          >
             @for (days of periods; track days) {
               <button
                 mat-button

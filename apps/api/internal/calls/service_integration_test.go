@@ -141,6 +141,68 @@ INSERT INTO tenancy.memberships(workspace_id,id,user_id,role) VALUES
 		t.Fatal(err)
 	}
 
+	outsiderTx, err := appPool.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = outsiderTx.Exec(ctx,
+		`SELECT set_config('app.actor_id',$1,true), set_config('app.workspace_id',$2,true)`,
+		outsider.String(), workspaceID.String()); err != nil {
+		_ = outsiderTx.Rollback(ctx)
+		t.Fatal(err)
+	}
+	var rawCalls, rawParticipants int
+	if err = outsiderTx.QueryRow(ctx, `
+SELECT
+  (SELECT count(*) FROM collaboration.calls WHERE id=$1),
+  (SELECT count(*) FROM collaboration.call_participants WHERE call_id=$1)
+`, created.ID.PG()).Scan(&rawCalls, &rawParticipants); err != nil {
+		_ = outsiderTx.Rollback(ctx)
+		t.Fatal(err)
+	}
+	if rawCalls != 0 || rawParticipants != 0 {
+		_ = outsiderTx.Rollback(ctx)
+		t.Fatalf("RLS exposed private call to outsider: calls=%d participants=%d", rawCalls, rawParticipants)
+	}
+	_ = outsiderTx.Rollback(ctx)
+
+	callerTx, err := appPool.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = callerTx.Exec(ctx,
+		`SELECT set_config('app.actor_id',$1,true), set_config('app.workspace_id',$2,true)`,
+		caller.String(), workspaceID.String()); err != nil {
+		_ = callerTx.Rollback(ctx)
+		t.Fatal(err)
+	}
+	if _, err = callerTx.Exec(ctx, `
+UPDATE collaboration.calls SET created_by=$1 WHERE workspace_id=$2 AND id=$3
+`, recipient.PG(), workspaceID.PG(), created.ID.PG()); err == nil {
+		_ = callerTx.Rollback(ctx)
+		t.Fatal("call creator could mutate immutable call ownership directly")
+	}
+	_ = callerTx.Rollback(ctx)
+
+	participantTx, err := appPool.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = participantTx.Exec(ctx,
+		`SELECT set_config('app.actor_id',$1,true), set_config('app.workspace_id',$2,true)`,
+		caller.String(), workspaceID.String()); err != nil {
+		_ = participantTx.Rollback(ctx)
+		t.Fatal(err)
+	}
+	if _, err = participantTx.Exec(ctx, `
+UPDATE collaboration.call_participants SET user_id=$1
+WHERE workspace_id=$2 AND call_id=$3 AND user_id=$4
+`, outsider.PG(), workspaceID.PG(), created.ID.PG(), recipient.PG()); err == nil {
+		_ = participantTx.Rollback(ctx)
+		t.Fatal("call creator could mutate immutable participant identity directly")
+	}
+	_ = participantTx.Rollback(ctx)
+
 	var count int
 	var recipientsOnly, tokenAbsent bool
 	if err := admin.QueryRow(ctx, `

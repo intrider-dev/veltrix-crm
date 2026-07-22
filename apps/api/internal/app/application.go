@@ -18,6 +18,7 @@ import (
 	"github.com/veltrixcrm/veltrix-crm/apps/api/internal/identity"
 	"github.com/veltrixcrm/veltrix-crm/apps/api/internal/integrations"
 	"github.com/veltrixcrm/veltrix-crm/apps/api/internal/localization"
+	"github.com/veltrixcrm/veltrix-crm/apps/api/internal/mailbox"
 	"github.com/veltrixcrm/veltrix-crm/apps/api/internal/notifications"
 	"github.com/veltrixcrm/veltrix-crm/apps/api/internal/platform/config"
 	"github.com/veltrixcrm/veltrix-crm/apps/api/internal/platform/httpx"
@@ -50,6 +51,7 @@ type Application struct {
 	search       *search.Service
 	audit        *audit.Service
 	translations *localization.ContentService
+	mailbox      *mailbox.Service
 	attachments  *files.Service
 	advanced     *AdvancedHandlers
 	apiKeyAuth   *integrations.APIKeyHTTPAuthenticator
@@ -75,6 +77,10 @@ func New(cfg config.Config, logger *slog.Logger, pool *pgxpool.Pool, spa http.Ha
 		spa = http.NotFoundHandler()
 	}
 	aiService, err := buildAIService(cfg)
+	if err != nil {
+		return nil, err
+	}
+	mailboxService, err := buildMailboxService(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -109,6 +115,7 @@ func New(cfg config.Config, logger *slog.Logger, pool *pgxpool.Pool, spa http.Ha
 		ai:           aiService,
 		audit:        audit.NewService(),
 		translations: localization.NewContentService(cfg.SupportedLocales),
+		mailbox:      mailboxService,
 		hub:          notifications.NewHub(logger),
 		spa:          spa,
 		loginLimits:  httpx.NewRateLimiter(8, 1.0/30.0, 10_000),
@@ -119,7 +126,7 @@ func New(cfg config.Config, logger *slog.Logger, pool *pgxpool.Pool, spa http.Ha
 	}
 	application.activities = activities.NewService(application)
 	application.advanced, application.workers, err = BuildAdvancedComponents(
-		cfg, logger, pool, application.tenancy, nil,
+		cfg, logger, pool, application.tenancy, nil, mailboxService,
 	)
 	if err != nil {
 		return nil, err

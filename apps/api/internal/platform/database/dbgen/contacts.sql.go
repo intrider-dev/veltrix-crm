@@ -125,12 +125,18 @@ func (q *Queries) CreateContact(ctx context.Context, arg CreateContactParams) (C
 
 const getContact = `-- name: GetContact :one
 SELECT c.id, c.first_name, c.last_name, c.display_name, c.email, c.phone,
-       c.job_title, c.company_id, co.name AS company_name, c.owner_user_id,
+       c.job_title, c.company_id, COALESCE(co.name, '') AS company_name, c.owner_user_id,
        c.status, c.source, c.address, c.custom_fields, c.last_contacted_at,
        c.next_activity_at, c.version, c.created_at, c.updated_at
 FROM customers.contacts c
-LEFT JOIN customers.companies co
-  ON co.workspace_id = c.workspace_id AND co.id = c.company_id AND co.deleted_at IS NULL
+LEFT JOIN LATERAL (
+  SELECT company.name
+  FROM customers.companies company
+  WHERE company.workspace_id = c.workspace_id
+    AND company.id = c.company_id
+    AND company.deleted_at IS NULL
+  LIMIT 1
+) co ON true
 WHERE c.workspace_id = $1 AND c.id = $2 AND c.deleted_at IS NULL
 `
 
@@ -148,7 +154,7 @@ type GetContactRow struct {
 	Phone           *string            `json:"phone"`
 	JobTitle        *string            `json:"job_title"`
 	CompanyID       pgtype.UUID        `json:"company_id"`
-	CompanyName     *string            `json:"company_name"`
+	CompanyName     string             `json:"company_name"`
 	OwnerUserID     pgtype.UUID        `json:"owner_user_id"`
 	Status          string             `json:"status"`
 	Source          *string            `json:"source"`
@@ -298,11 +304,17 @@ func (q *Queries) ListContactTags(ctx context.Context, arg ListContactTagsParams
 
 const listContacts = `-- name: ListContacts :many
 SELECT c.id, c.first_name, c.last_name, c.display_name, c.email, c.phone,
-       c.company_id, co.name AS company_name, c.owner_user_id, c.status, c.source,
+       c.company_id, COALESCE(co.name, '') AS company_name, c.owner_user_id, c.status, c.source,
        c.custom_fields, c.version, c.created_at, c.updated_at
 FROM customers.contacts c
-LEFT JOIN customers.companies co
-  ON co.workspace_id = c.workspace_id AND co.id = c.company_id AND co.deleted_at IS NULL
+LEFT JOIN LATERAL (
+  SELECT company.name
+  FROM customers.companies company
+  WHERE company.workspace_id = c.workspace_id
+    AND company.id = c.company_id
+    AND company.deleted_at IS NULL
+  LIMIT 1
+) co ON true
 WHERE c.workspace_id = $1
   AND c.deleted_at IS NULL
   AND ($2::text = '' OR c.display_name ILIKE '%' || $2 || '%'
@@ -330,7 +342,7 @@ type ListContactsRow struct {
 	Email        *string            `json:"email"`
 	Phone        *string            `json:"phone"`
 	CompanyID    pgtype.UUID        `json:"company_id"`
-	CompanyName  *string            `json:"company_name"`
+	CompanyName  string             `json:"company_name"`
 	OwnerUserID  pgtype.UUID        `json:"owner_user_id"`
 	Status       string             `json:"status"`
 	Source       *string            `json:"source"`

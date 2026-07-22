@@ -25,22 +25,24 @@ import { NotificationsStore } from './notifications.store';
         </button>
       </header>
       <section class="panel feature-toolbar">
-        <button
-          mat-button
-          type="button"
-          [class.active]="!store.unreadOnly()"
-          (click)="setUnread(false)"
-        >
-          {{ i18n.t('notifications.all') }}
-        </button>
-        <button
-          mat-button
-          type="button"
-          [class.active]="store.unreadOnly()"
-          (click)="setUnread(true)"
-        >
-          {{ i18n.t('notifications.unread') }}
-        </button>
+        <div class="segmented-control">
+          <button
+            mat-button
+            type="button"
+            [class.active]="!store.unreadOnly()"
+            (click)="setUnread(false)"
+          >
+            {{ i18n.t('notifications.all') }}
+          </button>
+          <button
+            mat-button
+            type="button"
+            [class.active]="store.unreadOnly()"
+            (click)="setUnread(true)"
+          >
+            {{ i18n.t('notifications.unread') }}
+          </button>
+        </div>
         <span class="live-status" role="status">{{ i18n.t('notifications.live') }}</span>
       </section>
       @if (store.error()) {
@@ -92,10 +94,6 @@ import { NotificationsStore } from './notifications.store';
     </div>
   `,
   styles: `
-    .feature-toolbar .active {
-      color: var(--brand);
-      background: var(--brand-soft);
-    }
     .live-status {
       margin-inline-start: auto;
       color: var(--text-muted);

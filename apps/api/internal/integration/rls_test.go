@@ -95,6 +95,24 @@ VALUES($1,$2,'Blocked','Insert','Blocked Insert')
 		if count != 0 {
 			t.Fatal("foreign search document was visible")
 		}
+		if err := tx.QueryRow(ctx, `
+SELECT count(*)
+FROM search.query_documents($1, 'secret omega', 50)
+`, item.workspaceB.PG()).Scan(&count); err != nil {
+			t.Fatal(err)
+		}
+		if count != 0 {
+			t.Fatal("indexed search function returned a foreign workspace document")
+		}
+		if err := tx.QueryRow(ctx, `
+SELECT count(*)
+FROM search.query_documents($1, 'unique alpha', 50)
+`, item.workspaceA.PG()).Scan(&count); err != nil {
+			t.Fatal(err)
+		}
+		if count != 1 {
+			t.Fatalf("indexed search function returned %d own-workspace rows, want 1", count)
+		}
 		if err := tx.QueryRow(ctx, `SELECT count(*) FROM projects.projects WHERE id=$1`, item.projectB.PG()).Scan(&count); err != nil {
 			t.Fatal(err)
 		}
@@ -141,6 +159,39 @@ VALUES($1,$2,'Cross','Tenant','Cross Tenant')
 		}
 		if count != 0 {
 			t.Fatalf("pool reuse leaked %d rows", count)
+		}
+	})
+
+	t.Run("SSE trigger publishes on the current brand channel", func(t *testing.T) {
+		listener, err := item.admin.Acquire(ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer listener.Release()
+		if _, err := listener.Exec(ctx, `LISTEN veltrix_sse`); err != nil {
+			t.Fatal(err)
+		}
+		defer func() { _, _ = listener.Exec(context.Background(), `UNLISTEN veltrix_sse`) }()
+
+		eventID := mustID(t)
+		eventType := "integration.sse.channel"
+		if _, err := item.admin.Exec(ctx, `
+INSERT INTO notifications.sse_events(workspace_id,id,event_type,data,expires_at)
+VALUES ($1,$2,$3,'{}'::jsonb,now() + interval '1 minute')
+`, item.workspaceA.PG(), eventID.PG(), eventType); err != nil {
+			t.Fatal(err)
+		}
+
+		waitCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+		notification, err := listener.Conn().WaitForNotification(waitCtx)
+		if err != nil {
+			t.Fatalf("wait for veltrix_sse notification: %v", err)
+		}
+		wantPayload := item.workspaceA.String() + ":" + eventID.String() + ":" + eventType
+		if notification.Channel != "veltrix_sse" || notification.Payload != wantPayload {
+			t.Fatalf("unexpected notification channel=%q payload=%q, want channel=%q payload=%q",
+				notification.Channel, notification.Payload, "veltrix_sse", wantPayload)
 		}
 	})
 }

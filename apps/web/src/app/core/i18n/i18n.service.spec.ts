@@ -130,4 +130,34 @@ describe('I18nService', () => {
     await expect(service.loadNamespaces(['retry'])).resolves.toBeUndefined();
     expect(attempts).toBe(2);
   });
+
+  it('does not blank the SPA when one eager catalog stays unavailable', async () => {
+    const originalFetch = vi.mocked(fetch);
+    let problemAttempts = 0;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((input: string | URL | Request) => {
+        const path =
+          typeof input === 'string'
+            ? input
+            : input instanceof URL
+              ? input.pathname
+              : new URL(input.url).pathname;
+        if (path === '/i18n/en/problems.json') {
+          problemAttempts += 1;
+          return Promise.reject(new TypeError('Failed to fetch'));
+        }
+        return originalFetch(input);
+      }),
+    );
+
+    const service = TestBed.inject(I18nService);
+    await expect(service.initialize()).resolves.toBeUndefined();
+
+    expect(problemAttempts).toBe(2);
+    expect(service.t('common.product.welcome', { productName: 'CRM' })).toBe('Welcome to CRM');
+    expect(service.t('problems.problem.generic', { requestId: 'request' })).toBe(
+      'problems.problem.generic',
+    );
+  });
 });

@@ -9,8 +9,9 @@ SELECT count(*) FROM sales.pipelines WHERE workspace_id = $1;
 -- name: ListPipelineStagesForWorkspace :many
 SELECT id, pipeline_id, name, probability, forecast_category, position, version,
        created_at, updated_at
-FROM sales.pipeline_stages
-WHERE workspace_id = $1
+FROM sales.pipeline_stages stage
+WHERE stage.workspace_id = $1
+  AND sales.pipeline_stage_access_allowed(stage.workspace_id, stage.id, 'view')
 ORDER BY pipeline_id, position, id;
 
 -- name: UnsetPipelineDefaults :exec
@@ -89,16 +90,17 @@ RETURNING stage.id, stage.pipeline_id;
 SELECT id, name, email, phone, company_name, job_title, source, status, stage_id,
        owner_user_id, team_id, converted_contact_id, converted_company_id,
        converted_deal_id, custom_fields, version, created_at, updated_at
-FROM sales.leads
-WHERE workspace_id = sqlc.arg(workspace_id)
-  AND deleted_at IS NULL
-  AND (sqlc.arg(search_query)::text = '' OR name ILIKE '%' || sqlc.arg(search_query) || '%'
-       OR COALESCE(email_normalized, '') ILIKE '%' || lower(sqlc.arg(search_query)) || '%'
-       OR COALESCE(company_name, '') ILIKE '%' || sqlc.arg(search_query) || '%')
-  AND (sqlc.arg(status_filter)::text = '' OR status = sqlc.arg(status_filter))
-  AND (sqlc.arg(owner_id)::uuid IS NULL OR owner_user_id = sqlc.arg(owner_id))
-  AND (updated_at, id) < (sqlc.arg(cursor_updated_at)::timestamptz, sqlc.arg(cursor_id)::uuid)
-ORDER BY updated_at DESC, id DESC
+FROM sales.leads lead
+WHERE lead.workspace_id = sqlc.arg(workspace_id)
+  AND lead.deleted_at IS NULL
+  AND sales.lead_stage_access_allowed(lead.workspace_id, lead.stage_id, 'view')
+  AND (sqlc.arg(search_query)::text = '' OR lead.name ILIKE '%' || sqlc.arg(search_query) || '%'
+       OR COALESCE(lead.email_normalized, '') ILIKE '%' || lower(sqlc.arg(search_query)) || '%'
+       OR COALESCE(lead.company_name, '') ILIKE '%' || sqlc.arg(search_query) || '%')
+  AND (sqlc.arg(status_filter)::text = '' OR lead.status = sqlc.arg(status_filter))
+  AND (sqlc.arg(owner_id)::uuid IS NULL OR lead.owner_user_id = sqlc.arg(owner_id))
+  AND (lead.updated_at, lead.id) < (sqlc.arg(cursor_updated_at)::timestamptz, sqlc.arg(cursor_id)::uuid)
+ORDER BY lead.updated_at DESC, lead.id DESC
 LIMIT sqlc.arg(page_limit);
 
 -- name: GetLeadAdvanced :one
@@ -106,8 +108,9 @@ SELECT id, name, email, phone, company_name, job_title, source, status, stage_id
        owner_user_id, team_id, converted_contact_id, converted_company_id,
        converted_deal_id, custom_fields, version, deleted_at, deleted_by,
        created_at, updated_at
-FROM sales.leads
-WHERE workspace_id = $1 AND id = $2 AND deleted_at IS NULL;
+FROM sales.leads lead
+WHERE lead.workspace_id = $1 AND lead.id = $2 AND lead.deleted_at IS NULL
+  AND sales.lead_stage_access_allowed(lead.workspace_id, lead.stage_id, 'view');
 
 -- name: CreateLeadAdvanced :one
 INSERT INTO sales.leads (
@@ -147,10 +150,11 @@ RETURNING id, name, email, phone, company_name, job_title, source, status, stage
 -- name: ListLeadTrash :many
 SELECT id, name, email, company_name, status, owner_user_id, version, deleted_at,
        deleted_by, created_at, updated_at
-FROM sales.leads
-WHERE workspace_id = sqlc.arg(workspace_id) AND deleted_at IS NOT NULL
-  AND (deleted_at, id) < (sqlc.arg(cursor_deleted_at)::timestamptz, sqlc.arg(cursor_id)::uuid)
-ORDER BY deleted_at DESC, id DESC
+FROM sales.leads lead
+WHERE lead.workspace_id = sqlc.arg(workspace_id) AND lead.deleted_at IS NOT NULL
+  AND sales.lead_stage_access_allowed(lead.workspace_id, lead.stage_id, 'view')
+  AND (lead.deleted_at, lead.id) < (sqlc.arg(cursor_deleted_at)::timestamptz, sqlc.arg(cursor_id)::uuid)
+ORDER BY lead.deleted_at DESC, lead.id DESC
 LIMIT sqlc.arg(page_limit);
 
 -- name: MarkLeadConverted :one
@@ -172,16 +176,17 @@ RETURNING id, name, email, phone, company_name, job_title, source, status, stage
 SELECT id, pipeline_id, stage_id, name, contact_id, company_id, owner_user_id,
        amount_minor, currency, planned_start_date, expected_close_date, position, status, lost_reason,
        forecast_category, won_at, lost_at, custom_fields, version, created_at, updated_at
-FROM sales.deals
-WHERE workspace_id = sqlc.arg(workspace_id)
-  AND deleted_at IS NULL
-  AND (sqlc.arg(search_query)::text = '' OR name ILIKE '%' || sqlc.arg(search_query) || '%')
-  AND (sqlc.arg(pipeline_id)::uuid IS NULL OR pipeline_id = sqlc.arg(pipeline_id))
-  AND (sqlc.arg(stage_id)::uuid IS NULL OR stage_id = sqlc.arg(stage_id))
-  AND (sqlc.arg(owner_id)::uuid IS NULL OR owner_user_id = sqlc.arg(owner_id))
-  AND (sqlc.arg(status_filter)::text = '' OR status = sqlc.arg(status_filter))
-  AND (updated_at, id) < (sqlc.arg(cursor_updated_at)::timestamptz, sqlc.arg(cursor_id)::uuid)
-ORDER BY updated_at DESC, id DESC
+FROM sales.deals deal
+WHERE deal.workspace_id = sqlc.arg(workspace_id)
+  AND deal.deleted_at IS NULL
+  AND sales.pipeline_stage_access_allowed(deal.workspace_id, deal.stage_id, 'view')
+  AND (sqlc.arg(search_query)::text = '' OR deal.name ILIKE '%' || sqlc.arg(search_query) || '%')
+  AND (sqlc.arg(pipeline_id)::uuid IS NULL OR deal.pipeline_id = sqlc.arg(pipeline_id))
+  AND (sqlc.arg(stage_id)::uuid IS NULL OR deal.stage_id = sqlc.arg(stage_id))
+  AND (sqlc.arg(owner_id)::uuid IS NULL OR deal.owner_user_id = sqlc.arg(owner_id))
+  AND (sqlc.arg(status_filter)::text = '' OR deal.status = sqlc.arg(status_filter))
+  AND (deal.updated_at, deal.id) < (sqlc.arg(cursor_updated_at)::timestamptz, sqlc.arg(cursor_id)::uuid)
+ORDER BY deal.updated_at DESC, deal.id DESC
 LIMIT sqlc.arg(page_limit);
 
 -- name: GetDealAdvanced :one
@@ -189,8 +194,9 @@ SELECT id, pipeline_id, stage_id, name, contact_id, company_id, owner_user_id,
        amount_minor, currency, planned_start_date, expected_close_date, position, status, lost_reason,
        forecast_category, won_at, lost_at, custom_fields, version, deleted_at,
        deleted_by, created_at, updated_at
-FROM sales.deals
-WHERE workspace_id = $1 AND id = $2 AND deleted_at IS NULL;
+FROM sales.deals deal
+WHERE deal.workspace_id = $1 AND deal.id = $2 AND deal.deleted_at IS NULL
+  AND sales.pipeline_stage_access_allowed(deal.workspace_id, deal.stage_id, 'view');
 
 -- name: UpdateDealAdvanced :one
 UPDATE sales.deals
@@ -233,23 +239,25 @@ RETURNING id, pipeline_id, stage_id, name, contact_id, company_id, owner_user_id
 -- name: ListDealTrash :many
 SELECT id, pipeline_id, stage_id, name, status, amount_minor, currency,
        owner_user_id, version, deleted_at, deleted_by, created_at, updated_at
-FROM sales.deals
-WHERE workspace_id = sqlc.arg(workspace_id) AND deleted_at IS NOT NULL
-  AND (deleted_at, id) < (sqlc.arg(cursor_deleted_at)::timestamptz, sqlc.arg(cursor_id)::uuid)
-ORDER BY deleted_at DESC, id DESC
+FROM sales.deals deal
+WHERE deal.workspace_id = sqlc.arg(workspace_id) AND deal.deleted_at IS NOT NULL
+  AND sales.pipeline_stage_access_allowed(deal.workspace_id, deal.stage_id, 'view')
+  AND (deal.deleted_at, deal.id) < (sqlc.arg(cursor_deleted_at)::timestamptz, sqlc.arg(cursor_id)::uuid)
+ORDER BY deal.deleted_at DESC, deal.id DESC
 LIMIT sqlc.arg(page_limit);
 
 -- name: ListKanbanStageDeals :many
 SELECT id, pipeline_id, stage_id, name, contact_id, company_id, owner_user_id,
        amount_minor, currency, planned_start_date, expected_close_date, position, forecast_category,
        version, updated_at
-FROM sales.deals
-WHERE workspace_id = sqlc.arg(workspace_id)
-  AND pipeline_id = sqlc.arg(pipeline_id)
-  AND stage_id = sqlc.arg(stage_id)
-  AND status = 'open' AND deleted_at IS NULL
-  AND (position, id) > (sqlc.arg(after_position)::integer, sqlc.arg(after_id)::uuid)
-ORDER BY position, id
+FROM sales.deals deal
+WHERE deal.workspace_id = sqlc.arg(workspace_id)
+  AND deal.pipeline_id = sqlc.arg(pipeline_id)
+  AND deal.stage_id = sqlc.arg(stage_id)
+  AND sales.pipeline_stage_access_allowed(deal.workspace_id, deal.stage_id, 'view')
+  AND deal.status = 'open' AND deal.deleted_at IS NULL
+  AND (deal.position, deal.id) > (sqlc.arg(after_position)::integer, sqlc.arg(after_id)::uuid)
+ORDER BY deal.position, deal.id
 LIMIT sqlc.arg(page_limit);
 
 -- name: ListDealStageHistoryAdvanced :many

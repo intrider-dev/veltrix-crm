@@ -21,51 +21,8 @@
   background: var(--surface-subtle);
   outline: none;
 }
-.toolbar {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  padding: 0.75rem;
-}
-.mode-switch {
-  display: flex;
-  padding: 0.2rem;
-  border-radius: 0.55rem;
-  background: var(--surface-subtle);
-}
-.mode-switch .selected {
-  color: var(--brand);
-  background: var(--surface-raised);
-  box-shadow: var(--shadow-sm);
-}
-.search-field {
-  min-width: min(19rem, 100%);
-  margin-left: auto;
-}
-.compact-select {
-  display: grid;
-  gap: 0.2rem;
-  min-width: 9rem;
-}
-.compact-select > span {
-  color: var(--text-muted);
-  font-size: 0.7rem;
-}
-.compact-select select {
-  min-height: 2.55rem;
-  padding: 0 0.65rem;
-  border: 1px solid var(--border);
-  border-radius: 0.45rem;
-  color: var(--text);
-  background: var(--surface-raised);
-  font: inherit;
-}
-.compact-select select:focus-visible {
-  outline: 2px solid var(--brand);
-  outline-offset: 2px;
-}
 .saved-view-select {
-  min-width: 11rem;
+  min-width: 10rem;
 }
 .company-summary {
   min-width: 0;
@@ -186,27 +143,13 @@ button {
 button:active {
   transform: scale(0.98);
 }
-@media (max-width: 900px) {
-  .toolbar {
-    flex-wrap: wrap;
-  }
-  .search-field {
-    order: 2;
-    width: 100%;
-    margin-left: 0;
+@media (min-width: 641px) and (max-width: 900px) {
+  .company-toolbar .filter-search {
+    order: 3;
+    flex-basis: 100%;
   }
 }
 @media (max-width: 640px) {
-  .toolbar,
-  .mode-switch {
-    align-items: stretch;
-  }
-  .toolbar {
-    flex-direction: column;
-  }
-  .mode-switch > button {
-    flex: 1;
-  }
   .company-list > a,
   .trash-row {
     grid-template-columns: auto minmax(0, 1fr) auto;

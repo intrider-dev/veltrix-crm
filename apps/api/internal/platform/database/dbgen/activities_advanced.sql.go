@@ -318,7 +318,13 @@ WHERE membership.workspace_id = $1
     membership.user_id = $2
     OR membership.user_id = $3
     OR membership.user_id = $4
-    OR membership.role IN ('owner', 'admin')
+    OR EXISTS (
+      SELECT 1 FROM tenancy.workspace_roles role
+      WHERE role.workspace_id = membership.workspace_id
+        AND role.id = membership.role_id
+        AND role.is_system
+        AND role.role_key IN ('owner', 'admin')
+    )
     OR (
       $5::text = 'department'
       AND EXISTS (

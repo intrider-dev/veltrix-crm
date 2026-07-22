@@ -49,7 +49,11 @@ import { IconComponent } from '../../shared/icon/icon.component';
               >{{ i18n.t('settings.workspace.defaultLanguage') }}: {{ workspaceLocale() }}</small
             >
           </div>
-          <div class="segmented" role="group" [attr.aria-label]="i18n.t('settings.language.label')">
+          <div
+            class="segmented segmented-control"
+            role="group"
+            [attr.aria-label]="i18n.t('settings.language.label')"
+          >
             @for (locale of i18n.supportedLocales; track locale) {
               <button
                 mat-button
@@ -98,7 +102,7 @@ import { IconComponent } from '../../shared/icon/icon.component';
         <div class="setting-row">
           <strong>{{ i18n.t('settings.appearance.comfortable') }}</strong>
           <div
-            class="segmented"
+            class="segmented segmented-control"
             role="group"
             [attr.aria-label]="i18n.t('settings.appearance.comfortable')"
           >

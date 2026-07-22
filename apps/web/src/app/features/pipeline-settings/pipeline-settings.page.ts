@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { RouterLink } from '@angular/router';
 
 import type {
   PipelineInput,
@@ -13,6 +14,7 @@ import type {
 import { Permissions } from '../../core/auth/permissions';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { ToastService } from '../../shared/feedback/toast.service';
+import { StageAccessEditorComponent } from '../../shared/stage-access/stage-access-editor.component';
 import { ErrorPanelComponent } from '../../shared/state/error-panel.component';
 import { PipelineSettingsStore } from './pipeline-settings.store';
 
@@ -20,7 +22,14 @@ type ForecastCategory = PipelineStageInput['forecastCategory'];
 
 @Component({
   selector: 'app-pipeline-settings-page',
-  imports: [ErrorPanelComponent, MatButtonModule, MatFormFieldModule, MatInputModule],
+  imports: [
+    ErrorPanelComponent,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    RouterLink,
+    StageAccessEditorComponent,
+  ],
   providers: [PipelineSettingsStore],
   template: `
     <div class="page pipeline-settings">
@@ -29,11 +38,27 @@ type ForecastCategory = PipelineStageInput['forecastCategory'];
           <h1>{{ i18n.t('pipelines.title') }}</h1>
           <p>{{ i18n.t('pipelines.subtitle') }}</p>
         </div>
-        @if (canManage()) {
-          <button mat-flat-button type="button" (click)="startPipelineCreate()">
-            {{ i18n.t('pipelines.addPipeline') }}
-          </button>
-        }
+        <div class="header-actions">
+          @if (canTranslate()) {
+            <a
+              mat-stroked-button
+              routerLink="/settings/translations"
+              [queryParams]="{ namespace: 'sales.pipeline.name' }"
+              >{{ i18n.t('pipelines.translatePipelines') }}</a
+            >
+            <a
+              mat-stroked-button
+              routerLink="/settings/translations"
+              [queryParams]="{ namespace: 'sales.pipeline_stage.name' }"
+              >{{ i18n.t('pipelines.translateStages') }}</a
+            >
+          }
+          @if (canManage()) {
+            <button mat-flat-button type="button" (click)="startPipelineCreate()">
+              {{ i18n.t('pipelines.addPipeline') }}
+            </button>
+          }
+        </div>
       </header>
 
       @if (store.error()) {
@@ -122,6 +147,15 @@ type ForecastCategory = PipelineStageInput['forecastCategory'];
         </section>
       }
 
+      @if (accessStage(); as stage) {
+        <app-stage-access-editor
+          kind="deal"
+          [stageId]="stage.id"
+          [stageName]="stage.displayName"
+          (closed)="accessStage.set(null)"
+        />
+      }
+
       <section class="pipeline-list" [attr.aria-busy]="store.loading()">
         @for (pipeline of store.pipelines(); track pipeline.id) {
           <article class="panel pipeline-card">
@@ -191,6 +225,9 @@ type ForecastCategory = PipelineStageInput['forecastCategory'];
                       <button mat-button type="button" (click)="startStageEdit(pipeline, stage)">
                         {{ i18n.t('common.action.edit') }}
                       </button>
+                      <button mat-button type="button" (click)="accessStage.set(stage)">
+                        {{ i18n.t('pipelines.access') }}
+                      </button>
                       <button mat-button type="button" (click)="deleteStage(stage)">
                         {{ i18n.t('common.action.delete') }}
                       </button>
@@ -211,6 +248,12 @@ type ForecastCategory = PipelineStageInput['forecastCategory'];
   styles: `
     .pipeline-settings {
       max-width: 70rem;
+    }
+    .header-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 0.5rem;
     }
     .pipeline-list {
       display: grid;
@@ -328,6 +371,7 @@ export class PipelineSettingsPage implements OnInit {
   readonly pipelineDefault = signal(false);
   readonly stagePipeline = signal<PipelineRecord | null>(null);
   readonly editingStage = signal<PipelineStageRecord | null>(null);
+  readonly accessStage = signal<PipelineStageRecord | null>(null);
   readonly stageName = signal('');
   readonly stageProbability = signal(20);
   readonly stageForecast = signal<ForecastCategory>('pipeline');
@@ -337,6 +381,9 @@ export class PipelineSettingsPage implements OnInit {
   }
   canManage(): boolean {
     return this.permissions.allows('deal_stages.manage');
+  }
+  canTranslate(): boolean {
+    return this.permissions.allows('settings.write');
   }
   setPipelineName(event: Event): void {
     this.pipelineName.set((event.target as HTMLInputElement).value);

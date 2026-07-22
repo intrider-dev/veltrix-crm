@@ -49,6 +49,23 @@ import { ContactsStore, type DeletedContact } from './contacts.store';
 
 type ImportField = Exclude<keyof ContactImportMapping, 'customFields'>;
 
+// AG Grid themes allocate generated CSS and internal class-name metadata.
+// Reuse one immutable theme across route instances instead of rebuilding it
+// whenever the contacts list is reattached.
+const CONTACTS_GRID_THEME = themeQuartz.withParams({
+  accentColor: '#506fdd',
+  backgroundColor: 'var(--surface-raised)',
+  borderColor: 'var(--border)',
+  foregroundColor: 'var(--text)',
+  headerBackgroundColor: 'var(--surface-subtle)',
+  oddRowBackgroundColor: 'var(--surface-raised)',
+  rowHoverColor: 'var(--surface-selected)',
+  fontFamily: 'system-ui, sans-serif',
+  fontSize: 13,
+  spacing: 6,
+  wrapperBorderRadius: 0,
+});
+
 @Component({
   selector: 'app-contacts-page',
   imports: [
@@ -91,46 +108,57 @@ type ImportField = Exclude<keyof ContactImportMapping, 'customFields'>;
         </div>
       </header>
 
-      <section class="view-switcher panel" [attr.aria-label]="i18n.t('contacts.view.label')">
-        <button
-          type="button"
-          [class.active]="store.mode() === 'contacts'"
-          [attr.aria-pressed]="store.mode() === 'contacts'"
-          (click)="setMode('contacts')"
+      <form
+        class="panel filter-toolbar contacts-filter-toolbar"
+        (submit)="search($event)"
+        role="search"
+        [attr.aria-label]="i18n.t('contacts.filter.toolbarLabel')"
+      >
+        <div
+          class="view-switcher segmented-control"
+          role="group"
+          [attr.aria-label]="i18n.t('contacts.view.label')"
         >
-          {{ i18n.t('contacts.contacts.view.all') }}
-        </button>
-        <button
-          type="button"
-          [class.active]="store.mode() === 'trash'"
-          [attr.aria-pressed]="store.mode() === 'trash'"
-          (click)="setMode('trash')"
-        >
-          {{ i18n.t('contacts.trash.title') }}
-        </button>
-      </section>
+          <button
+            type="button"
+            [class.active]="store.mode() === 'contacts'"
+            [attr.aria-pressed]="store.mode() === 'contacts'"
+            (click)="setMode('contacts')"
+          >
+            {{ i18n.t('contacts.contacts.view.all') }}
+          </button>
+          <button
+            type="button"
+            [class.active]="store.mode() === 'trash'"
+            [attr.aria-pressed]="store.mode() === 'trash'"
+            (click)="setMode('trash')"
+          >
+            {{ i18n.t('contacts.trash.title') }}
+          </button>
+        </div>
 
-      @if (store.mode() === 'contacts') {
-        <section class="toolbar panel">
-          <form (submit)="search($event)" role="search">
-            <mat-form-field appearance="outline" subscriptSizing="dynamic">
-              <mat-label>{{ i18n.t('contacts.contacts.search') }}</mat-label>
-              <input matInput type="search" [value]="store.query()" (input)="setQuery($event)" />
-            </mat-form-field>
-            <label class="compact-field">
-              <span>{{ i18n.t('common.field.status') }}</span>
-              <select [value]="store.status()" (change)="setStatus($event)">
-                <option value="all">{{ i18n.t('contacts.filter.allStatuses') }}</option>
-                <option value="active">{{ i18n.t('common.status.active') }}</option>
-                <option value="inactive">{{ i18n.t('common.status.inactive') }}</option>
-              </select>
-            </label>
-            <button mat-button type="submit">{{ i18n.t('common.action.search') }}</button>
-          </form>
-        </section>
-
-        <section class="saved-views panel" [attr.aria-label]="i18n.t('contacts.savedViews.title')">
-          <label class="compact-field saved-view-picker">
+        @if (store.mode() === 'contacts') {
+          <label class="filter-field filter-search">
+            <span class="visually-hidden">{{ i18n.t('contacts.contacts.search') }}</span>
+            <span class="filter-search-control">
+              <app-icon name="search" />
+              <input
+                type="search"
+                [placeholder]="i18n.t('contacts.contacts.search')"
+                [value]="store.query()"
+                (input)="setQuery($event)"
+              />
+            </span>
+          </label>
+          <label class="filter-field">
+            <span>{{ i18n.t('common.field.status') }}</span>
+            <select [value]="store.status()" (change)="setStatus($event)">
+              <option value="all">{{ i18n.t('contacts.filter.allStatuses') }}</option>
+              <option value="active">{{ i18n.t('common.status.active') }}</option>
+              <option value="inactive">{{ i18n.t('common.status.inactive') }}</option>
+            </select>
+          </label>
+          <label class="filter-field saved-view-picker">
             <span>{{ i18n.t('contacts.savedViews.title') }}</span>
             <select (change)="applySavedView($event)">
               <option value="" [selected]="selectedSavedView() === null">
@@ -143,34 +171,11 @@ type ImportField = Exclude<keyof ContactImportMapping, 'customFields'>;
               }
             </select>
           </label>
+          <button mat-stroked-button type="submit">{{ i18n.t('common.action.search') }}</button>
           @if (permissions.allows('records.update')) {
-            @if (savedViewEditorOpen()) {
-              <form class="saved-view-form" (submit)="saveCurrentView($event)">
-                <label>
-                  <span>{{ i18n.t('contacts.savedViews.name') }}</span>
-                  <input
-                    #savedViewNameInput
-                    type="text"
-                    maxlength="120"
-                    [value]="savedViewName()"
-                    (input)="setSavedViewName($event)"
-                  />
-                </label>
-                <button mat-flat-button type="submit" [disabled]="store.operationPending()">
-                  {{ i18n.t('contacts.savedViews.save') }}
-                </button>
-                <button mat-button type="button" (click)="closeSavedViewEditor()">
-                  {{ i18n.t('common.action.cancel') }}
-                </button>
-                @if (savedViewError()) {
-                  <span class="inline-error" role="alert">{{ savedViewError() }}</span>
-                }
-              </form>
-            } @else {
-              <button mat-button type="button" (click)="openSavedViewEditor()">
-                {{ i18n.t('contacts.savedViews.saveCurrent') }}
-              </button>
-            }
+            <button mat-button type="button" (click)="openSavedViewEditor()">
+              {{ i18n.t('contacts.savedViews.saveCurrent') }}
+            </button>
             @if (selectedSavedView(); as selectedView) {
               <button
                 mat-button
@@ -183,6 +188,32 @@ type ImportField = Exclude<keyof ContactImportMapping, 'customFields'>;
               </button>
             }
           }
+        }
+      </form>
+
+      @if (store.mode() === 'contacts' && savedViewEditorOpen()) {
+        <section class="saved-views panel" [attr.aria-label]="i18n.t('contacts.savedViews.title')">
+          <form class="saved-view-form" (submit)="saveCurrentView($event)">
+            <label>
+              <span>{{ i18n.t('contacts.savedViews.name') }}</span>
+              <input
+                #savedViewNameInput
+                type="text"
+                maxlength="120"
+                [value]="savedViewName()"
+                (input)="setSavedViewName($event)"
+              />
+            </label>
+            <button mat-flat-button type="submit" [disabled]="store.operationPending()">
+              {{ i18n.t('contacts.savedViews.save') }}
+            </button>
+            <button mat-button type="button" (click)="closeSavedViewEditor()">
+              {{ i18n.t('common.action.cancel') }}
+            </button>
+            @if (savedViewError()) {
+              <span class="inline-error" role="alert">{{ savedViewError() }}</span>
+            }
+          </form>
         </section>
       }
 
@@ -308,7 +339,6 @@ type ImportField = Exclude<keyof ContactImportMapping, 'customFields'>;
               [animateRows]="false"
               [rowHeight]="44"
               [headerHeight]="42"
-              [domLayout]="'autoHeight'"
               [ariaLabel]="
                 i18n.t(
                   permissions.allows('records.update') || permissions.allows('records.delete')
@@ -690,19 +720,7 @@ export class ContactsPage implements OnInit, OnDestroy {
     email(schema.email);
   });
   readonly gridModules = [ClientSideRowModelModule, RowSelectionModule];
-  readonly gridTheme = themeQuartz.withParams({
-    accentColor: '#506fdd',
-    backgroundColor: 'var(--surface-raised)',
-    borderColor: 'var(--border)',
-    foregroundColor: 'var(--text)',
-    headerBackgroundColor: 'var(--surface-subtle)',
-    oddRowBackgroundColor: 'var(--surface-raised)',
-    rowHoverColor: 'var(--surface-selected)',
-    fontFamily: 'system-ui, sans-serif',
-    fontSize: 13,
-    spacing: 6,
-    wrapperBorderRadius: 0,
-  });
+  readonly gridTheme = CONTACTS_GRID_THEME;
   readonly defaultColumn: ColDef<Contact> = {
     flex: 1,
     minWidth: 130,

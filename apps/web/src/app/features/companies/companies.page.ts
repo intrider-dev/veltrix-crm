@@ -42,8 +42,15 @@ import { CompaniesStore } from './companies.store';
         }
       </header>
 
-      <section class="panel toolbar" [attr.aria-label]="i18n.t('companies.filters.search')">
-        <div class="mode-switch" role="group" [attr.aria-label]="i18n.t('common.nav.companies')">
+      <section
+        class="panel filter-toolbar company-toolbar"
+        [attr.aria-label]="i18n.t('companies.filters.search')"
+      >
+        <div
+          class="mode-switch segmented-control"
+          role="group"
+          [attr.aria-label]="i18n.t('common.nav.companies')"
+        >
           <button
             mat-button
             type="button"
@@ -63,12 +70,19 @@ import { CompaniesStore } from './companies.store';
         </div>
 
         @if (store.mode() === 'companies') {
-          <mat-form-field appearance="outline" class="search-field" subscriptSizing="dynamic">
-            <mat-label>{{ i18n.t('companies.filters.search') }}</mat-label>
-            <app-icon matPrefix name="search" />
-            <input matInput type="search" [value]="store.query()" (input)="searchChanged($event)" />
-          </mat-form-field>
-          <label class="compact-select">
+          <label class="filter-field filter-search">
+            <span class="visually-hidden">{{ i18n.t('companies.filters.search') }}</span>
+            <span class="filter-search-control">
+              <app-icon name="search" />
+              <input
+                type="search"
+                [placeholder]="i18n.t('companies.filters.search')"
+                [value]="store.query()"
+                (input)="searchChanged($event)"
+              />
+            </span>
+          </label>
+          <label class="filter-field">
             <span>{{ i18n.t('common.field.status') }}</span>
             <select [value]="store.status()" (change)="statusChanged($event)">
               <option value="all">{{ i18n.t('companies.filters.allStatuses') }}</option>
@@ -76,7 +90,7 @@ import { CompaniesStore } from './companies.store';
               <option value="inactive">{{ i18n.t('common.status.inactive') }}</option>
             </select>
           </label>
-          <label class="compact-select saved-view-select">
+          <label class="filter-field saved-view-select">
             <span>{{ i18n.t('companies.savedViews.title') }}</span>
             <select [value]="selectedViewId()" (change)="savedViewChanged($event)">
               <option value="">{{ i18n.t('companies.savedViews.current') }}</option>

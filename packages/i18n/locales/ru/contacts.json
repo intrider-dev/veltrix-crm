@@ -41,6 +41,7 @@
   "duplicates.title": "Возможные дубликаты",
   "export.action": "Экспорт текущего вида",
   "filter.allStatuses": "Все статусы",
+  "filter.toolbarLabel": "Фильтры контактов",
   "grid.label": "Таблица контактов. Пробел выбирает строку, Enter открывает контакт.",
   "grid.readonlyLabel": "Таблица контактов. Enter открывает контакт.",
   "import.action": "Импорт CSV",

@@ -45,28 +45,37 @@ test("desktop Kanban persists an actual pointer drag between stages", async ({
   const handle = card.locator(".drag-handle");
   const dropZone = targetStage.locator(".drop-zone");
   await handle.scrollIntoViewIfNeeded();
-  await dropZone.scrollIntoViewIfNeeded();
   const sourceBox = await handle.boundingBox();
   const targetBox = await dropZone.boundingBox();
   expect(sourceBox, "drag handle bounding box").not.toBeNull();
   expect(targetBox, "target stage bounding box").not.toBeNull();
+
+  // Columns can be several viewports tall. Dropping at `targetBox.y + 30`
+  // would point above the viewport after the newly-created source card is
+  // scrolled into view. Use the visible part of the adjacent drop zone while
+  // still exercising actual pointer events through CDK drag-and-drop.
+  const viewport = page.viewportSize();
+  expect(viewport, "desktop viewport").not.toBeNull();
+  const sourceX = sourceBox!.x + sourceBox!.width / 2;
+  const sourceY = sourceBox!.y + sourceBox!.height / 2;
+  const targetX = targetBox!.x + targetBox!.width / 2;
+  const targetTop = Math.max(targetBox!.y + 8, 8);
+  const targetBottom = Math.min(
+    targetBox!.y + targetBox!.height - 8,
+    viewport!.height - 8,
+  );
+  expect(targetBottom, "visible target drop-zone bottom").toBeGreaterThan(targetTop);
+  const targetY = Math.min(Math.max(sourceY, targetTop), targetBottom);
 
   const moveResponse = page.waitForResponse(
     (response) =>
       response.request().method() === "PATCH" &&
       response.url().includes(`/deals/${dealId}/stage`),
   );
-  await page.mouse.move(
-    sourceBox!.x + sourceBox!.width / 2,
-    sourceBox!.y + sourceBox!.height / 2,
-  );
+  await page.mouse.move(sourceX, sourceY);
   await page.mouse.down();
-  await page.mouse.move(sourceBox!.x + 20, sourceBox!.y + 20, { steps: 5 });
-  await page.mouse.move(
-    targetBox!.x + targetBox!.width / 2,
-    targetBox!.y + 30,
-    { steps: 20 },
-  );
+  await page.mouse.move(sourceX + 20, sourceY + 20, { steps: 5 });
+  await page.mouse.move(targetX, targetY, { steps: 20 });
   await page.mouse.up();
   expect((await moveResponse).status()).toBe(200);
   await expect(

@@ -63,7 +63,12 @@ describe('DealsStore', () => {
       {
         id: 'pipeline-1',
         name: 'Sales',
+        displayName: 'Sales',
+        isDefault: true,
+        version: 1,
         stages: [],
+        createdAt: '2026-07-22T00:00:00Z',
+        updatedAt: '2026-07-22T00:00:00Z',
       },
     ]);
     store.activePipelineId.set('pipeline-1');

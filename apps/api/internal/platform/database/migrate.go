@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"io/fs"
 	"sort"
@@ -38,8 +39,11 @@ func Migrate(ctx context.Context, adminURL, appPassword string) error {
 CREATE TABLE IF NOT EXISTS public.schema_migrations (
   version bigint PRIMARY KEY,
   name text NOT NULL,
+  checksum text,
   applied_at timestamptz NOT NULL DEFAULT now()
-)`); err != nil {
+);
+ALTER TABLE public.schema_migrations ADD COLUMN IF NOT EXISTS checksum text
+`); err != nil {
 		return fmt.Errorf("create migration ledger: %w", err)
 	}
 
@@ -60,25 +64,49 @@ CREATE TABLE IF NOT EXISTS public.schema_migrations (
 		if err != nil {
 			return fmt.Errorf("migration %q: %w", entry.Name(), err)
 		}
-		var exists bool
-		if err := conn.QueryRow(ctx, "SELECT EXISTS (SELECT 1 FROM public.schema_migrations WHERE version=$1)", version).Scan(&exists); err != nil {
-			return fmt.Errorf("check migration %d: %w", version, err)
-		}
-		if exists {
-			continue
-		}
 		contents, err := migrations.Files.ReadFile(entry.Name())
 		if err != nil {
 			return fmt.Errorf("read migration %q: %w", entry.Name(), err)
 		}
-		if err := applyMigration(ctx, conn, version, entry.Name(), string(contents), appPassword); err != nil {
+		checksum := migrationChecksum(contents)
+		var recordedName string
+		var recordedChecksum *string
+		err = conn.QueryRow(ctx, `
+SELECT name, checksum FROM public.schema_migrations WHERE version=$1
+`, version).Scan(&recordedName, &recordedChecksum)
+		if err == nil {
+			if recordedName != entry.Name() {
+				return fmt.Errorf("migration %d name changed: recorded %q, embedded %q", version, recordedName, entry.Name())
+			}
+			if recordedChecksum == nil {
+				if _, err := conn.Exec(ctx, `
+UPDATE public.schema_migrations SET checksum=$2 WHERE version=$1 AND checksum IS NULL
+`, version, checksum); err != nil {
+					return fmt.Errorf("backfill migration %d checksum: %w", version, err)
+				}
+				continue
+			}
+			if *recordedChecksum != checksum {
+				return fmt.Errorf("migration %d checksum changed: recorded %s, embedded %s", version, *recordedChecksum, checksum)
+			}
+			continue
+		}
+		if err != pgx.ErrNoRows {
+			return fmt.Errorf("check migration %d: %w", version, err)
+		}
+		if err := applyMigration(ctx, conn, version, entry.Name(), string(contents), checksum, appPassword); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func applyMigration(ctx context.Context, conn *pgxpool.Conn, version int64, name, sql, appPassword string) error {
+func migrationChecksum(contents []byte) string {
+	sum := sha256.Sum256(contents)
+	return fmt.Sprintf("sha256:%x", sum)
+}
+
+func applyMigration(ctx context.Context, conn *pgxpool.Conn, version int64, name, sql, checksum, appPassword string) error {
 	tx, err := conn.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		return fmt.Errorf("begin migration %d: %w", version, err)
@@ -90,7 +118,9 @@ func applyMigration(ctx context.Context, conn *pgxpool.Conn, version int64, name
 	if _, err := tx.Exec(ctx, sql); err != nil {
 		return fmt.Errorf("apply migration %d (%s): %w", version, name, err)
 	}
-	if _, err := tx.Exec(ctx, "INSERT INTO public.schema_migrations(version, name) VALUES($1, $2)", version, name); err != nil {
+	if _, err := tx.Exec(ctx, `
+INSERT INTO public.schema_migrations(version, name, checksum) VALUES($1, $2, $3)
+`, version, name, checksum); err != nil {
 		return fmt.Errorf("record migration %d: %w", version, err)
 	}
 	if err := tx.Commit(ctx); err != nil {

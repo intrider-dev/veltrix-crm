@@ -197,6 +197,112 @@ p {
 .feature-toolbar .grow {
   flex: 1;
 }
+.filter-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.65rem;
+  min-height: 4.25rem;
+  padding: 0.75rem;
+}
+.filter-field {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 9rem;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+.filter-field > input,
+.filter-field > select,
+.filter-search-control {
+  min-height: var(--control-height);
+  border: 1px solid var(--border);
+  border-radius: var(--control-radius);
+  color: var(--text);
+  background-color: var(--surface-raised);
+}
+.filter-field > input,
+.filter-field > select {
+  padding-inline: var(--control-inline-padding);
+  font-size: 0.875rem;
+  line-height: 1.3;
+}
+.filter-field > select {
+  appearance: none;
+  padding-inline-end: 2.35rem;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
+    linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
+  background-position:
+    calc(100% - 1rem) 50%,
+    calc(100% - 0.72rem) 50%;
+  background-size:
+    0.3rem 0.3rem,
+    0.3rem 0.3rem;
+  background-repeat: no-repeat;
+}
+.filter-field > :is(input, select):focus-visible,
+.filter-search-control:focus-within {
+  border-color: var(--brand);
+  outline: 3px solid var(--focus);
+  outline-offset: 1px;
+}
+.filter-search {
+  min-width: min(15rem, 100%);
+  flex: 1 1 15rem;
+}
+.filter-search-control {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.5rem;
+  padding-inline: var(--control-inline-padding);
+}
+.filter-search-control app-icon {
+  width: var(--control-icon-size);
+  height: var(--control-icon-size);
+  color: var(--text-muted);
+}
+.filter-search-control input {
+  width: 100%;
+  min-width: 0;
+  height: calc(var(--control-height) - 2px);
+  padding: 0;
+  border: 0;
+  outline: 0;
+  color: var(--text);
+  background: transparent;
+  font-size: 0.875rem;
+  line-height: 1.3;
+}
+.segmented-control {
+  display: inline-flex;
+  width: fit-content;
+  min-height: var(--control-height);
+  padding: 0.2rem;
+  border: 1px solid var(--border);
+  border-radius: var(--control-radius);
+  background: var(--surface-subtle);
+}
+.segmented-control > button,
+.segmented-control > .mat-mdc-button-base {
+  min-width: 0;
+  min-height: calc(var(--control-height) - 0.5rem);
+  height: calc(var(--control-height) - 0.5rem);
+  padding-inline: 0.75rem;
+  border: 0;
+  border-radius: calc(var(--control-radius) - 0.2rem);
+  color: var(--text-muted);
+  background: transparent;
+  box-shadow: none;
+  white-space: nowrap;
+}
+.segmented-control > button:is(.active, .selected, [aria-pressed='true']) {
+  color: var(--brand);
+  background: var(--surface-raised);
+  box-shadow: 0 1px 3px rgb(19 30 54 / 10%);
+  font-weight: 650;
+}
 .native-field {
   display: grid;
   gap: 0.3rem;
@@ -279,6 +385,22 @@ p {
   .feature-toolbar {
     align-items: stretch;
     flex-direction: column;
+  }
+  .filter-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .filter-field,
+  .filter-search,
+  .segmented-control {
+    width: 100%;
+  }
+  .filter-search {
+    flex: 0 0 auto;
+  }
+  .segmented-control > button,
+  .segmented-control > .mat-mdc-button-base {
+    flex: 1 1 0;
   }
 }
 @media (prefers-reduced-motion: reduce) {

@@ -136,15 +136,20 @@ func (service *Service) Create(
 	ctx context.Context, workspace *tenancy.WorkspaceTx, workspaceID, actorID ids.UUID, input ConversationInput,
 ) (Conversation, error) {
 	input.Title = strings.TrimSpace(input.Title)
-	unique := map[string]ids.UUID{actorID.String(): actorID}
+	seen := map[string]struct{}{actorID.String(): {}}
+	memberIDs := make([]ids.UUID, 0, len(input.MemberUserIDs)+1)
+	memberIDs = append(memberIDs, actorID)
 	for _, userID := range input.MemberUserIDs {
-		unique[userID.String()] = userID
+		if _, exists := seen[userID.String()]; exists {
+			continue
+		}
+		seen[userID.String()] = struct{}{}
+		memberIDs = append(memberIDs, userID)
 	}
-	if len(unique) < 2 || len(unique) > maxConversationMembers {
+	if len(memberIDs) < 2 || len(memberIDs) > maxConversationMembers {
 		return Conversation{}, validation("/memberUserIds", "validation.items.range")
 	}
-	memberIDs := make([]ids.UUID, 0, len(unique))
-	for _, userID := range unique {
+	for _, userID := range memberIDs {
 		active, err := workspace.Queries.ActiveWorkspaceUserExists(ctx, dbgen.ActiveWorkspaceUserExistsParams{
 			WorkspaceID: workspaceID.PG(), UserID: userID.PG(),
 		})
@@ -154,7 +159,6 @@ func (service *Service) Create(
 		if !active {
 			return Conversation{}, validation("/memberUserIds", "validation.reference.invalid")
 		}
-		memberIDs = append(memberIDs, userID)
 	}
 	conversationType := "group"
 	var directKey *string

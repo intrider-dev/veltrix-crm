@@ -12,8 +12,16 @@
           "/manifest.webmanifest",
           "/icons/*.svg",
           "/*.css",
-          "/*.js"
+          "/main-*.js"
         ]
+      }
+    },
+    {
+      "name": "lazy-features",
+      "installMode": "lazy",
+      "updateMode": "lazy",
+      "resources": {
+        "files": ["/*.js"]
       }
     },
     {

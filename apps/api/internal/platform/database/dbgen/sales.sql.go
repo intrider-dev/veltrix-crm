@@ -221,8 +221,9 @@ const getDeal = `-- name: GetDeal :one
 SELECT id, pipeline_id, stage_id, name, contact_id, company_id, owner_user_id,
        amount_minor, currency, planned_start_date, expected_close_date, position, status, lost_reason,
        custom_fields, version, created_at, updated_at
-FROM sales.deals
-WHERE workspace_id = $1 AND id = $2 AND deleted_at IS NULL
+FROM sales.deals deal
+WHERE deal.workspace_id = $1 AND deal.id = $2 AND deal.deleted_at IS NULL
+  AND sales.pipeline_stage_access_allowed(deal.workspace_id, deal.stage_id, 'view')
 `
 
 type GetDealParams struct {
@@ -321,13 +322,14 @@ const listDeals = `-- name: ListDeals :many
 SELECT id, pipeline_id, stage_id, name, contact_id, company_id, owner_user_id,
        amount_minor, currency, planned_start_date, expected_close_date, position, status, lost_reason,
        version, created_at, updated_at
-FROM sales.deals
-WHERE workspace_id = $1
-  AND deleted_at IS NULL
-  AND ($2::uuid IS NULL OR pipeline_id = $2)
-  AND ($3::uuid IS NULL OR stage_id = $3)
-  AND (updated_at, id) < ($4::timestamptz, $5::uuid)
-ORDER BY updated_at DESC, id DESC
+FROM sales.deals deal
+WHERE deal.workspace_id = $1
+  AND deal.deleted_at IS NULL
+  AND sales.pipeline_stage_access_allowed(deal.workspace_id, deal.stage_id, 'view')
+  AND ($2::uuid IS NULL OR deal.pipeline_id = $2)
+  AND ($3::uuid IS NULL OR deal.stage_id = $3)
+  AND (deal.updated_at, deal.id) < ($4::timestamptz, $5::uuid)
+ORDER BY deal.updated_at DESC, deal.id DESC
 LIMIT $6
 `
 
@@ -408,8 +410,9 @@ func (q *Queries) ListDeals(ctx context.Context, arg ListDealsParams) ([]ListDea
 const listPipelineStages = `-- name: ListPipelineStages :many
 SELECT id, pipeline_id, name, probability, forecast_category, position,
        created_at, updated_at
-FROM sales.pipeline_stages
-WHERE workspace_id = $1 AND pipeline_id = $2
+FROM sales.pipeline_stages stage
+WHERE stage.workspace_id = $1 AND stage.pipeline_id = $2
+  AND sales.pipeline_stage_access_allowed(stage.workspace_id, stage.id, 'view')
 ORDER BY position, id
 `
 

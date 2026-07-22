@@ -109,6 +109,16 @@ func TestBuildWorkerHandlersMergesBoundedRegistries(t *testing.T) {
 	}); err == nil {
 		t.Fatal("duplicate worker kind was accepted")
 	}
+	mailHandlers, err := BuildWorkerHandlers(config.Config{
+		IdentityKeyID:     "mailbox-test-key",
+		IdentityKeyBase64: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+	}, nil, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if mailHandlers["mailbox.outgoing.deliver"] == nil {
+		t.Fatal("durable mailbox delivery handler is not registered")
+	}
 }
 
 type wiringAPIKeyRepository struct {

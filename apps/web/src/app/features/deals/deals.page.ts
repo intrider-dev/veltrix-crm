@@ -13,6 +13,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
 import type { CreateDeal, Deal } from '../../core/api/api.types';
@@ -32,6 +33,7 @@ import { DealsStore } from './deals.store';
     CdkDropListGroup,
     ErrorPanelComponent,
     FormField,
+    FormsModule,
     IconComponent,
     MatButtonModule,
     MatFormFieldModule,
@@ -65,7 +67,10 @@ import { DealsStore } from './deals.store';
           }
         </mat-select>
       }
-      <nav class="view-switcher" [attr.aria-label]="i18n.t('sales.deal.view.switcher')">
+      <nav
+        class="view-switcher segmented-control"
+        [attr.aria-label]="i18n.t('sales.deal.view.switcher')"
+      >
         @for (mode of viewModes; track mode) {
           <button
             mat-button
@@ -100,7 +105,13 @@ import { DealsStore } from './deals.store';
         </div>
       } @else if (store.activePipeline(); as pipeline) {
         @if (store.viewMode() === 'kanban') {
-          <section class="kanban" cdkDropListGroup [attr.aria-busy]="store.saving()">
+          <section
+            class="kanban"
+            cdkDropListGroup
+            tabindex="0"
+            [attr.aria-label]="i18n.t('sales.pipeline.title')"
+            [attr.aria-busy]="store.saving()"
+          >
             @for (stage of pipeline.stages; track stage.id) {
               <article class="stage">
                 <header>
@@ -139,9 +150,9 @@ import { DealsStore } from './deals.store';
                           i18n.t('web.deal.moveWithKeyboard')
                         }}</span
                         ><select
-                          [value]="deal.stageId"
+                          [ngModel]="deal.stageId"
                           [disabled]="!permissions.allows('deals.update')"
-                          (change)="moveFromSelect(deal, $event)"
+                          (ngModelChange)="moveFromSelect(deal, $event)"
                           [attr.aria-label]="i18n.t('web.deal.moveWithKeyboard')"
                         >
                           @for (target of pipeline.stages; track target.id) {
@@ -189,9 +200,9 @@ import { DealsStore } from './deals.store';
                       </td>
                       <td>
                         <select
-                          [value]="deal.stageId"
+                          [ngModel]="deal.stageId"
                           [disabled]="!permissions.allows('deals.update')"
-                          (change)="moveFromSelect(deal, $event)"
+                          (ngModelChange)="moveFromSelect(deal, $event)"
                           [attr.aria-label]="i18n.t('web.deal.moveWithKeyboard')"
                         >
                           @for (stage of pipeline.stages; track stage.id) {
@@ -395,9 +406,9 @@ export class DealsPage implements OnInit {
     const deal = event.item.data as Deal;
     void this.store.move(deal.id, stageId, event.currentIndex);
   }
-  moveFromSelect(deal: Deal, event: Event): void {
+  moveFromSelect(deal: Deal, stageId: string): void {
     if (!this.permissions.allows('deals.update')) return;
-    void this.store.move(deal.id, (event.target as HTMLSelectElement).value, 0);
+    void this.store.move(deal.id, stageId, 0);
   }
   ganttStart(deal: Deal): number {
     const start = dateValue(this.timelineBounds().start);

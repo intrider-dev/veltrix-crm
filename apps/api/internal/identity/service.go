@@ -270,7 +270,11 @@ func (service *Service) Authenticate(ctx context.Context, rawToken string) (Prin
 	}
 	var csrfHash [32]byte
 	copy(csrfHash[:], row.CsrfHash)
-	_ = service.queries.TouchSession(ctx, row.SessionID)
+	// Avoid a write-query roundtrip on every authenticated request. The SQL
+	// predicate remains defense in depth for concurrent stale readers.
+	if !row.LastSeenAt.Valid || row.LastSeenAt.Time.Before(time.Now().Add(-5*time.Minute)) {
+		_ = service.queries.TouchSession(ctx, row.SessionID)
+	}
 	return Principal{
 		SessionID:       sessionID,
 		UserID:          userID,

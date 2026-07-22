@@ -1,13 +1,23 @@
-import type { OnInit } from '@angular/core';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { FormField, form, required } from '@angular/forms/signals';
+import type { ElementRef, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  Injector,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
+import { FormField, form, maxLength, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { RouterLink } from '@angular/router';
 
 import type { LeadStage, LeadStageCategory, LeadStageInput } from '../../core/api/api.types';
 import { Permissions } from '../../core/auth/permissions';
 import { I18nService } from '../../core/i18n/i18n.service';
+import { focusAfterNextRender } from '../../shared/a11y/focus-after-render';
+import { StageAccessEditorComponent } from '../../shared/stage-access/stage-access-editor.component';
 import { ErrorPanelComponent } from '../../shared/state/error-panel.component';
 import { LeadStagesStore } from './lead-stages.store';
 
@@ -19,7 +29,15 @@ interface StageModel {
 
 @Component({
   selector: 'app-lead-stages-page',
-  imports: [ErrorPanelComponent, FormField, MatButtonModule, MatFormFieldModule, MatInputModule],
+  imports: [
+    ErrorPanelComponent,
+    FormField,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    RouterLink,
+    StageAccessEditorComponent,
+  ],
   providers: [LeadStagesStore],
   template: `
     <div class="page stages-page">
@@ -28,11 +46,21 @@ interface StageModel {
           <h1>{{ i18n.t('leadStages.title') }}</h1>
           <p>{{ i18n.t('leadStages.subtitle') }}</p>
         </div>
-        @if (permissions.allows('lead_stages.manage')) {
-          <button mat-flat-button type="button" (click)="startCreate()">
-            {{ i18n.t('leadStages.add') }}
-          </button>
-        }
+        <div class="header-actions">
+          @if (permissions.allows('settings.write')) {
+            <a
+              mat-stroked-button
+              routerLink="/settings/translations"
+              [queryParams]="{ namespace: 'sales.lead_stage.name' }"
+              >{{ i18n.t('leadStages.translateNames') }}</a
+            >
+          }
+          @if (permissions.allows('lead_stages.manage')) {
+            <button mat-flat-button type="button" (click)="startCreate($event)">
+              {{ i18n.t('leadStages.add') }}
+            </button>
+          }
+        </div>
       </header>
 
       @if (store.error()) {
@@ -40,10 +68,12 @@ interface StageModel {
       }
 
       @if (editorOpen() && permissions.allows('lead_stages.manage')) {
-        <section class="panel editor">
+        <section class="panel editor" aria-labelledby="lead-stage-editor-title">
           <form (submit)="save($event)" novalidate>
             <header>
-              <h2>{{ i18n.t(editing() ? 'leadStages.edit' : 'leadStages.create') }}</h2>
+              <h2 id="lead-stage-editor-title">
+                {{ i18n.t(editing() ? 'leadStages.edit' : 'leadStages.create') }}
+              </h2>
               <button mat-button type="button" (click)="closeEditor()">
                 {{ i18n.t('common.action.cancel') }}
               </button>
@@ -52,9 +82,21 @@ interface StageModel {
               <mat-form-field appearance="outline">
                 <mat-label>{{ i18n.t('common.field.name') }}</mat-label>
                 @if (editing()?.systemKey) {
-                  <input matInput [value]="systemStageName()" readonly aria-readonly="true" />
+                  <input
+                    #stageNameInput
+                    matInput
+                    [value]="systemStageName()"
+                    readonly
+                    aria-readonly="true"
+                  />
                 } @else {
-                  <input matInput [formField]="stageForm.name" />
+                  <input #stageNameInput matInput [formField]="stageForm.name" />
+                  @if (
+                    stageForm.name().touched() &&
+                    (stageForm.name().invalid() || !model().name.trim())
+                  ) {
+                    <mat-error>{{ i18n.t('leadStages.nameError') }}</mat-error>
+                  }
                 }
               </mat-form-field>
               <label class="native-field">
@@ -84,7 +126,7 @@ interface StageModel {
               <button
                 mat-flat-button
                 type="submit"
-                [disabled]="store.saving() || stageForm().invalid()"
+                [disabled]="store.saving() || stageForm().invalid() || !model().name.trim()"
               >
                 {{ i18n.t('common.action.save') }}
               </button>
@@ -93,8 +135,17 @@ interface StageModel {
         </section>
       }
 
+      @if (accessStage(); as stage) {
+        <app-stage-access-editor
+          kind="lead"
+          [stageId]="stage.id"
+          [stageName]="stageLabel(stage)"
+          (closed)="accessStage.set(null)"
+        />
+      }
+
       <section class="panel stage-list" [attr.aria-busy]="store.loading()">
-        @for (stage of store.stages(); track stage.id) {
+        @for (stage of store.stages(); track stage.id; let first = $first; let last = $last) {
           <article>
             <span class="stage-swatch" [style.background]="stage.color" aria-hidden="true"></span>
             <div class="stage-copy">
@@ -106,11 +157,39 @@ interface StageModel {
             }
             @if (permissions.allows('lead_stages.manage')) {
               <div class="stage-actions">
-                <button mat-stroked-button type="button" (click)="startEdit(stage)">
+                <button
+                  mat-button
+                  type="button"
+                  [disabled]="first || store.saving()"
+                  [attr.aria-label]="i18n.t('leadStages.moveUpLabel', { name: stageLabel(stage) })"
+                  (click)="store.move(stage, -1)"
+                >
+                  &uarr;
+                </button>
+                <button
+                  mat-button
+                  type="button"
+                  [disabled]="last || store.saving()"
+                  [attr.aria-label]="
+                    i18n.t('leadStages.moveDownLabel', { name: stageLabel(stage) })
+                  "
+                  (click)="store.move(stage, 1)"
+                >
+                  &darr;
+                </button>
+                <button mat-stroked-button type="button" (click)="startEdit(stage, $event)">
                   {{ i18n.t('common.action.edit') }}
                 </button>
+                <button mat-button type="button" (click)="accessStage.set(stage)">
+                  {{ i18n.t('leadStages.access') }}
+                </button>
                 @if (!stage.systemKey) {
-                  <button mat-button type="button" (click)="store.remove(stage)">
+                  <button
+                    mat-button
+                    type="button"
+                    [disabled]="store.saving()"
+                    (click)="remove(stage)"
+                  >
                     {{ i18n.t('common.action.delete') }}
                   </button>
                 }
@@ -118,7 +197,9 @@ interface StageModel {
             }
           </article>
         } @empty {
-          <div class="empty-state">{{ i18n.t('leadStages.empty') }}</div>
+          @if (!store.loading()) {
+            <div class="empty-state">{{ i18n.t('leadStages.empty') }}</div>
+          }
         }
       </section>
     </div>
@@ -126,6 +207,12 @@ interface StageModel {
   styles: `
     .stages-page {
       max-width: 58rem;
+    }
+    .header-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 0.5rem;
     }
     .editor {
       padding: 1rem;
@@ -204,6 +291,9 @@ interface StageModel {
       align-items: center;
       gap: 0.4rem;
     }
+    .stage-actions button[mat-button] {
+      min-width: 2.25rem;
+    }
     @media (max-width: 720px) {
       .editor-fields {
         grid-template-columns: 1fr;
@@ -231,28 +321,38 @@ export class LeadStagesPage implements OnInit {
   ];
   readonly editorOpen = signal(false);
   readonly editing = signal<LeadStage | null>(null);
+  readonly accessStage = signal<LeadStage | null>(null);
   readonly model = signal<StageModel>({ name: '', category: 'new', color: '#64748b' });
-  readonly stageForm = form(this.model, (schema) => required(schema.name));
+  readonly stageForm = form(this.model, (schema) => {
+    required(schema.name);
+    maxLength(schema.name, 100);
+  });
+  readonly stageNameInput = viewChild<ElementRef<HTMLInputElement>>('stageNameInput');
 
   ngOnInit(): void {
     void this.store.load();
   }
 
-  startCreate(): void {
+  startCreate(event: Event): void {
+    this.editorTrigger = event.currentTarget as HTMLButtonElement;
     this.editing.set(null);
     this.model.set({ name: '', category: 'new', color: '#64748b' });
     this.editorOpen.set(true);
+    focusAfterNextRender(this.injector, () => this.stageNameInput()?.nativeElement);
   }
 
-  startEdit(stage: LeadStage): void {
+  startEdit(stage: LeadStage, event: Event): void {
+    this.editorTrigger = event.currentTarget as HTMLButtonElement;
     this.editing.set(stage);
     this.model.set({ name: stage.name, category: stage.category, color: stage.color });
     this.editorOpen.set(true);
+    focusAfterNextRender(this.injector, () => this.stageNameInput()?.nativeElement);
   }
 
   closeEditor(): void {
     this.editorOpen.set(false);
     this.editing.set(null);
+    focusAfterNextRender(this.injector, () => this.editorTrigger);
   }
 
   setCategory(event: Event): void {
@@ -267,12 +367,24 @@ export class LeadStagesPage implements OnInit {
 
   async save(event: Event): Promise<void> {
     event.preventDefault();
-    if (this.stageForm().invalid()) return;
-    const input: LeadStageInput = { ...this.model(), name: this.model().name.trim() };
+    const name = this.model().name.trim();
+    if (this.stageForm().invalid() || !name) {
+      this.stageForm().markAsTouched();
+      return;
+    }
+    const input: LeadStageInput = { ...this.model(), name };
     const stage = this.editing();
-    if (stage) await this.store.update(stage, input);
-    else await this.store.create(input);
-    this.closeEditor();
+    const saved = stage ? await this.store.update(stage, input) : await this.store.create(input);
+    if (saved) this.closeEditor();
+  }
+
+  async remove(stage: LeadStage): Promise<void> {
+    if (
+      !window.confirm(this.i18n.t('leadStages.deleteConfirm', { name: this.stageLabel(stage) }))
+    ) {
+      return;
+    }
+    await this.store.remove(stage);
   }
 
   stageLabel(stage: LeadStage): string {
@@ -287,4 +399,7 @@ export class LeadStagesPage implements OnInit {
   categoryKey(category: LeadStageCategory): `leadStages.category.${LeadStageCategory}` {
     return `leadStages.category.${category}`;
   }
+
+  private readonly injector = inject(Injector);
+  private editorTrigger: HTMLButtonElement | null = null;
 }

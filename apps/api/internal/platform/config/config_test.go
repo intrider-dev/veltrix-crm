@@ -185,7 +185,6 @@ func setMinimumEnvironment(t *testing.T) {
 	t.Helper()
 	t.Setenv("APP_ENV", "development")
 	t.Setenv("DATABASE_URL", "postgres://app@localhost/crm")
-	t.Setenv("AUTO_MIGRATE", "false")
 	t.Setenv("DEMO_SEED", "false")
 	t.Setenv("SMTP_ADDR", "")
 	t.Setenv("SMTP_FROM", "")

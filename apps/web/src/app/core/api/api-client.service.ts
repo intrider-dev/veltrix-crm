@@ -66,6 +66,15 @@ import type {
   LeadPage,
   LeadStage,
   LeadStageInput,
+  LeadStageOrderRequest,
+  MailboxAccount,
+  MailboxAccountInput,
+  MailboxAccountUpdate,
+  MailboxFolder,
+  MailboxMessageBody,
+  MailboxMessagePage,
+  MailboxSendInput,
+  MailboxSendResult,
   LineItemMutation,
   MergeResult,
   MembershipMutation,
@@ -87,6 +96,8 @@ import type {
   PipelineStageInput,
   PipelineStageOrderRequest,
   PipelineStageRecord,
+  StageAccessRequest,
+  StageAccessRule,
   ParticipantMutation,
   PutContentTranslation,
   Project,
@@ -632,6 +643,27 @@ export class ApiClient {
     );
   }
 
+  listPipelineStageAccess(workspaceId: string, stageId: string): Promise<StageAccessRule[]> {
+    return this.request(
+      this.http.get<StageAccessRule[]>(
+        this.workspaceUrl(workspaceId, `pipeline-stages/${stageId}/access`),
+      ),
+    );
+  }
+
+  replacePipelineStageAccess(
+    workspaceId: string,
+    stageId: string,
+    body: StageAccessRequest,
+  ): Promise<StageAccessRule[]> {
+    return this.request(
+      this.http.put<StageAccessRule[]>(
+        this.workspaceUrl(workspaceId, `pipeline-stages/${stageId}/access`),
+        body,
+      ),
+    );
+  }
+
   listDeals(
     workspaceId: string,
     pipelineId?: string,
@@ -1130,6 +1162,33 @@ export class ApiClient {
     );
   }
 
+  reorderLeadStages(workspaceId: string, body: LeadStageOrderRequest): Promise<LeadStage[]> {
+    return this.request(
+      this.http.put<LeadStage[]>(this.workspaceUrl(workspaceId, 'lead-stages/order'), body),
+    );
+  }
+
+  listLeadStageAccess(workspaceId: string, stageId: string): Promise<StageAccessRule[]> {
+    return this.request(
+      this.http.get<StageAccessRule[]>(
+        this.workspaceUrl(workspaceId, `lead-stages/${stageId}/access`),
+      ),
+    );
+  }
+
+  replaceLeadStageAccess(
+    workspaceId: string,
+    stageId: string,
+    body: StageAccessRequest,
+  ): Promise<StageAccessRule[]> {
+    return this.request(
+      this.http.put<StageAccessRule[]>(
+        this.workspaceUrl(workspaceId, `lead-stages/${stageId}/access`),
+        body,
+      ),
+    );
+  }
+
   createLead(workspaceId: string, body: LeadInput): Promise<Lead> {
     return this.request(
       this.http.post<Lead>(this.workspaceUrl(workspaceId, 'leads'), body, {
@@ -1332,6 +1391,96 @@ export class ApiClient {
       this.http.patch<MembershipMutation>(
         this.workspaceUrl(workspaceId, `members/${membershipId}/role`),
         { role },
+      ),
+    );
+  }
+
+  listMailboxAccounts(workspaceId: string): Promise<MailboxAccount[]> {
+    return this.request(
+      this.http.get<MailboxAccount[]>(this.workspaceUrl(workspaceId, 'mail/accounts')),
+    );
+  }
+
+  createMailboxAccount(workspaceId: string, body: MailboxAccountInput): Promise<MailboxAccount> {
+    return this.request(
+      this.http.post<MailboxAccount>(this.workspaceUrl(workspaceId, 'mail/accounts'), body, {
+        headers: { 'Idempotency-Key': crypto.randomUUID() },
+      }),
+    );
+  }
+
+  updateMailboxAccount(
+    workspaceId: string,
+    account: MailboxAccount,
+    body: MailboxAccountUpdate,
+  ): Promise<MailboxAccount> {
+    return this.request(
+      this.http.put<MailboxAccount>(
+        this.workspaceUrl(workspaceId, `mail/accounts/${account.id}`),
+        body,
+        { headers: { 'If-Match': `"${account.version}"` } },
+      ),
+    );
+  }
+
+  deleteMailboxAccount(workspaceId: string, account: MailboxAccount): Promise<void> {
+    return this.request(
+      this.http.delete<void>(this.workspaceUrl(workspaceId, `mail/accounts/${account.id}`), {
+        headers: { 'If-Match': `"${account.version}"` },
+      }),
+    );
+  }
+
+  syncMailboxAccount(workspaceId: string, accountId: string): Promise<{ synced: true }> {
+    return this.request(
+      this.http.post<{ synced: true }>(
+        this.workspaceUrl(workspaceId, `mail/accounts/${accountId}/sync`),
+        null,
+      ),
+    );
+  }
+
+  listMailboxFolders(workspaceId: string, accountId: string): Promise<MailboxFolder[]> {
+    return this.request(
+      this.http.get<MailboxFolder[]>(
+        this.workspaceUrl(workspaceId, `mail/accounts/${accountId}/folders`),
+      ),
+    );
+  }
+
+  listMailboxMessages(
+    workspaceId: string,
+    folderId: string,
+    cursor?: string,
+  ): Promise<MailboxMessagePage> {
+    let params = new HttpParams().set('limit', 50);
+    if (cursor) params = params.set('cursor', cursor);
+    return this.request(
+      this.http.get<MailboxMessagePage>(
+        this.workspaceUrl(workspaceId, `mail/folders/${folderId}/messages`),
+        { params },
+      ),
+    );
+  }
+
+  readMailboxMessageBody(workspaceId: string, messageId: string): Promise<MailboxMessageBody> {
+    return this.request(
+      this.http.get<MailboxMessageBody>(
+        this.workspaceUrl(workspaceId, `mail/messages/${messageId}/body`),
+      ),
+    );
+  }
+
+  sendMailboxMessage(
+    workspaceId: string,
+    accountId: string,
+    body: MailboxSendInput,
+  ): Promise<MailboxSendResult> {
+    return this.request(
+      this.http.post<MailboxSendResult>(
+        this.workspaceUrl(workspaceId, `mail/accounts/${accountId}/send`),
+        body,
+        { headers: { 'Idempotency-Key': crypto.randomUUID() } },
       ),
     );
   }

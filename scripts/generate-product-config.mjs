@@ -58,7 +58,8 @@ await writeFile(
   `${JSON.stringify(manifest, null, 2)}\n`,
 );
 
-const html = `<!doctype html>
+const html = `<!-- Generated from packages/product-config/product.json. DO NOT EDIT. -->
+<!doctype html>
 <html lang="${config.defaultLocale}">
   <head>
     <meta charset="utf-8" />

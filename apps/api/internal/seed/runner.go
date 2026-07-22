@@ -92,6 +92,9 @@ func Run(
 		if err := tx.Commit(ctx); err != nil {
 			return Result{}, fmt.Errorf("commit seed verification: %w", err)
 		}
+		if err := analyzeSeedTables(ctx, pool); err != nil {
+			return Result{}, err
+		}
 		writeProgress(options.Progress, "profile %s already matches its deterministic seed ledger\n", profile.Name)
 		return result, nil
 	}
@@ -143,8 +146,22 @@ VALUES ($1, $2, $3, $4, $5::jsonb, $6)`,
 	if err := tx.Commit(ctx); err != nil {
 		return Result{}, fmt.Errorf("commit seed transaction: %w", err)
 	}
+	if err := analyzeSeedTables(ctx, pool); err != nil {
+		return Result{}, err
+	}
 	writeProgress(options.Progress, "profile %s: seed committed\n", profile.Name)
 	return result, nil
+}
+
+func analyzeSeedTables(ctx context.Context, pool *pgxpool.Pool) error {
+	if _, err := pool.Exec(ctx, `
+ANALYZE customers.contacts, customers.companies, sales.deals,
+        activities.activities, search.documents, tenancy.memberships,
+        tenancy.role_permissions
+`); err != nil {
+		return fmt.Errorf("analyze seeded tables: %w", err)
+	}
+	return nil
 }
 
 func inspectLedger(ctx context.Context, tx pgx.Tx, generator generator, expected Result) (bool, error) {
@@ -175,9 +192,10 @@ WHERE profile = $1 AND seed_version = $2`, generator.profile.Name, seedVersion).
 	if stored != expected.Counts {
 		return false, fmt.Errorf("seed profile %q ledger counts differ from the current contract", generator.profile.Name)
 	}
-	if err := verifyCounts(ctx, tx, generator.workspaceID, expected.Counts); err != nil {
-		return false, err
-	}
+	// The ledger proves which deterministic dataset initialized the workspace.
+	// Live CRM rows are intentionally mutable after that point; re-checking the
+	// original counts would make every legitimate create/delete prevent the
+	// application from restarting with DEMO_SEED enabled.
 	return true, nil
 }
 
@@ -284,6 +302,35 @@ VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8)`,
 	}
 	if err := results.Close(); err != nil {
 		return fmt.Errorf("close pipeline stage batch: %w", err)
+	}
+	if _, err := tx.Exec(ctx, `
+INSERT INTO localization.content_resources (
+  workspace_id, namespace, resource_key, source_locale, source_text,
+  description, placeholders, created_by, updated_by, created_at, updated_at
+)
+VALUES ($1, 'sales.pipeline.name', $2, 'en', 'Sales pipeline', '', ARRAY[]::text[], $3, $3, $4, $4)`,
+		generator.workspaceID.PG(), generator.pipelineID.String(), generator.ownerID.PG(), generator.base); err != nil {
+		return fmt.Errorf("insert seed pipeline translation resource: %w", err)
+	}
+	translationBatch := &pgx.Batch{}
+	for index, stageID := range generator.stageIDs {
+		translationBatch.Queue(`
+INSERT INTO localization.content_resources (
+  workspace_id, namespace, resource_key, source_locale, source_text,
+  description, placeholders, created_by, updated_by, created_at, updated_at
+)
+VALUES ($1, 'sales.pipeline_stage.name', $2, 'en', $3, '', ARRAY[]::text[], $4, $4, $5, $5)`,
+			generator.workspaceID.PG(), stageID.String(), stageNames[index], generator.ownerID.PG(), generator.base)
+	}
+	translationResults := tx.SendBatch(ctx, translationBatch)
+	for index := range generator.stageIDs {
+		if _, err := translationResults.Exec(); err != nil {
+			_ = translationResults.Close()
+			return fmt.Errorf("insert seed pipeline stage translation resource %d: %w", index, err)
+		}
+	}
+	if err := translationResults.Close(); err != nil {
+		return fmt.Errorf("close pipeline stage translation batch: %w", err)
 	}
 	return nil
 }

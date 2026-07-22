@@ -1,8 +1,9 @@
 -- name: ListLeadStages :many
 SELECT id, name, category, color, position, system_key, is_default, version,
        created_at, updated_at
-FROM sales.lead_stages
-WHERE workspace_id = $1 AND archived_at IS NULL
+FROM sales.lead_stages stage
+WHERE stage.workspace_id = $1 AND stage.archived_at IS NULL
+  AND sales.lead_stage_access_allowed(stage.workspace_id, stage.id, 'view')
 ORDER BY position, id;
 
 -- name: GetLeadStage :one
@@ -34,6 +35,20 @@ UPDATE sales.lead_stages
 SET name = CASE WHEN system_key IS NULL THEN $3 ELSE name END,
     color = $4, version = version + 1, updated_at = now()
 WHERE workspace_id = $1 AND id = $2 AND version = $5 AND archived_at IS NULL
+RETURNING id, name, category, color, position, system_key, is_default, version,
+          created_at, updated_at;
+
+-- name: OffsetLeadStagePositions :exec
+UPDATE sales.lead_stages
+SET position = position + 1000
+WHERE workspace_id = sqlc.arg(workspace_id) AND archived_at IS NULL;
+
+-- name: ApplyLeadStagePosition :one
+UPDATE sales.lead_stages
+SET position = sqlc.arg(position), version = version + 1, updated_at = now()
+WHERE workspace_id = sqlc.arg(workspace_id)
+  AND id = sqlc.arg(id)
+  AND archived_at IS NULL
 RETURNING id, name, category, color, position, system_key, is_default, version,
           created_at, updated_at;
 

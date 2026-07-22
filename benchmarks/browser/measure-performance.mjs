@@ -354,6 +354,20 @@ async function heapUsage(client, collectGarbage) {
   };
 }
 
+async function lifecycleMetrics(client) {
+  const response = await client.send("Performance.getMetrics");
+  const metric = (name) =>
+    response.metrics.find((candidate) => candidate.name === name)?.value ?? null;
+  return {
+    nodes: metric("Nodes"),
+    documents: metric("Documents"),
+    frames: metric("Frames"),
+    eventListeners: metric("JSEventListeners"),
+    layoutObjects: metric("LayoutObjects"),
+    contexts: metric("V8PerContextDatas"),
+  };
+}
+
 async function pageSnapshot(page, client) {
   const [dom, heap, performanceMetrics] = await Promise.all([
     page.evaluate(() => ({
@@ -477,21 +491,11 @@ async function runSearchInteraction(page, settleMs) {
 async function measureScroll(page, durationMs) {
   return page.evaluate(async (configuredDurationMs) => {
     const grid = document.querySelector('[role="grid"]');
-    const scroller = document.scrollingElement;
-    if (!(grid instanceof HTMLElement) || !scroller)
+    if (!(grid instanceof HTMLElement))
       throw new Error("contacts grid is unavailable");
-    const gridTop = grid.getBoundingClientRect().top + scroller.scrollTop;
-    const start = Math.max(
-      0,
-      Math.min(scroller.scrollHeight - innerHeight, gridTop - 80),
-    );
-    const end = Math.max(
-      start,
-      Math.min(
-        scroller.scrollHeight - innerHeight,
-        gridTop + grid.offsetHeight - innerHeight + 80,
-      ),
-    );
+    const scroller = grid;
+    const start = 0;
+    const end = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
     if (end - start < 100)
       throw new Error(
         "contacts grid does not expose a measurable scroll range",
@@ -548,7 +552,7 @@ async function measureScroll(page, durationMs) {
 function summarizeScroll(raw) {
   return {
     method:
-      "requestAnimationFrame-driven two-pass document scroll across the rendered 50-row contacts grid in headless Chromium; this is an approximate rendering signal, not compositor telemetry",
+      "requestAnimationFrame-driven two-pass scroll through the virtualized AG Grid viewport in headless Chromium; this is an approximate rendering signal, not compositor telemetry",
     measuredDurationMs: round(raw.measuredDurationMs),
     scrollDistancePx: Math.round(raw.scrollDistancePx),
     frameCount: raw.frameCount,
@@ -589,11 +593,17 @@ async function navigateContactRoundTrip(page, settleMs, label) {
 
 async function runNavigationCycles(page, client, cycles, settleMs) {
   await waitForContactRows(page);
-  // Load the lazy details route, its locale catalog, and stable Angular caches
-  // before establishing the retained-heap baseline. The warm-up is explicit
-  // in the artifact and is not counted among the requested measured cycles.
-  await navigateContactRoundTrip(page, settleMs, "warm-up cycle");
+  // Stabilize lazy route code, Angular/AG Grid caches, and V8 JIT feedback
+  // before establishing the retained-heap baseline. Heap-snapshot comparison
+  // showed that one warm-up left almost all measured growth in V8 Code and
+  // InstructionStream objects rather than application retainers.
+  const warmupCycles = 10;
+  for (let cycle = 0; cycle < warmupCycles; cycle += 1) {
+    await navigateContactRoundTrip(page, settleMs, `warm-up cycle ${cycle + 1}`);
+  }
+  await page.evaluate(() => performance.clearResourceTimings());
   const before = await heapUsage(client, true);
+  const lifecycleBefore = await lifecycleMetrics(client);
   const started = nodePerformance.now();
   let completed = 0;
   for (let cycle = 0; cycle < cycles; cycle += 1) {
@@ -601,19 +611,23 @@ async function runNavigationCycles(page, client, cycles, settleMs) {
     completed += 1;
   }
   const durationMs = nodePerformance.now() - started;
+  await page.evaluate(() => performance.clearResourceTimings());
   const after = await heapUsage(client, true);
+  const lifecycleAfter = await lifecycleMetrics(client);
   const growthBytes = after.usedBytes - before.usedBytes;
   const growthPercent =
     before.usedBytes === 0 ? null : (growthBytes / before.usedBytes) * 100;
   return {
     method:
-      "One unmeasured warm-up round-trip loads lazy route code and stable catalogs, then CDP HeapProfiler.collectGarbage plus Runtime.getHeapUsage is sampled before and after repeated Angular SPA navigations; this approximates retained JS heap and is not a dominator-tree heap snapshot",
-    warmupCycles: 1,
+      "Ten unmeasured warm-up round-trips stabilize lazy code, AG Grid, and V8 JIT feedback; the benchmark then clears its Resource Timing buffer and samples CDP HeapProfiler.collectGarbage plus Runtime.getHeapUsage before and after the requested Angular SPA navigations. This approximates steady-state retained JS heap and is not a dominator-tree heap snapshot.",
+    warmupCycles,
     requestedCycles: cycles,
     completedCycles: completed,
     totalDurationMs: round(durationMs),
     beforeForcedGc: before,
     afterForcedGc: after,
+    lifecycleBefore,
+    lifecycleAfter,
     usedHeapGrowthBytes: growthBytes,
     usedHeapGrowthPercent: growthPercent === null ? null : round(growthPercent),
   };

@@ -69,7 +69,8 @@ while [ "$run" -le "$runs" ]; do
     echo "dataset_profile=benchmark"
     echo "application_limit=0.5 CPU,128 MiB"
     echo "postgres_limit=0.5 CPU,384 MiB"
-    echo "run=warm-after-${K6_WARMUP:-1m}-warmup-on-clean-dataset"
+    echo "virtual_users=${CRM_BENCHMARK_VUS:-50}"
+    echo "run=warm-after-${CRM_BENCHMARK_WARMUP:-1m}-warmup-and-${CRM_BENCHMARK_DURATION:-5m}-measured-on-clean-dataset"
     echo "frontend_bundle_report=benchmarks/results/bundle-report.json"
   } >"$result_root/benchmark-metadata-$profile-run-$run.txt"
 
@@ -85,7 +86,11 @@ while [ "$run" -le "$runs" ]; do
   ) >"$stats_path" 2>&1 &
   stats_pid=$!
   if ! compose --profile benchmark run --rm --no-deps \
-    -e "K6_PROFILE=$profile" -e "K6_RESULT_PATH=$result_path" benchmark \
+    -e "K6_PROFILE=$profile" -e "K6_RESULT_PATH=$result_path" \
+    -e "CRM_BENCHMARK_VUS=${CRM_BENCHMARK_VUS:-50}" \
+    -e "CRM_BENCHMARK_WARMUP=${CRM_BENCHMARK_WARMUP:-1m}" \
+    -e "CRM_BENCHMARK_DURATION=${CRM_BENCHMARK_DURATION:-5m}" \
+    -e "CRM_BENCHMARK_THINK_TIME=${CRM_BENCHMARK_THINK_TIME:-0.1}" benchmark \
     run --out "json=/benchmarks/results/k6-$profile-run-$run.json" \
     /benchmarks/k6/baseline.js; then
     benchmark_status=1
@@ -93,7 +98,7 @@ while [ "$run" -le "$runs" ]; do
   kill "$stats_pid" >/dev/null 2>&1 || true
   wait "$stats_pid" 2>/dev/null || true
   stats_pid=""
-  compose stats --no-stream app postgres >"$result_root/docker-stats-$profile-run-$run.txt"
+  compose stats --no-stream >"$result_root/docker-stats-$profile-run-$run.txt"
   compose logs --no-color app postgres >"$result_root/compose-$profile-run-$run.log" 2>&1 || true
   run=$((run + 1))
 done

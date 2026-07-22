@@ -83,9 +83,13 @@ func (application *Application) globalSearch(writer http.ResponseWriter, request
 			result = make([]apigen.SearchResult, 0, len(rows))
 			for _, row := range rows {
 				snippet := row.Snippet
+				var subtitle *string
+				if row.Subtitle != "" {
+					subtitle = &row.Subtitle
+				}
 				result = append(result, apigen.SearchResult{
 					EntityId: apiID(row.EntityID), EntityType: apigen.SearchResultEntityType(row.EntityType),
-					Title: row.Title, Subtitle: row.Subtitle, Snippet: &snippet, Rank: row.Rank,
+					Title: row.Title, Subtitle: subtitle, Snippet: &snippet, Rank: row.Rank,
 				})
 			}
 			return nil

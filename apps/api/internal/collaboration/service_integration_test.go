@@ -135,6 +135,60 @@ INSERT INTO tenancy.memberships(workspace_id,id,user_id,role) VALUES
 		t.Fatal(err)
 	}
 
+	outsiderTx, err := appPool.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = outsiderTx.Exec(ctx,
+		`SELECT set_config('app.actor_id',$1,true), set_config('app.workspace_id',$2,true)`,
+		outsider.String(), workspaceID.String()); err != nil {
+		_ = outsiderTx.Rollback(ctx)
+		t.Fatal(err)
+	}
+	var rawConversations, rawMembers, rawMessages int
+	if err = outsiderTx.QueryRow(ctx, `
+SELECT
+  (SELECT count(*) FROM collaboration.conversations WHERE id=$1),
+  (SELECT count(*) FROM collaboration.conversation_members WHERE conversation_id=$1),
+  (SELECT count(*) FROM collaboration.messages WHERE conversation_id=$1)
+`, conversationID.PG()).Scan(&rawConversations, &rawMembers, &rawMessages); err != nil {
+		_ = outsiderTx.Rollback(ctx)
+		t.Fatal(err)
+	}
+	if rawConversations != 0 || rawMembers != 0 || rawMessages != 0 {
+		_ = outsiderTx.Rollback(ctx)
+		t.Fatalf("RLS exposed private chat to outsider: conversations=%d members=%d messages=%d",
+			rawConversations, rawMembers, rawMessages)
+	}
+	if _, err = outsiderTx.Exec(ctx, `
+INSERT INTO collaboration.messages(workspace_id,id,conversation_id,sender_user_id,message_kind,body)
+VALUES($1,$2,$3,$4,'text','blocked outsider message')
+`, workspaceID.PG(), mustChatID(t).PG(), conversationID.PG(), outsider.PG()); err == nil {
+		_ = outsiderTx.Rollback(ctx)
+		t.Fatal("RLS allowed outsider to insert a private chat message")
+	}
+	_ = outsiderTx.Rollback(ctx)
+
+	ownerTx, err := appPool.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = ownerTx.Exec(ctx,
+		`SELECT set_config('app.actor_id',$1,true), set_config('app.workspace_id',$2,true)`,
+		userA.String(), workspaceID.String()); err != nil {
+		_ = ownerTx.Rollback(ctx)
+		t.Fatal(err)
+	}
+	if _, err = ownerTx.Exec(ctx, `
+UPDATE collaboration.conversation_members
+SET member_role='member'
+WHERE workspace_id=$1 AND conversation_id=$2 AND user_id=$3
+`, workspaceID.PG(), conversationID.PG(), userA.PG()); err == nil {
+		_ = ownerTx.Rollback(ctx)
+		t.Fatal("conversation owner could mutate the immutable security role directly")
+	}
+	_ = ownerTx.Rollback(ctx)
+
 	var eventCount int
 	var recipientsOnly, bodyAbsent bool
 	if err := admin.QueryRow(ctx, `

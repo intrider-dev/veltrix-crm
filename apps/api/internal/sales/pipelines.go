@@ -114,6 +114,9 @@ func (service *Service) CreatePipelineAdvanced(
 	if err != nil {
 		return PipelineRecord{}, err
 	}
+	if err := lockSalesConfiguration(ctx, workspace, metadata.WorkspaceID, "pipelines"); err != nil {
+		return PipelineRecord{}, err
+	}
 	count, err := workspace.Queries.CountPipelines(ctx, metadata.WorkspaceID.PG())
 	if err != nil {
 		return PipelineRecord{}, fmt.Errorf("count pipelines: %w", err)
@@ -161,6 +164,9 @@ func (service *Service) UpdatePipelineAdvanced(
 ) (PipelineRecord, error) {
 	validated, err := validatePipelineInput(input)
 	if err != nil {
+		return PipelineRecord{}, err
+	}
+	if err := lockSalesConfiguration(ctx, workspace, metadata.WorkspaceID, "pipelines"); err != nil {
 		return PipelineRecord{}, err
 	}
 	existing, err := workspace.Queries.GetPipelineAdvanced(ctx, dbgen.GetPipelineAdvancedParams{
@@ -263,6 +269,9 @@ func (service *Service) CreatePipelineStageAdvanced(
 ) (PipelineStageRecord, error) {
 	validated, err := validateStageInput(input)
 	if err != nil {
+		return PipelineStageRecord{}, err
+	}
+	if err := lockSalesConfiguration(ctx, workspace, metadata.WorkspaceID, "pipeline-stages:"+pipelineID.String()); err != nil {
 		return PipelineStageRecord{}, err
 	}
 	if _, err := workspace.Queries.GetPipelineAdvanced(ctx, dbgen.GetPipelineAdvancedParams{

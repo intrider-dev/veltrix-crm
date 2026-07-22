@@ -14,6 +14,7 @@ export type IconName =
   | 'deal'
   | 'language'
   | 'lead'
+  | 'mail'
   | 'menu'
   | 'moon'
   | 'search'
@@ -73,6 +74,9 @@ export type IconName =
         }
         @case ('chat') {
           <path d="M4 5h16v11H9l-5 4zM8 9h8M8 12h5" />
+        }
+        @case ('mail') {
+          <path d="M3 5h18v14H3zM3 7l9 7 9-7" />
         }
         @case ('phone') {
           <path

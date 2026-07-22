@@ -27,7 +27,17 @@ function Invoke-Compose {
 }
 
 function Remove-BenchmarkEnvironment {
-  & docker @composeBase --profile benchmark down --volumes --remove-orphans *> $null
+  # Windows PowerShell 5 converts ordinary Docker progress on stderr into
+  # ErrorRecord objects when the caller uses Stop. Cleanup is best-effort and
+  # scoped to the dedicated project, so evaluate Docker's exit code instead.
+  $previousPreference = $ErrorActionPreference
+  $ErrorActionPreference = 'Continue'
+  & docker @composeBase --profile benchmark down --volumes --remove-orphans 2>$null | Out-Null
+  $exitCode = $LASTEXITCODE
+  $ErrorActionPreference = $previousPreference
+  if ($exitCode -ne 0) {
+    Write-Warning "benchmark cleanup exited with code $exitCode"
+  }
 }
 
 function Wait-BenchmarkReadiness {
@@ -59,10 +69,16 @@ try {
     # Only the dedicated benchmark project is reset; application development
     # volumes use a different Compose project and are never touched here.
     Remove-BenchmarkEnvironment
-    Invoke-Compose up -d --build postgres app
+    # Use an explicit argument array: PowerShell otherwise interprets `-d` as
+    # the common `-Debug` parameter of this wrapper instead of Compose detach.
+    Invoke-Compose -Arguments @('up', '--detach', '--build', 'postgres', 'app')
     Wait-BenchmarkReadiness
-    Invoke-Compose --profile benchmark run --rm benchmark-seed
+    Invoke-Compose -Arguments @('--profile', 'benchmark', 'run', '--rm', 'benchmark-seed')
 
+    $benchmarkVUs = if ($env:CRM_BENCHMARK_VUS) { $env:CRM_BENCHMARK_VUS } else { '50' }
+    $benchmarkWarmup = if ($env:CRM_BENCHMARK_WARMUP) { $env:CRM_BENCHMARK_WARMUP } else { '1m' }
+    $benchmarkDuration = if ($env:CRM_BENCHMARK_DURATION) { $env:CRM_BENCHMARK_DURATION } else { '5m' }
+    $benchmarkThinkTime = if ($env:CRM_BENCHMARK_THINK_TIME) { $env:CRM_BENCHMARK_THINK_TIME } else { '0.1' }
     $computer = Get-CimInstance Win32_ComputerSystem
     $processor = Get-CimInstance Win32_Processor | Select-Object -First 1
     $commit = & git -C $projectRoot rev-parse HEAD 2>$null
@@ -79,7 +95,8 @@ try {
       'dataset_profile=benchmark'
       'application_limit=0.5 CPU,128 MiB'
       'postgres_limit=0.5 CPU,384 MiB'
-      'run=warm-after-1m-warmup-on-clean-dataset'
+      "virtual_users=$benchmarkVUs"
+      "run=warm-after-$benchmarkWarmup-warmup-and-$benchmarkDuration-measured-on-clean-dataset"
       'frontend_bundle_report=benchmarks/results/bundle-report.json'
     ) | Set-Content -Encoding UTF8 (Join-Path $resultRoot "benchmark-metadata-$Profile-run-$run.txt")
 
@@ -94,10 +111,16 @@ try {
       }
     }
     try {
-      Invoke-Compose --profile benchmark run --rm --no-deps `
-        -e "K6_PROFILE=$Profile" -e "K6_RESULT_PATH=$resultPath" benchmark `
-        run --out "json=/benchmarks/results/k6-$Profile-run-$run.json" `
-        /benchmarks/k6/baseline.js
+      Invoke-Compose -Arguments @(
+        '--profile', 'benchmark', 'run', '--rm', '--no-deps',
+        '--env', "K6_PROFILE=$Profile", '--env', "K6_RESULT_PATH=$resultPath",
+        '--env', "CRM_BENCHMARK_VUS=$benchmarkVUs",
+        '--env', "CRM_BENCHMARK_WARMUP=$benchmarkWarmup",
+        '--env', "CRM_BENCHMARK_DURATION=$benchmarkDuration",
+        '--env', "CRM_BENCHMARK_THINK_TIME=$benchmarkThinkTime",
+        'benchmark', 'run', '--out', "json=/benchmarks/results/k6-$Profile-run-$run.json",
+        '/benchmarks/k6/baseline.js'
+      )
     }
     catch {
       $benchmarkFailed = $true
@@ -109,7 +132,10 @@ try {
         Set-Content -Encoding UTF8 (Join-Path $resultRoot "docker-stats-$Profile-run-$run.jsonl")
       Remove-Job $statsJob -Force -ErrorAction SilentlyContinue
     }
-    Invoke-Compose stats --no-stream app postgres |
+    # Compose v5 accepts at most one optional service for `stats`; this
+    # benchmark project contains only the measured app/postgres at this point,
+    # so collect both by omitting a service filter.
+    Invoke-Compose -Arguments @('stats', '--no-stream') |
       Set-Content -Encoding UTF8 (Join-Path $resultRoot "docker-stats-$Profile-run-$run.txt")
     & docker @composeBase logs --no-color app postgres *> (Join-Path $resultRoot "compose-$Profile-run-$run.log")
   }

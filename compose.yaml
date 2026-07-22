@@ -1,11 +1,27 @@
 services:
   postgres:
-    image: postgres:18.4-bookworm
+    image: ${POSTGRES_IMAGE:-crm-postgres:local}
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: postgres-runtime
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-veltrix_crm}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_local_password}
+      APP_ENV: ${APP_ENV:-development}
+      APP_BRAND_CONFIG: /app/config/brand.json
+      DATABASE_URL: ${DATABASE_URL:-postgres://veltrix_app:veltrix_local_password@postgres:5432/veltrix_crm?sslmode=disable}
+      DATABASE_ADMIN_URL: ${DATABASE_ADMIN_URL:-postgres://postgres:postgres_local_password@postgres:5432/veltrix_crm?sslmode=disable}
+      DATABASE_DISPATCHER_URL: ${DATABASE_DISPATCHER_URL:-postgres://veltrix_dispatcher:veltrix_local_password@postgres:5432/veltrix_crm?sslmode=disable}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:-veltrix_local_password}
+      DEMO_SEED: ${DEMO_SEED:-true}
+      DEMO_EMAIL: ${DEMO_EMAIL:-admin@demo.local}
+      DEMO_PASSWORD: ${DEMO_PASSWORD:-Demo123!}
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-false}
+      IDENTITY_ENCRYPTION_KEY_ID: ${IDENTITY_ENCRYPTION_KEY_ID:-dev-local-v1}
+      IDENTITY_ENCRYPTION_KEY_BASE64: ${IDENTITY_ENCRYPTION_KEY_BASE64:-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=}
     command:
       - postgres
       - -c
@@ -22,7 +38,7 @@ services:
       # PostgreSQL 18 uses a version-specific PGDATA below this mount point.
       - postgres-data:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "test -f /tmp/veltrix-bootstrap-ready && pg_isready -h 127.0.0.1 -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 3s
       retries: 12
@@ -39,6 +55,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      target: runtime
     restart: unless-stopped
     depends_on:
       postgres:
@@ -46,15 +63,12 @@ services:
     environment:
       APP_ENV: ${APP_ENV:-development}
       APP_ADDR: :8080
-      APP_PUBLIC_URL: ${APP_PUBLIC_URL:-http://localhost:8080}
+      APP_PUBLIC_URL: ${APP_PUBLIC_URL:-http://127.0.0.1:8080}
       APP_BRAND_CONFIG: /app/config/brand.json
       APP_DEFAULT_LOCALE: ${APP_DEFAULT_LOCALE:-en}
       APP_SUPPORTED_LOCALES: ${APP_SUPPORTED_LOCALES:-en,ru}
       DATABASE_URL: ${DATABASE_URL:-postgres://veltrix_app:veltrix_local_password@postgres:5432/veltrix_crm?sslmode=disable}
-      DATABASE_ADMIN_URL: ${DATABASE_ADMIN_URL:-postgres://postgres:postgres_local_password@postgres:5432/veltrix_crm?sslmode=disable}
       DATABASE_DISPATCHER_URL: ${DATABASE_DISPATCHER_URL:-postgres://veltrix_dispatcher:veltrix_local_password@postgres:5432/veltrix_crm?sslmode=disable}
-      APP_DB_PASSWORD: ${APP_DB_PASSWORD:-veltrix_local_password}
-      AUTO_MIGRATE: ${AUTO_MIGRATE:-true}
       SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-false}
       SESSION_TTL: ${SESSION_TTL:-168h}
       PASSWORD_RESET_TTL: ${PASSWORD_RESET_TTL:-1h}
@@ -75,6 +89,7 @@ services:
       SMTP_REQUIRE_TLS: ${SMTP_REQUIRE_TLS:-false}
       SMTP_IMPLICIT_TLS: ${SMTP_IMPLICIT_TLS:-false}
       SMTP_WRITE_TIMEOUT: ${SMTP_WRITE_TIMEOUT:-10s}
+      MAILBOX_ALLOW_PRIVATE_ENDPOINTS: ${MAILBOX_ALLOW_PRIVATE_ENDPOINTS:-false}
       S3_ENDPOINT: ${S3_ENDPOINT:-}
       S3_REGION: ${S3_REGION:-us-east-1}
       S3_BUCKET: ${S3_BUCKET:-crm-attachments}
@@ -98,9 +113,6 @@ services:
       LIVEKIT_API_KEY: ${LIVEKIT_API_KEY:-}
       LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET:-}
       LIVEKIT_TOKEN_TTL: ${LIVEKIT_TOKEN_TTL:-5m}
-      DEMO_SEED: ${DEMO_SEED:-true}
-      DEMO_EMAIL: ${DEMO_EMAIL:-admin@demo.local}
-      DEMO_PASSWORD: ${DEMO_PASSWORD:-Demo123!}
     ports:
       - "${APP_BIND_ADDRESS:-0.0.0.0}:${APP_PORT:-8080}:8080"
     volumes:

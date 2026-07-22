@@ -4,6 +4,7 @@ import {
   currentWorkspace,
   failOnBrowserErrors,
   loginAsDemo,
+  loginWithCredentials,
   scenarioSuffix,
   setAppLanguage,
   waitForAppReady,
@@ -61,12 +62,15 @@ test("a development user can accept a one-time workspace invitation", async ({
   await expect(page).toHaveURL(/\/dashboard$/);
 
   await page.goto(`/invitations/accept?token=${encodeURIComponent(token)}`);
+  const acceptButton = page.getByRole("button", {
+    name: "Accept invitation",
+    exact: true,
+  });
+  await expect(acceptButton).toBeVisible();
   await page.evaluate(() =>
     history.replaceState({}, "", "/invitations/accept"),
   );
-  await page
-    .getByRole("button", { name: "Accept invitation", exact: true })
-    .click();
+  await acceptButton.click();
   await expect(page.getByRole("status")).toContainText("Invitation accepted");
   await page
     .getByRole("button", { name: "Open workspace", exact: true })
@@ -75,5 +79,38 @@ test("a development user can accept a one-time workspace invitation", async ({
   await expect(page.locator("mat-select.workspace-select")).toContainText(
     invitedWorkspace.name,
   );
+
+  // The invited sales role cannot administer the workspace member directory.
+  // Return to the owner account to exercise a permitted direct-chat creation
+  // against the user that has just joined.
+  await context.clearCookies();
+  await loginWithCredentials(page);
+  await expect(page.locator("mat-select.workspace-select")).toContainText(
+    invitedWorkspace.name,
+  );
+
+  await page
+    .getByRole("button", { name: "Open team chat", exact: true })
+    .click();
+  const chat = page.getByRole("dialog", { name: "Team chat" });
+  await expect(chat).toBeVisible();
+  await chat
+    .getByRole("button", { name: "New conversation", exact: true })
+    .click();
+  const memberSelect = chat.locator(".new-conversation select");
+  await expect
+    .poll(() => memberSelect.locator("option").count(), { timeout: 15_000 })
+    .toBeGreaterThan(1);
+  await memberSelect.selectOption({ index: 1 });
+  await chat.getByRole("button", { name: "Create", exact: true }).click();
+
+  const message = `Hello from ${suffix}`;
+  await chat.getByPlaceholder("Message").fill(message);
+  await chat.getByRole("button", { name: "Send", exact: true }).click();
+  await expect(chat.locator(".message-list")).toContainText(message);
+  await expect(chat.getByTitle("Calls are not configured")).toHaveCount(2);
+  await expect(
+    chat.getByTitle("Calls are not configured").first(),
+  ).toBeDisabled();
   assertNoBrowserErrors();
 });

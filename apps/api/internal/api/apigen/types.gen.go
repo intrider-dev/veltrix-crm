@@ -1275,6 +1275,141 @@ func (e MFAChallengeMfaRequired) Valid() bool {
 	}
 }
 
+// Defines values for MailboxAccountImapPort.
+const (
+	MailboxAccountImapPortN143 MailboxAccountImapPort = 143
+	MailboxAccountImapPortN993 MailboxAccountImapPort = 993
+)
+
+// Valid indicates whether the value is a known member of the MailboxAccountImapPort enum.
+func (e MailboxAccountImapPort) Valid() bool {
+	switch e {
+	case MailboxAccountImapPortN143:
+		return true
+	case MailboxAccountImapPortN993:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MailboxAccountSmtpPort.
+const (
+	MailboxAccountSmtpPortN465 MailboxAccountSmtpPort = 465
+	MailboxAccountSmtpPortN587 MailboxAccountSmtpPort = 587
+)
+
+// Valid indicates whether the value is a known member of the MailboxAccountSmtpPort enum.
+func (e MailboxAccountSmtpPort) Valid() bool {
+	switch e {
+	case MailboxAccountSmtpPortN465:
+		return true
+	case MailboxAccountSmtpPortN587:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MailboxAccountSyncState.
+const (
+	Error   MailboxAccountSyncState = "error"
+	Idle    MailboxAccountSyncState = "idle"
+	Ready   MailboxAccountSyncState = "ready"
+	Syncing MailboxAccountSyncState = "syncing"
+)
+
+// Valid indicates whether the value is a known member of the MailboxAccountSyncState enum.
+func (e MailboxAccountSyncState) Valid() bool {
+	switch e {
+	case Error:
+		return true
+	case Idle:
+		return true
+	case Ready:
+		return true
+	case Syncing:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MailboxAccountInputImapPort.
+const (
+	MailboxAccountInputImapPortN143 MailboxAccountInputImapPort = 143
+	MailboxAccountInputImapPortN993 MailboxAccountInputImapPort = 993
+)
+
+// Valid indicates whether the value is a known member of the MailboxAccountInputImapPort enum.
+func (e MailboxAccountInputImapPort) Valid() bool {
+	switch e {
+	case MailboxAccountInputImapPortN143:
+		return true
+	case MailboxAccountInputImapPortN993:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MailboxAccountInputSmtpPort.
+const (
+	MailboxAccountInputSmtpPortN465 MailboxAccountInputSmtpPort = 465
+	MailboxAccountInputSmtpPortN587 MailboxAccountInputSmtpPort = 587
+)
+
+// Valid indicates whether the value is a known member of the MailboxAccountInputSmtpPort enum.
+func (e MailboxAccountInputSmtpPort) Valid() bool {
+	switch e {
+	case MailboxAccountInputSmtpPortN465:
+		return true
+	case MailboxAccountInputSmtpPortN587:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MailboxMessageBodyState.
+const (
+	MailboxMessageBodyStateCached      MailboxMessageBodyState = "cached"
+	MailboxMessageBodyStateMetadata    MailboxMessageBodyState = "metadata"
+	MailboxMessageBodyStateUnavailable MailboxMessageBodyState = "unavailable"
+)
+
+// Valid indicates whether the value is a known member of the MailboxMessageBodyState enum.
+func (e MailboxMessageBodyState) Valid() bool {
+	switch e {
+	case MailboxMessageBodyStateCached:
+		return true
+	case MailboxMessageBodyStateMetadata:
+		return true
+	case MailboxMessageBodyStateUnavailable:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MailboxSecurity.
+const (
+	Starttls MailboxSecurity = "starttls"
+	Tls      MailboxSecurity = "tls"
+)
+
+// Valid indicates whether the value is a known member of the MailboxSecurity enum.
+func (e MailboxSecurity) Valid() bool {
+	switch e {
+	case Starttls:
+		return true
+	case Tls:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MembershipStatus.
 const (
 	MembershipStatusActive   MembershipStatus = "active"
@@ -1764,6 +1899,33 @@ func (e SearchResultEntityType) Valid() bool {
 	}
 }
 
+// Defines values for StageAccessRuleBaseRole.
+const (
+	StageAccessRuleBaseRoleAdmin   StageAccessRuleBaseRole = "admin"
+	StageAccessRuleBaseRoleManager StageAccessRuleBaseRole = "manager"
+	StageAccessRuleBaseRoleOwner   StageAccessRuleBaseRole = "owner"
+	StageAccessRuleBaseRoleSales   StageAccessRuleBaseRole = "sales"
+	StageAccessRuleBaseRoleViewer  StageAccessRuleBaseRole = "viewer"
+)
+
+// Valid indicates whether the value is a known member of the StageAccessRuleBaseRole enum.
+func (e StageAccessRuleBaseRole) Valid() bool {
+	switch e {
+	case StageAccessRuleBaseRoleAdmin:
+		return true
+	case StageAccessRuleBaseRoleManager:
+		return true
+	case StageAccessRuleBaseRoleOwner:
+		return true
+	case StageAccessRuleBaseRoleSales:
+		return true
+	case StageAccessRuleBaseRoleViewer:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for WebhookDeliveryStatus.
 const (
 	Dead       WebhookDeliveryStatus = "dead"
@@ -2004,6 +2166,21 @@ func (e SalesListLeadsParamsStatus) Valid() bool {
 	case SalesListLeadsParamsStatusNew:
 		return true
 	case SalesListLeadsParamsStatusQualified:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MailboxSyncAccount200JSONResponseBodySynced.
+const (
+	MailboxSyncAccount200JSONResponseBodySyncedTrue MailboxSyncAccount200JSONResponseBodySynced = true
+)
+
+// Valid indicates whether the value is a known member of the MailboxSyncAccount200JSONResponseBodySynced enum.
+func (e MailboxSyncAccount200JSONResponseBodySynced) Valid() bool {
+	switch e {
+	case MailboxSyncAccount200JSONResponseBodySyncedTrue:
 		return true
 	default:
 		return false
@@ -3299,6 +3476,11 @@ type LeadStageMoveInput struct {
 	StageId openapi_types.UUID `json:"stageId"`
 }
 
+// LeadStageOrderRequest defines model for LeadStageOrderRequest.
+type LeadStageOrderRequest struct {
+	Stages []VersionedRecordInput `json:"stages"`
+}
+
 // LeadStatus defines model for LeadStatus.
 type LeadStatus string
 
@@ -3358,6 +3540,132 @@ type MFASetupRequest struct {
 // MFAStatus defines model for MFAStatus.
 type MFAStatus struct {
 	Enabled bool `json:"enabled"`
+}
+
+// MailboxAccount defines model for MailboxAccount.
+type MailboxAccount struct {
+	DisplayName   string                  `json:"displayName"`
+	Email         openapi_types.Email     `json:"email"`
+	Id            openapi_types.UUID      `json:"id"`
+	ImapHost      string                  `json:"imapHost"`
+	ImapPort      MailboxAccountImapPort  `json:"imapPort"`
+	ImapSecurity  MailboxSecurity         `json:"imapSecurity"`
+	LastErrorCode *string                 `json:"lastErrorCode,omitempty"`
+	LastSyncAt    *time.Time              `json:"lastSyncAt,omitempty"`
+	SmtpHost      string                  `json:"smtpHost"`
+	SmtpPort      MailboxAccountSmtpPort  `json:"smtpPort"`
+	SmtpSecurity  MailboxSecurity         `json:"smtpSecurity"`
+	SyncEnabled   bool                    `json:"syncEnabled"`
+	SyncState     MailboxAccountSyncState `json:"syncState"`
+	Username      string                  `json:"username"`
+	Version       int64                   `json:"version"`
+}
+
+// MailboxAccountImapPort defines model for MailboxAccount.ImapPort.
+type MailboxAccountImapPort int
+
+// MailboxAccountSmtpPort defines model for MailboxAccount.SmtpPort.
+type MailboxAccountSmtpPort int
+
+// MailboxAccountSyncState defines model for MailboxAccount.SyncState.
+type MailboxAccountSyncState string
+
+// MailboxAccountInput defines model for MailboxAccountInput.
+type MailboxAccountInput struct {
+	DisplayName  string                      `json:"displayName"`
+	Email        openapi_types.Email         `json:"email"`
+	ImapHost     string                      `json:"imapHost"`
+	ImapPort     MailboxAccountInputImapPort `json:"imapPort"`
+	ImapSecurity MailboxSecurity             `json:"imapSecurity"`
+	Password     *string                     `json:"password,omitempty"`
+	SmtpHost     string                      `json:"smtpHost"`
+	SmtpPort     MailboxAccountInputSmtpPort `json:"smtpPort"`
+	SmtpSecurity MailboxSecurity             `json:"smtpSecurity"`
+	SyncEnabled  bool                        `json:"syncEnabled"`
+	Username     string                      `json:"username"`
+}
+
+// MailboxAccountInputImapPort defines model for MailboxAccountInput.ImapPort.
+type MailboxAccountInputImapPort int
+
+// MailboxAccountInputSmtpPort defines model for MailboxAccountInput.SmtpPort.
+type MailboxAccountInputSmtpPort int
+
+// MailboxAccountUpdate Same settings as create; an empty password preserves the encrypted credential.
+type MailboxAccountUpdate = MailboxAccountInput
+
+// MailboxAddress defines model for MailboxAddress.
+type MailboxAddress struct {
+	Address openapi_types.Email `json:"address"`
+	Name    *string             `json:"name,omitempty"`
+}
+
+// MailboxFolder defines model for MailboxFolder.
+type MailboxFolder struct {
+	AccountId   openapi_types.UUID `json:"accountId"`
+	DisplayName string             `json:"displayName"`
+	HighestUid  int64              `json:"highestUid"`
+	Id          openapi_types.UUID `json:"id"`
+	LastSyncAt  *time.Time         `json:"lastSyncAt,omitempty"`
+	RemoteName  string             `json:"remoteName"`
+	SpecialUse  *string            `json:"specialUse,omitempty"`
+	TotalCount  int                `json:"totalCount"`
+	UidNext     *int64             `json:"uidNext,omitempty"`
+	UidValidity *int64             `json:"uidValidity,omitempty"`
+	UnreadCount int                `json:"unreadCount"`
+}
+
+// MailboxMessage defines model for MailboxMessage.
+type MailboxMessage struct {
+	AccountId         openapi_types.UUID      `json:"accountId"`
+	BodyState         MailboxMessageBodyState `json:"bodyState"`
+	Flags             []string                `json:"flags"`
+	FolderId          openapi_types.UUID      `json:"folderId"`
+	HasAttachments    bool                    `json:"hasAttachments"`
+	Id                openapi_types.UUID      `json:"id"`
+	InternetMessageId *string                 `json:"internetMessageId,omitempty"`
+	ReceivedAt        time.Time               `json:"receivedAt"`
+	Recipients        []MailboxAddress        `json:"recipients"`
+	RemoteUid         int64                   `json:"remoteUid"`
+	Sender            MailboxAddress          `json:"sender"`
+	SentAt            *time.Time              `json:"sentAt,omitempty"`
+	SizeBytes         int64                   `json:"sizeBytes"`
+	Snippet           string                  `json:"snippet"`
+	Subject           string                  `json:"subject"`
+}
+
+// MailboxMessageBodyState defines model for MailboxMessage.BodyState.
+type MailboxMessageBodyState string
+
+// MailboxMessageBody defines model for MailboxMessageBody.
+type MailboxMessageBody struct {
+	PlainText string `json:"plainText"`
+}
+
+// MailboxMessagePage defines model for MailboxMessagePage.
+type MailboxMessagePage struct {
+	Items      []MailboxMessage `json:"items"`
+	NextCursor *string          `json:"nextCursor,omitempty"`
+}
+
+// MailboxSecurity defines model for MailboxSecurity.
+type MailboxSecurity string
+
+// MailboxSendInput defines model for MailboxSendInput.
+type MailboxSendInput struct {
+	Bcc       *[]MailboxAddress `json:"bcc,omitempty"`
+	Cc        *[]MailboxAddress `json:"cc,omitempty"`
+	PlainText string            `json:"plainText"`
+	Subject   string            `json:"subject"`
+	To        []MailboxAddress  `json:"to"`
+}
+
+// MailboxSendResult defines model for MailboxSendResult.
+type MailboxSendResult struct {
+	ErrorCode  *string            `json:"errorCode,omitempty"`
+	OutgoingId openapi_types.UUID `json:"outgoingId"`
+	Queued     *bool              `json:"queued,omitempty"`
+	Sent       bool               `json:"sent"`
 }
 
 // MemberRoleRequest defines model for MemberRoleRequest.
@@ -3879,6 +4187,38 @@ type SessionView struct {
 	User       User        `json:"user"`
 	Workspaces []Workspace `json:"workspaces"`
 }
+
+// StageAccessRequest defines model for StageAccessRequest.
+type StageAccessRequest struct {
+	Rules []StageAccessRuleInput `json:"rules"`
+}
+
+// StageAccessRule defines model for StageAccessRule.
+type StageAccessRule struct {
+	BaseRole  StageAccessRuleBaseRole `json:"baseRole"`
+	CanEnter  bool                    `json:"canEnter"`
+	CanLeave  bool                    `json:"canLeave"`
+	CanView   bool                    `json:"canView"`
+	CreatedAt time.Time               `json:"createdAt"`
+	RoleId    openapi_types.UUID      `json:"roleId"`
+	RoleKey   string                  `json:"roleKey"`
+	RoleName  string                  `json:"roleName"`
+	UpdatedAt time.Time               `json:"updatedAt"`
+}
+
+// StageAccessRuleBaseRole defines model for StageAccessRule.BaseRole.
+type StageAccessRuleBaseRole string
+
+// StageAccessRuleInput defines model for StageAccessRuleInput.
+type StageAccessRuleInput struct {
+	CanEnter bool               `json:"canEnter"`
+	CanLeave bool               `json:"canLeave"`
+	CanView  bool               `json:"canView"`
+	RoleId   openapi_types.UUID `json:"roleId"`
+}
+
+// StageAccessRules defines model for StageAccessRules.
+type StageAccessRules = []StageAccessRule
 
 // StageHistory defines model for StageHistory.
 type StageHistory struct {
@@ -4774,6 +5114,35 @@ type LocalizationUpdateSettingsParams struct {
 	IfMatch IfMatch `json:"If-Match"`
 }
 
+// MailboxCreateAccountParams defines parameters for MailboxCreateAccount.
+type MailboxCreateAccountParams struct {
+	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
+}
+
+// MailboxDeleteAccountParams defines parameters for MailboxDeleteAccount.
+type MailboxDeleteAccountParams struct {
+	IfMatch IfMatch `json:"If-Match"`
+}
+
+// MailboxUpdateAccountParams defines parameters for MailboxUpdateAccount.
+type MailboxUpdateAccountParams struct {
+	IfMatch IfMatch `json:"If-Match"`
+}
+
+// MailboxSendMessageParams defines parameters for MailboxSendMessage.
+type MailboxSendMessageParams struct {
+	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
+}
+
+// MailboxSyncAccount200JSONResponseBodySynced defines parameters for MailboxSyncAccount.
+type MailboxSyncAccount200JSONResponseBodySynced bool
+
+// MailboxListMessagesParams defines parameters for MailboxListMessages.
+type MailboxListMessagesParams struct {
+	Cursor *Cursor `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Limit  *int    `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
 // TenancySetMyWorkspaceLocaleParams defines parameters for TenancySetMyWorkspaceLocale.
 type TenancySetMyWorkspaceLocaleParams struct {
 	// XCSRFToken Required for unsafe cookie-authenticated requests; validated bearer API keys do not use CSRF.
@@ -5211,8 +5580,14 @@ type TenancyInviteMemberJSONRequestBody = InviteMemberRequest
 // SalesCreateLeadStageJSONRequestBody defines body for SalesCreateLeadStage for application/json ContentType.
 type SalesCreateLeadStageJSONRequestBody = LeadStageInput
 
+// SalesReorderLeadStagesJSONRequestBody defines body for SalesReorderLeadStages for application/json ContentType.
+type SalesReorderLeadStagesJSONRequestBody = LeadStageOrderRequest
+
 // SalesUpdateLeadStageJSONRequestBody defines body for SalesUpdateLeadStage for application/json ContentType.
 type SalesUpdateLeadStageJSONRequestBody = LeadStageInput
+
+// SalesReplaceLeadStageAccessJSONRequestBody defines body for SalesReplaceLeadStageAccess for application/json ContentType.
+type SalesReplaceLeadStageAccessJSONRequestBody = StageAccessRequest
 
 // SalesCreateLeadJSONRequestBody defines body for SalesCreateLead for application/json ContentType.
 type SalesCreateLeadJSONRequestBody = LeadInput
@@ -5232,6 +5607,15 @@ type SalesMoveLeadStageJSONRequestBody = LeadStageMoveInput
 // LocalizationUpdateSettingsJSONRequestBody defines body for LocalizationUpdateSettings for application/json ContentType.
 type LocalizationUpdateSettingsJSONRequestBody = UpdateWorkspaceLocaleSettings
 
+// MailboxCreateAccountJSONRequestBody defines body for MailboxCreateAccount for application/json ContentType.
+type MailboxCreateAccountJSONRequestBody = MailboxAccountInput
+
+// MailboxUpdateAccountJSONRequestBody defines body for MailboxUpdateAccount for application/json ContentType.
+type MailboxUpdateAccountJSONRequestBody = MailboxAccountUpdate
+
+// MailboxSendMessageJSONRequestBody defines body for MailboxSendMessage for application/json ContentType.
+type MailboxSendMessageJSONRequestBody = MailboxSendInput
+
 // TenancySetMyWorkspaceLocaleJSONRequestBody defines body for TenancySetMyWorkspaceLocale for application/json ContentType.
 type TenancySetMyWorkspaceLocaleJSONRequestBody = WorkspaceLocaleRequest
 
@@ -5246,6 +5630,9 @@ type TenancyUpdateMemberStatusJSONRequestBody = MemberStatusRequest
 
 // SalesUpdatePipelineStageJSONRequestBody defines body for SalesUpdatePipelineStage for application/json ContentType.
 type SalesUpdatePipelineStageJSONRequestBody = PipelineStageInput
+
+// SalesReplacePipelineStageAccessJSONRequestBody defines body for SalesReplacePipelineStageAccess for application/json ContentType.
+type SalesReplacePipelineStageAccessJSONRequestBody = StageAccessRequest
 
 // SalesCreatePipelineJSONRequestBody defines body for SalesCreatePipeline for application/json ContentType.
 type SalesCreatePipelineJSONRequestBody = PipelineInput

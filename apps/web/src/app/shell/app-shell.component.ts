@@ -209,13 +209,13 @@ interface NavItem {
           [cdkTrapFocusAutoCapture]="true"
           [attr.aria-label]="i18n.t('web.shell.commandPalette')"
         >
-          <label class="palette-search">
-            <span class="visually-hidden">{{ i18n.t('web.search.label') }}</span>
+          <div class="palette-search">
             <app-icon name="search" />
             <input
               #searchInput
               type="search"
               autocomplete="off"
+              [attr.aria-label]="i18n.t('web.search.label')"
               [placeholder]="i18n.t('web.shell.searchPlaceholder')"
               (input)="search($event)"
             />
@@ -227,7 +227,7 @@ interface NavItem {
             >
               <app-icon name="close" />
             </button>
-          </label>
+          </div>
           <div class="palette-results" aria-live="polite">
             @if (searchPending()) {
               <p>{{ i18n.t('common.result.loading') }}</p>
@@ -280,6 +280,7 @@ export class AppShellComponent {
     { path: '/projects', key: 'common.nav.projects', icon: 'project' },
     { path: '/activities', key: 'common.nav.activities', icon: 'activity' },
     { path: '/calendar', key: 'common.nav.calendar', icon: 'calendar' },
+    { path: '/mail', key: 'common.nav.mailbox', icon: 'mail' },
     {
       path: '/automations',
       key: 'common.nav.automations',
@@ -308,7 +309,9 @@ export class AppShellComponent {
       )
       .subscribe(() => {
         this.mobileOpen.set(false);
-        focusAfterNextRender(this.injector, () => this.mainContent()?.nativeElement);
+        // The shell main element is stable across child-route navigation, so
+        // it does not need an Angular after-render registration per route.
+        queueMicrotask(() => this.mainContent()?.nativeElement.focus());
       });
     this.searchTerms
       .pipe(

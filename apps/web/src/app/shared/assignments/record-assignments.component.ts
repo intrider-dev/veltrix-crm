@@ -185,6 +185,13 @@ export type AssignmentResourceType = 'lead' | 'deal' | 'task';
       color: var(--text-muted);
       font-size: 0.75rem;
     }
+    .primary-toggle input {
+      width: 1.5rem;
+      height: 1.5rem;
+      flex: 0 0 1.5rem;
+      margin: 0;
+      accent-color: var(--brand);
+    }
     @media (max-width: 700px) {
       .assignment-editor {
         grid-template-columns: 1fr;

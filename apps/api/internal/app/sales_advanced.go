@@ -499,6 +499,40 @@ func (application *Application) updateLeadStage(writer http.ResponseWriter, requ
 	httpx.WriteJSON(writer, http.StatusOK, result)
 }
 
+func (application *Application) reorderLeadStages(writer http.ResponseWriter, request *http.Request) {
+	workspaceID, err := application.workspaceID(request)
+	if writeError(application, writer, request, err) {
+		return
+	}
+	body, _, err := httpx.DecodeJSON[pipelineStageOrderRequest](writer, request, httpx.DefaultJSONLimit)
+	if writeError(application, writer, request, err) {
+		return
+	}
+	order := make([]sales.StageOrderItem, 0, len(body.Stages))
+	for _, item := range body.Stages {
+		id, parseErr := ids.Parse(strings.TrimSpace(item.ID))
+		if parseErr != nil {
+			writeError(application, writer, request, &errx.ValidationError{Fields: []errx.FieldError{{Pointer: "/stages/id", Code: "validation.uuid.invalid"}}})
+			return
+		}
+		order = append(order, sales.StageOrderItem{ID: id, Version: item.Version})
+	}
+	principal, _ := httpx.Principal(request.Context())
+	var result []sales.LeadStageRecord
+	err = application.tenancy.WithWorkspace(request.Context(), principal, workspaceID, httpx.RequestID(request.Context()), tenancy.PermissionLeadStagesManage,
+		func(workspace *tenancy.WorkspaceTx) error {
+			result, err = application.sales.ReorderLeadStages(request.Context(), workspace, metadata(request, workspaceID, principal), order)
+			if err != nil {
+				return err
+			}
+			return application.localizeLeadStages(request.Context(), workspace, workspaceID, principal.PreferredLocale, result)
+		})
+	if writeError(application, writer, request, err) {
+		return
+	}
+	httpx.WriteJSON(writer, http.StatusOK, result)
+}
+
 func (application *Application) deleteLeadStage(writer http.ResponseWriter, request *http.Request) {
 	workspaceID, stageID, ok := salesWorkspaceAndResourceID(application, writer, request, "stageId")
 	if !ok {

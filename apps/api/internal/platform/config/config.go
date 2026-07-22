@@ -38,9 +38,9 @@ type Config struct {
 	SMTPRequireTLS           bool
 	SMTPImplicitTLS          bool
 	SMTPWriteTimeout         time.Duration
+	MailboxAllowPrivate      bool
 	MaxDBConnections         int32
 	WorkerConcurrency        int
-	AutoMigrate              bool
 	DemoSeed                 bool
 	DemoEmail                string
 	DemoPassword             string
@@ -128,9 +128,6 @@ func Load() (Config, error) {
 	if cfg.CookieSecure, err = boolValue("SESSION_COOKIE_SECURE", cfg.Environment == "production"); err != nil {
 		return Config{}, err
 	}
-	if cfg.AutoMigrate, err = boolValue("AUTO_MIGRATE", cfg.Environment != "production"); err != nil {
-		return Config{}, err
-	}
 	if cfg.DemoSeed, err = boolValue("DEMO_SEED", cfg.Environment == "development"); err != nil {
 		return Config{}, err
 	}
@@ -153,6 +150,9 @@ func Load() (Config, error) {
 		return Config{}, err
 	}
 	if cfg.SMTPImplicitTLS, err = boolValue("SMTP_IMPLICIT_TLS", false); err != nil {
+		return Config{}, err
+	}
+	if cfg.MailboxAllowPrivate, err = boolValue("MAILBOX_ALLOW_PRIVATE_ENDPOINTS", false); err != nil {
 		return Config{}, err
 	}
 	if cfg.S3AllowInsecure, err = boolValue("S3_ALLOW_INSECURE", false); err != nil {
@@ -247,9 +247,6 @@ func Load() (Config, error) {
 		if cfg.IdentityKeyID == "dev-local-v1" {
 			return Config{}, errors.New("IDENTITY_ENCRYPTION_KEY_ID must not use the development identifier in production")
 		}
-	}
-	if cfg.AutoMigrate && (cfg.DatabaseAdminURL == "" || cfg.AppDBPassword == "") {
-		return Config{}, errors.New("AUTO_MIGRATE requires DATABASE_ADMIN_URL and APP_DB_PASSWORD")
 	}
 	if cfg.DatabaseDispatcherURL == "" {
 		cfg.DatabaseDispatcherURL = cfg.DatabaseURL

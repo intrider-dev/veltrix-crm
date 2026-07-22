@@ -169,6 +169,20 @@ function expectedArtifacts(outputPrefix) {
   };
 }
 
+function hasCompleteReport(artifacts) {
+  if (!existsSync(artifacts.json) || !existsSync(artifacts.html)) return false;
+  try {
+    const document = JSON.parse(readFileSync(artifacts.json, "utf8"));
+    return Boolean(
+      document.lighthouseVersion &&
+        document.categories?.performance &&
+        document.categories?.accessibility,
+    );
+  } catch {
+    return false;
+  }
+}
+
 function score(value) {
   return typeof value === "number" ? Math.round(value * 100) : null;
 }
@@ -261,9 +275,15 @@ export function run(options) {
       stdio: "inherit",
     });
     if (child.error) throw child.error;
-    if (child.status !== 0) {
+    if (child.status !== 0 && !hasCompleteReport(plan.artifacts)) {
       throw new Error(
         `Lighthouse ${plan.profile} exited with code ${child.status ?? "unknown"}`,
+      );
+    }
+    if (child.status !== 0) {
+      process.stderr.write(
+        `Lighthouse ${plan.profile} returned ${child.status}, but produced a complete report; ` +
+          `continuing because Chrome cleanup can fail with EPERM on Windows.\n`,
       );
     }
     for (const artifact of Object.values(plan.artifacts)) {

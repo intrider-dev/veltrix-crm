@@ -2,6 +2,7 @@
 
 ARG NODE_IMAGE=node:24.15.0-bookworm-slim
 ARG GO_IMAGE=golang:1.26.5-bookworm
+ARG POSTGRES_IMAGE=postgres:18.4-bookworm
 
 FROM ${NODE_IMAGE} AS web-deps
 
@@ -77,3 +78,16 @@ HEALTHCHECK --interval=10s --timeout=3s --start-period=10s --retries=5 \
 
 ENTRYPOINT ["/app/veltrix-crm"]
 CMD ["serve"]
+
+FROM ${POSTGRES_IMAGE} AS postgres-runtime
+
+COPY --from=api-build /out/veltrix-crm /app/veltrix-crm
+COPY --from=api-build /out/config /app/config
+COPY infra/container/postgres-entrypoint.sh /usr/local/bin/veltrix-postgres-entrypoint
+
+RUN chmod 0755 /usr/local/bin/veltrix-postgres-entrypoint
+
+ENV APP_BRAND_CONFIG=/app/config/brand.json
+
+ENTRYPOINT ["/usr/local/bin/veltrix-postgres-entrypoint"]
+CMD ["postgres"]

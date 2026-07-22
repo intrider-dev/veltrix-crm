@@ -52,6 +52,17 @@ func run(arguments []string, logger *slog.Logger) error {
 			return fmt.Errorf("serve does not accept arguments")
 		}
 		return serve(ctx, cfg, logger)
+	case "bootstrap":
+		if len(arguments) != 0 {
+			return fmt.Errorf("bootstrap does not accept arguments")
+		}
+		if err := migrate(ctx, cfg); err != nil {
+			return err
+		}
+		if cfg.DemoSeed {
+			return seedDatabase(ctx, cfg, "demo", os.Stdout)
+		}
+		return nil
 	case "migrate":
 		if len(arguments) != 0 {
 			return fmt.Errorf("migrate does not accept arguments")
@@ -71,21 +82,11 @@ func run(arguments []string, logger *slog.Logger) error {
 		}
 		return runWorker(ctx, cfg, logger)
 	default:
-		return fmt.Errorf("unknown command %q; expected serve, migrate, seed, or worker", command)
+		return fmt.Errorf("unknown command %q; expected serve, bootstrap, migrate, seed, or worker", command)
 	}
 }
 
 func serve(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
-	if cfg.AutoMigrate {
-		if err := migrate(ctx, cfg); err != nil {
-			return err
-		}
-	}
-	if cfg.DemoSeed {
-		if err := seedDatabase(ctx, cfg, "demo", os.Stdout); err != nil {
-			return err
-		}
-	}
 	pool, err := database.Open(ctx, cfg.DatabaseURL, cfg.MaxDBConnections, "veltrix-crm-server")
 	if err != nil {
 		return err

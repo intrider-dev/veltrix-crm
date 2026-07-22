@@ -460,15 +460,23 @@ func (service *Service) classifyDealMutation(
 ) error {
 	var currentVersion int64
 	var deleted bool
+	var stageID pgtype.UUID
 	err := workspace.Tx.QueryRow(ctx, `
-		SELECT version, deleted_at IS NOT NULL FROM sales.deals
+		SELECT version, deleted_at IS NOT NULL, stage_id FROM sales.deals
 		WHERE workspace_id = $1 AND id = $2`, workspaceID.PG(), dealID.PG(),
-	).Scan(&currentVersion, &deleted)
+	).Scan(&currentVersion, &deleted, &stageID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return errx.ErrNotFound
 	}
 	if err != nil {
 		return fmt.Errorf("classify deal mutation: %w", err)
+	}
+	resolvedStageID, ok := ids.FromPG(stageID)
+	if !ok {
+		return errx.ErrNotFound
+	}
+	if err := service.RequirePipelineStageAccess(ctx, workspace, workspaceID, resolvedStageID, StageAccessView); err != nil {
+		return err
 	}
 	if currentVersion != version {
 		return errx.ErrVersionConflict

@@ -145,6 +145,56 @@ INSERT INTO tenancy.memberships(workspace_id,id,user_id,role) VALUES
 	assertVisible(departmentUserID, "workspace", "department")
 	assertVisible(outsiderID, "workspace")
 
+	customAdminRoleID := mustCalendarID(t)
+	if _, err := admin.Exec(ctx, `
+INSERT INTO tenancy.workspace_roles(workspace_id,id,role_key,name,base_role,is_system)
+VALUES($1,$2,'calendar_restricted_admin','Calendar restricted admin','admin',false)
+`, workspaceID.PG(), customAdminRoleID.PG()); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := admin.Exec(ctx, `
+INSERT INTO tenancy.role_permissions(workspace_id,role_id,permission)
+VALUES($1,$2,'records.read')
+`, workspaceID.PG(), customAdminRoleID.PG()); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := admin.Exec(ctx, `
+UPDATE tenancy.memberships SET role='admin', role_id=$3
+WHERE workspace_id=$1 AND id=$2
+`, workspaceID.PG(), outsiderMembershipID.PG(), customAdminRoleID.PG()); err != nil {
+		t.Fatal(err)
+	}
+	assertVisible(outsiderID, "workspace")
+
+	err = tenantService.WithWorkspace(ctx, identity.Principal{UserID: targetID}, workspaceID,
+		"calendar-assignee-update-guard", tenancy.PermissionRecordsUpdate, func(workspace *tenancy.WorkspaceTx) error {
+			_, updateErr := workspace.Tx.Exec(ctx, `
+UPDATE activities.activities SET title='Unauthorized rewrite' WHERE workspace_id=$1 AND id=$2
+`, workspaceID.PG(), created["user"].ID.PG())
+			return updateErr
+		})
+	if err == nil {
+		t.Fatal("non-creator changed protected activity fields through the runtime role")
+	}
+	err = tenantService.WithWorkspace(ctx, identity.Principal{UserID: targetID}, workspaceID,
+		"calendar-assignee-complete", tenancy.PermissionRecordsUpdate, func(workspace *tenancy.WorkspaceTx) error {
+			command, updateErr := workspace.Tx.Exec(ctx, `
+UPDATE activities.activities
+SET status='completed', completed_at=now(), version=version+1, updated_at=now()
+WHERE workspace_id=$1 AND id=$2
+`, workspaceID.PG(), created["user"].ID.PG())
+			if updateErr != nil {
+				return updateErr
+			}
+			if command.RowsAffected() != 1 {
+				t.Fatal("non-creator could not complete an assigned/user-scoped activity")
+			}
+			return nil
+		})
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	err = tenantService.WithWorkspace(ctx, identity.Principal{UserID: outsiderID}, workspaceID,
 		"calendar-exact-deny", tenancy.PermissionRecordsRead, func(workspace *tenancy.WorkspaceTx) error {
 			_, getErr := service.Get(ctx, workspace, workspaceID, created["user"].ID)

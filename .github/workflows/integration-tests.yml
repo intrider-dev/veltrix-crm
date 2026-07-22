@@ -45,7 +45,6 @@ jobs:
       DATABASE_ADMIN_URL: postgres://postgres:postgres_ci_password@127.0.0.1:5432/veltrix_crm?sslmode=disable
       DATABASE_DISPATCHER_URL: postgres://veltrix_dispatcher:veltrix_ci_password@127.0.0.1:5432/veltrix_crm?sslmode=disable
       APP_DB_PASSWORD: veltrix_ci_password
-      AUTO_MIGRATE: "false"
       DEMO_SEED: "false"
       SESSION_COOKIE_SECURE: "false"
       TEST_DATABASE_URL: postgres://veltrix_app:veltrix_ci_password@127.0.0.1:5432/veltrix_crm?sslmode=disable

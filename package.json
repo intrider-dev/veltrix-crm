@@ -22,7 +22,7 @@
     "test": "pnpm test:api && pnpm test:web",
     "test:api": "go test ./apps/api/...",
     "test:web": "pnpm --filter @veltrix-crm/web test",
-    "test:integration": "go test -tags=integration -count=1 ./apps/api/...",
+    "test:integration": "go test -tags=integration -count=1 -p 1 ./apps/api/...",
     "test:e2e": "playwright test",
     "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
     "generate:contracts": "node scripts/generate-contracts.mjs",

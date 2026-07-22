@@ -361,8 +361,9 @@ SELECT id, pipeline_id, stage_id, name, contact_id, company_id, owner_user_id,
        amount_minor, currency, planned_start_date, expected_close_date, position, status, lost_reason,
        forecast_category, won_at, lost_at, custom_fields, version, deleted_at,
        deleted_by, created_at, updated_at
-FROM sales.deals
-WHERE workspace_id = $1 AND id = $2 AND deleted_at IS NULL
+FROM sales.deals deal
+WHERE deal.workspace_id = $1 AND deal.id = $2 AND deal.deleted_at IS NULL
+  AND sales.pipeline_stage_access_allowed(deal.workspace_id, deal.stage_id, 'view')
 `
 
 type GetDealAdvancedParams struct {
@@ -432,8 +433,9 @@ SELECT id, name, email, phone, company_name, job_title, source, status, stage_id
        owner_user_id, team_id, converted_contact_id, converted_company_id,
        converted_deal_id, custom_fields, version, deleted_at, deleted_by,
        created_at, updated_at
-FROM sales.leads
-WHERE workspace_id = $1 AND id = $2 AND deleted_at IS NULL
+FROM sales.leads lead
+WHERE lead.workspace_id = $1 AND lead.id = $2 AND lead.deleted_at IS NULL
+  AND sales.lead_stage_access_allowed(lead.workspace_id, lead.stage_id, 'view')
 `
 
 type GetLeadAdvancedParams struct {
@@ -736,10 +738,11 @@ func (q *Queries) ListDealStageHistoryAdvanced(ctx context.Context, arg ListDeal
 const listDealTrash = `-- name: ListDealTrash :many
 SELECT id, pipeline_id, stage_id, name, status, amount_minor, currency,
        owner_user_id, version, deleted_at, deleted_by, created_at, updated_at
-FROM sales.deals
-WHERE workspace_id = $1 AND deleted_at IS NOT NULL
-  AND (deleted_at, id) < ($2::timestamptz, $3::uuid)
-ORDER BY deleted_at DESC, id DESC
+FROM sales.deals deal
+WHERE deal.workspace_id = $1 AND deal.deleted_at IS NOT NULL
+  AND sales.pipeline_stage_access_allowed(deal.workspace_id, deal.stage_id, 'view')
+  AND (deal.deleted_at, deal.id) < ($2::timestamptz, $3::uuid)
+ORDER BY deal.deleted_at DESC, deal.id DESC
 LIMIT $4
 `
 
@@ -809,16 +812,17 @@ const listDealsAdvanced = `-- name: ListDealsAdvanced :many
 SELECT id, pipeline_id, stage_id, name, contact_id, company_id, owner_user_id,
        amount_minor, currency, planned_start_date, expected_close_date, position, status, lost_reason,
        forecast_category, won_at, lost_at, custom_fields, version, created_at, updated_at
-FROM sales.deals
-WHERE workspace_id = $1
-  AND deleted_at IS NULL
-  AND ($2::text = '' OR name ILIKE '%' || $2 || '%')
-  AND ($3::uuid IS NULL OR pipeline_id = $3)
-  AND ($4::uuid IS NULL OR stage_id = $4)
-  AND ($5::uuid IS NULL OR owner_user_id = $5)
-  AND ($6::text = '' OR status = $6)
-  AND (updated_at, id) < ($7::timestamptz, $8::uuid)
-ORDER BY updated_at DESC, id DESC
+FROM sales.deals deal
+WHERE deal.workspace_id = $1
+  AND deal.deleted_at IS NULL
+  AND sales.pipeline_stage_access_allowed(deal.workspace_id, deal.stage_id, 'view')
+  AND ($2::text = '' OR deal.name ILIKE '%' || $2 || '%')
+  AND ($3::uuid IS NULL OR deal.pipeline_id = $3)
+  AND ($4::uuid IS NULL OR deal.stage_id = $4)
+  AND ($5::uuid IS NULL OR deal.owner_user_id = $5)
+  AND ($6::text = '' OR deal.status = $6)
+  AND (deal.updated_at, deal.id) < ($7::timestamptz, $8::uuid)
+ORDER BY deal.updated_at DESC, deal.id DESC
 LIMIT $9
 `
 
@@ -914,13 +918,14 @@ const listKanbanStageDeals = `-- name: ListKanbanStageDeals :many
 SELECT id, pipeline_id, stage_id, name, contact_id, company_id, owner_user_id,
        amount_minor, currency, planned_start_date, expected_close_date, position, forecast_category,
        version, updated_at
-FROM sales.deals
-WHERE workspace_id = $1
-  AND pipeline_id = $2
-  AND stage_id = $3
-  AND status = 'open' AND deleted_at IS NULL
-  AND (position, id) > ($4::integer, $5::uuid)
-ORDER BY position, id
+FROM sales.deals deal
+WHERE deal.workspace_id = $1
+  AND deal.pipeline_id = $2
+  AND deal.stage_id = $3
+  AND sales.pipeline_stage_access_allowed(deal.workspace_id, deal.stage_id, 'view')
+  AND deal.status = 'open' AND deal.deleted_at IS NULL
+  AND (deal.position, deal.id) > ($4::integer, $5::uuid)
+ORDER BY deal.position, deal.id
 LIMIT $6
 `
 
@@ -997,10 +1002,11 @@ func (q *Queries) ListKanbanStageDeals(ctx context.Context, arg ListKanbanStageD
 const listLeadTrash = `-- name: ListLeadTrash :many
 SELECT id, name, email, company_name, status, owner_user_id, version, deleted_at,
        deleted_by, created_at, updated_at
-FROM sales.leads
-WHERE workspace_id = $1 AND deleted_at IS NOT NULL
-  AND (deleted_at, id) < ($2::timestamptz, $3::uuid)
-ORDER BY deleted_at DESC, id DESC
+FROM sales.leads lead
+WHERE lead.workspace_id = $1 AND lead.deleted_at IS NOT NULL
+  AND sales.lead_stage_access_allowed(lead.workspace_id, lead.stage_id, 'view')
+  AND (lead.deleted_at, lead.id) < ($2::timestamptz, $3::uuid)
+ORDER BY lead.deleted_at DESC, lead.id DESC
 LIMIT $4
 `
 
@@ -1066,16 +1072,17 @@ const listLeadsAdvanced = `-- name: ListLeadsAdvanced :many
 SELECT id, name, email, phone, company_name, job_title, source, status, stage_id,
        owner_user_id, team_id, converted_contact_id, converted_company_id,
        converted_deal_id, custom_fields, version, created_at, updated_at
-FROM sales.leads
-WHERE workspace_id = $1
-  AND deleted_at IS NULL
-  AND ($2::text = '' OR name ILIKE '%' || $2 || '%'
-       OR COALESCE(email_normalized, '') ILIKE '%' || lower($2) || '%'
-       OR COALESCE(company_name, '') ILIKE '%' || $2 || '%')
-  AND ($3::text = '' OR status = $3)
-  AND ($4::uuid IS NULL OR owner_user_id = $4)
-  AND (updated_at, id) < ($5::timestamptz, $6::uuid)
-ORDER BY updated_at DESC, id DESC
+FROM sales.leads lead
+WHERE lead.workspace_id = $1
+  AND lead.deleted_at IS NULL
+  AND sales.lead_stage_access_allowed(lead.workspace_id, lead.stage_id, 'view')
+  AND ($2::text = '' OR lead.name ILIKE '%' || $2 || '%'
+       OR COALESCE(lead.email_normalized, '') ILIKE '%' || lower($2) || '%'
+       OR COALESCE(lead.company_name, '') ILIKE '%' || $2 || '%')
+  AND ($3::text = '' OR lead.status = $3)
+  AND ($4::uuid IS NULL OR lead.owner_user_id = $4)
+  AND (lead.updated_at, lead.id) < ($5::timestamptz, $6::uuid)
+ORDER BY lead.updated_at DESC, lead.id DESC
 LIMIT $7
 `
 
@@ -1160,8 +1167,9 @@ func (q *Queries) ListLeadsAdvanced(ctx context.Context, arg ListLeadsAdvancedPa
 const listPipelineStagesForWorkspace = `-- name: ListPipelineStagesForWorkspace :many
 SELECT id, pipeline_id, name, probability, forecast_category, position, version,
        created_at, updated_at
-FROM sales.pipeline_stages
-WHERE workspace_id = $1
+FROM sales.pipeline_stages stage
+WHERE stage.workspace_id = $1
+  AND sales.pipeline_stage_access_allowed(stage.workspace_id, stage.id, 'view')
 ORDER BY pipeline_id, position, id
 `
 

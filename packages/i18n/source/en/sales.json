@@ -24,7 +24,7 @@
   "deal.title": "Deals",
   "deal.unscheduled": "Dates not scheduled",
   "deal.versionConflict": "This deal changed in another session. Reload before continuing.",
-  "deal.view.gantt": "Timeline",
+  "deal.view.gantt": "Gantt",
   "deal.view.kanban": "Kanban",
   "deal.view.list": "List",
   "deal.view.switcher": "Deal view",

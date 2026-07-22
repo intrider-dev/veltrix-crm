@@ -56,6 +56,7 @@ SELECT
    FROM sales.deals deal
    WHERE deal.workspace_id = $1
      AND deal.deleted_at IS NULL
+     AND sales.pipeline_stage_access_allowed(deal.workspace_id, deal.stage_id, 'view')
      AND deal.updated_at >= $2::timestamptz
      AND deal.updated_at < $3::timestamptz
      AND deal.status = 'won') AS won_count,
@@ -63,6 +64,7 @@ SELECT
    FROM sales.deals deal
    WHERE deal.workspace_id = $1
      AND deal.deleted_at IS NULL
+     AND sales.pipeline_stage_access_allowed(deal.workspace_id, deal.stage_id, 'view')
      AND deal.updated_at >= $2::timestamptz
      AND deal.updated_at < $3::timestamptz
      AND deal.status = 'lost') AS lost_count,
@@ -70,6 +72,7 @@ SELECT
    FROM sales.deals deal
    WHERE deal.workspace_id = $1
      AND deal.deleted_at IS NULL
+     AND sales.pipeline_stage_access_allowed(deal.workspace_id, deal.stage_id, 'view')
      AND deal.updated_at >= $2::timestamptz
      AND deal.updated_at < $3::timestamptz
      AND deal.status = 'won') AS won_value_minor,
@@ -77,12 +80,14 @@ SELECT
    FROM sales.leads lead
    WHERE lead.workspace_id = $1
      AND lead.deleted_at IS NULL
+     AND sales.lead_stage_access_allowed(lead.workspace_id, lead.stage_id, 'view')
      AND lead.created_at >= $2::timestamptz
      AND lead.created_at < $3::timestamptz) AS lead_count,
   (SELECT count(*)::bigint
    FROM sales.leads lead
    WHERE lead.workspace_id = $1
      AND lead.deleted_at IS NULL
+     AND sales.lead_stage_access_allowed(lead.workspace_id, lead.stage_id, 'view')
      AND lead.created_at >= $2::timestamptz
      AND lead.created_at < $3::timestamptz
      AND lead.status = 'converted') AS converted_lead_count,
@@ -269,6 +274,7 @@ FROM sales.deals deal
 LEFT JOIN identity.users users ON users.id = deal.owner_user_id
 WHERE deal.workspace_id = $1
   AND deal.deleted_at IS NULL
+  AND sales.pipeline_stage_access_allowed(deal.workspace_id, deal.stage_id, 'view')
   AND deal.updated_at >= $2::timestamptz
   AND deal.updated_at < $3::timestamptz
 GROUP BY deal.owner_user_id, users.display_name
@@ -332,6 +338,7 @@ LEFT JOIN sales.deals deal
  AND deal.updated_at >= $1::timestamptz
  AND deal.updated_at < $2::timestamptz
 WHERE stage.workspace_id = $3
+  AND sales.pipeline_stage_access_allowed(stage.workspace_id, stage.id, 'view')
 GROUP BY stage.id, stage.name, stage.position
 ORDER BY stage.position, stage.id
 LIMIT 200
@@ -386,6 +393,7 @@ SELECT COALESCE(NULLIF(trim(lead.source), ''), 'unspecified')::text AS source,
 FROM sales.leads lead
 WHERE lead.workspace_id = $1
   AND lead.deleted_at IS NULL
+  AND sales.lead_stage_access_allowed(lead.workspace_id, lead.stage_id, 'view')
   AND lead.created_at >= $2::timestamptz
   AND lead.created_at < $3::timestamptz
 GROUP BY COALESCE(NULLIF(trim(lead.source), ''), 'unspecified')

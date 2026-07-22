@@ -2237,6 +2237,36 @@ paths:
       responses:
         "204": { description: Empty stage deleted }
         "409": { $ref: "#/components/responses/Problem" }
+  /workspaces/{workspaceId}/pipeline-stages/{stageId}/access:
+    get:
+      operationId: salesListPipelineStageAccess
+      parameters:
+        - { $ref: "#/components/parameters/WorkspaceId" }
+        - { name: stageId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Explicit role access rules; an empty list inherits the deal resource permission
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StageAccessRules" }
+        "403": { $ref: "#/components/responses/Problem" }
+    put:
+      operationId: salesReplacePipelineStageAccess
+      parameters:
+        - { $ref: "#/components/parameters/WorkspaceId" }
+        - { name: stageId, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StageAccessRequest" }
+      responses:
+        "200":
+          description: Full explicit role access set replaced atomically
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StageAccessRules" }
+        "403": { $ref: "#/components/responses/Problem" }
   /workspaces/{workspaceId}/lead-stages:
     get:
       operationId: salesListLeadStages
@@ -2266,6 +2296,26 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/LeadStage" }
+  /workspaces/{workspaceId}/lead-stages/order:
+    put:
+      operationId: salesReorderLeadStages
+      parameters: [{ $ref: "#/components/parameters/WorkspaceId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LeadStageOrderRequest" }
+      responses:
+        "200":
+          description: Lead stages reordered
+          content:
+            application/json:
+              schema:
+                type: array
+                maxItems: 100
+                items: { $ref: "#/components/schemas/LeadStage" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "412": { $ref: "#/components/responses/Problem" }
   /workspaces/{workspaceId}/assignment-subjects:
     get:
       operationId: assignmentsListSubjects
@@ -2313,6 +2363,36 @@ paths:
       responses:
         "204": { description: Unused custom lead stage deleted }
         "409": { $ref: "#/components/responses/Problem" }
+  /workspaces/{workspaceId}/lead-stages/{stageId}/access:
+    get:
+      operationId: salesListLeadStageAccess
+      parameters:
+        - { $ref: "#/components/parameters/WorkspaceId" }
+        - { name: stageId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Explicit role access rules; an empty list inherits the lead resource permission
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StageAccessRules" }
+        "403": { $ref: "#/components/responses/Problem" }
+    put:
+      operationId: salesReplaceLeadStageAccess
+      parameters:
+        - { $ref: "#/components/parameters/WorkspaceId" }
+        - { name: stageId, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StageAccessRequest" }
+      responses:
+        "200":
+          description: Full explicit role access set replaced atomically
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StageAccessRules" }
+        "403": { $ref: "#/components/responses/Problem" }
   /workspaces/{workspaceId}/leads:
     get:
       operationId: salesListLeads
@@ -4766,6 +4846,145 @@ paths:
               schema: { $ref: "#/components/schemas/ContentTranslation" }
         "400": { $ref: "#/components/responses/Problem" }
         "412": { $ref: "#/components/responses/Problem" }
+  /workspaces/{workspaceId}/mail/accounts:
+    get:
+      operationId: mailboxListAccounts
+      parameters: [{ $ref: "#/components/parameters/WorkspaceId" }]
+      responses:
+        "200":
+          description: Current user's bounded corporate mail accounts
+          content:
+            application/json:
+              schema:
+                type: array
+                maxItems: 16
+                items: { $ref: "#/components/schemas/MailboxAccount" }
+        "503": { $ref: "#/components/responses/Problem" }
+    post:
+      operationId: mailboxCreateAccount
+      parameters:
+        - { $ref: "#/components/parameters/WorkspaceId" }
+        - { $ref: "#/components/parameters/IdempotencyKey" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MailboxAccountInput" }
+      responses:
+        "201":
+          description: Encrypted personal mail account created
+          headers: { ETag: { schema: { type: string } } }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MailboxAccount" }
+        "422": { $ref: "#/components/responses/Problem" }
+  /workspaces/{workspaceId}/mail/accounts/{accountId}:
+    put:
+      operationId: mailboxUpdateAccount
+      parameters:
+        - { $ref: "#/components/parameters/WorkspaceId" }
+        - { name: accountId, in: path, required: true, schema: { type: string, format: uuid } }
+        - { $ref: "#/components/parameters/IfMatch" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MailboxAccountUpdate" }
+      responses:
+        "200":
+          description: Mail account updated without returning its credential
+          headers: { ETag: { schema: { type: string } } }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MailboxAccount" }
+        "409": { $ref: "#/components/responses/Problem" }
+    delete:
+      operationId: mailboxDeleteAccount
+      parameters:
+        - { $ref: "#/components/parameters/WorkspaceId" }
+        - { name: accountId, in: path, required: true, schema: { type: string, format: uuid } }
+        - { $ref: "#/components/parameters/IfMatch" }
+      responses:
+        "204": { description: Personal mail account and cached mail deleted }
+        "409": { $ref: "#/components/responses/Problem" }
+  /workspaces/{workspaceId}/mail/accounts/{accountId}/sync:
+    post:
+      operationId: mailboxSyncAccount
+      parameters:
+        - { $ref: "#/components/parameters/WorkspaceId" }
+        - { name: accountId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Bounded incremental synchronization completed
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [synced]
+                properties: { synced: { type: boolean, const: true } }
+        "503": { $ref: "#/components/responses/Problem" }
+  /workspaces/{workspaceId}/mail/accounts/{accountId}/folders:
+    get:
+      operationId: mailboxListFolders
+      parameters:
+        - { $ref: "#/components/parameters/WorkspaceId" }
+        - { name: accountId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Cached folders for the current user's account
+          content:
+            application/json:
+              schema:
+                type: array
+                maxItems: 64
+                items: { $ref: "#/components/schemas/MailboxFolder" }
+  /workspaces/{workspaceId}/mail/folders/{folderId}/messages:
+    get:
+      operationId: mailboxListMessages
+      parameters:
+        - { $ref: "#/components/parameters/WorkspaceId" }
+        - { name: folderId, in: path, required: true, schema: { type: string, format: uuid } }
+        - { $ref: "#/components/parameters/Cursor" }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 50 } }
+      responses:
+        "200":
+          description: Cursor-paginated cached message metadata
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MailboxMessagePage" }
+  /workspaces/{workspaceId}/mail/messages/{messageId}/body:
+    get:
+      operationId: mailboxReadMessageBody
+      parameters:
+        - { $ref: "#/components/parameters/WorkspaceId" }
+        - { name: messageId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Sanitized plain-text message body, fetched and cached on demand
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MailboxMessageBody" }
+        "503": { $ref: "#/components/responses/Problem" }
+  /workspaces/{workspaceId}/mail/accounts/{accountId}/send:
+    post:
+      operationId: mailboxSendMessage
+      parameters:
+        - { $ref: "#/components/parameters/WorkspaceId" }
+        - { name: accountId, in: path, required: true, schema: { type: string, format: uuid } }
+        - { $ref: "#/components/parameters/IdempotencyKey" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MailboxSendInput" }
+      responses:
+        "201":
+          description: Message durably queued with a persisted stable Message-ID
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MailboxSendResult" }
+        "422": { $ref: "#/components/responses/Problem" }
+        "503": { $ref: "#/components/responses/Problem" }
 components:
   securitySchemes:
     cookieSession:
@@ -4841,6 +5060,130 @@ components:
         application/problem+json:
           schema: { $ref: "#/components/schemas/Problem" }
   schemas:
+    MailboxSecurity:
+      type: string
+      enum: [tls, starttls]
+    MailboxAccountInput:
+      type: object
+      additionalProperties: false
+      required: [displayName, email, username, imapHost, imapPort, imapSecurity, smtpHost, smtpPort, smtpSecurity, password, syncEnabled]
+      properties:
+        displayName: { type: string, minLength: 1, maxLength: 160 }
+        email: { type: string, format: email, maxLength: 320 }
+        username: { type: string, minLength: 1, maxLength: 320 }
+        imapHost: { type: string, minLength: 1, maxLength: 253 }
+        imapPort: { type: integer, enum: [143, 993] }
+        imapSecurity: { $ref: "#/components/schemas/MailboxSecurity" }
+        smtpHost: { type: string, minLength: 1, maxLength: 253 }
+        smtpPort: { type: integer, enum: [465, 587] }
+        smtpSecurity: { $ref: "#/components/schemas/MailboxSecurity" }
+        password: { type: string, maxLength: 4096, writeOnly: true }
+        syncEnabled: { type: boolean }
+    MailboxAccountUpdate:
+      allOf:
+        - { $ref: "#/components/schemas/MailboxAccountInput" }
+      description: Same settings as create; an empty password preserves the encrypted credential.
+    MailboxAccount:
+      type: object
+      additionalProperties: false
+      required: [id, displayName, email, username, imapHost, imapPort, imapSecurity, smtpHost, smtpPort, smtpSecurity, syncEnabled, syncState, version]
+      properties:
+        id: { type: string, format: uuid }
+        displayName: { type: string }
+        email: { type: string, format: email }
+        username: { type: string }
+        imapHost: { type: string }
+        imapPort: { type: integer, enum: [143, 993] }
+        imapSecurity: { $ref: "#/components/schemas/MailboxSecurity" }
+        smtpHost: { type: string }
+        smtpPort: { type: integer, enum: [465, 587] }
+        smtpSecurity: { $ref: "#/components/schemas/MailboxSecurity" }
+        syncEnabled: { type: boolean }
+        syncState: { type: string, enum: [idle, syncing, ready, error] }
+        lastSyncAt: { type: string, format: date-time }
+        lastErrorCode: { type: string }
+        version: { type: integer, format: int64, minimum: 1 }
+    MailboxFolder:
+      type: object
+      additionalProperties: false
+      required: [id, accountId, remoteName, displayName, highestUid, totalCount, unreadCount]
+      properties:
+        id: { type: string, format: uuid }
+        accountId: { type: string, format: uuid }
+        remoteName: { type: string }
+        displayName: { type: string }
+        specialUse: { type: string }
+        uidValidity: { type: integer, format: int64 }
+        uidNext: { type: integer, format: int64 }
+        highestUid: { type: integer, format: int64 }
+        totalCount: { type: integer }
+        unreadCount: { type: integer }
+        lastSyncAt: { type: string, format: date-time }
+    MailboxAddress:
+      type: object
+      additionalProperties: false
+      required: [address]
+      properties:
+        name: { type: string, maxLength: 320 }
+        address: { type: string, format: email, maxLength: 320 }
+    MailboxMessage:
+      type: object
+      additionalProperties: false
+      required: [id, accountId, folderId, remoteUid, subject, sender, recipients, receivedAt, flags, sizeBytes, snippet, hasAttachments, bodyState]
+      properties:
+        id: { type: string, format: uuid }
+        accountId: { type: string, format: uuid }
+        folderId: { type: string, format: uuid }
+        remoteUid: { type: integer, format: int64 }
+        internetMessageId: { type: string }
+        subject: { type: string }
+        sender: { $ref: "#/components/schemas/MailboxAddress" }
+        recipients:
+          type: array
+          maxItems: 100
+          items: { $ref: "#/components/schemas/MailboxAddress" }
+        sentAt: { type: string, format: date-time }
+        receivedAt: { type: string, format: date-time }
+        flags: { type: array, maxItems: 100, items: { type: string } }
+        sizeBytes: { type: integer, format: int64 }
+        snippet: { type: string }
+        hasAttachments: { type: boolean }
+        bodyState: { type: string, enum: [metadata, cached, unavailable] }
+    MailboxMessagePage:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          maxItems: 100
+          items: { $ref: "#/components/schemas/MailboxMessage" }
+        nextCursor: { type: string }
+    MailboxMessageBody:
+      type: object
+      additionalProperties: false
+      required: [plainText]
+      properties:
+        plainText: { type: string, maxLength: 2097152 }
+    MailboxSendInput:
+      type: object
+      additionalProperties: false
+      required: [to, subject, plainText]
+      properties:
+        to: { type: array, minItems: 1, maxItems: 100, items: { $ref: "#/components/schemas/MailboxAddress" } }
+        cc: { type: array, maxItems: 100, items: { $ref: "#/components/schemas/MailboxAddress" } }
+        bcc: { type: array, maxItems: 100, items: { $ref: "#/components/schemas/MailboxAddress" } }
+        subject: { type: string, maxLength: 2000 }
+        plainText: { type: string, maxLength: 2097152 }
+    MailboxSendResult:
+      type: object
+      additionalProperties: false
+      required: [outgoingId, sent]
+      properties:
+        outgoingId: { type: string, format: uuid }
+        sent: { type: boolean }
+        queued: { type: boolean }
+        errorCode: { type: string }
     Locale:
       type: string
       minLength: 2
@@ -5984,6 +6327,51 @@ components:
         version: { type: integer, format: int64 }
         createdAt: { type: string, format: date-time }
         updatedAt: { type: string, format: date-time }
+    LeadStageOrderRequest:
+      type: object
+      additionalProperties: false
+      required: [stages]
+      properties:
+        stages:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items: { $ref: "#/components/schemas/VersionedRecordInput" }
+    StageAccessRuleInput:
+      type: object
+      additionalProperties: false
+      required: [roleId, canView, canEnter, canLeave]
+      properties:
+        roleId: { type: string, format: uuid }
+        canView: { type: boolean }
+        canEnter: { type: boolean }
+        canLeave: { type: boolean }
+    StageAccessRequest:
+      type: object
+      additionalProperties: false
+      required: [rules]
+      properties:
+        rules:
+          type: array
+          maxItems: 256
+          uniqueItems: true
+          items: { $ref: "#/components/schemas/StageAccessRuleInput" }
+    StageAccessRule:
+      allOf:
+        - { $ref: "#/components/schemas/StageAccessRuleInput" }
+        - type: object
+          additionalProperties: false
+          required: [roleKey, roleName, baseRole, createdAt, updatedAt]
+          properties:
+            roleKey: { type: string }
+            roleName: { type: string }
+            baseRole: { type: string, enum: [owner, admin, manager, sales, viewer] }
+            createdAt: { type: string, format: date-time }
+            updatedAt: { type: string, format: date-time }
+    StageAccessRules:
+      type: array
+      maxItems: 256
+      items: { $ref: "#/components/schemas/StageAccessRule" }
     LeadStageMoveInput:
       type: object
       additionalProperties: false

@@ -1,10 +1,16 @@
 -- name: ListContacts :many
 SELECT c.id, c.first_name, c.last_name, c.display_name, c.email, c.phone,
-       c.company_id, co.name AS company_name, c.owner_user_id, c.status, c.source,
+       c.company_id, COALESCE(co.name, '') AS company_name, c.owner_user_id, c.status, c.source,
        c.custom_fields, c.version, c.created_at, c.updated_at
 FROM customers.contacts c
-LEFT JOIN customers.companies co
-  ON co.workspace_id = c.workspace_id AND co.id = c.company_id AND co.deleted_at IS NULL
+LEFT JOIN LATERAL (
+  SELECT company.name
+  FROM customers.companies company
+  WHERE company.workspace_id = c.workspace_id
+    AND company.id = c.company_id
+    AND company.deleted_at IS NULL
+  LIMIT 1
+) co ON true
 WHERE c.workspace_id = sqlc.arg(workspace_id)
   AND c.deleted_at IS NULL
   AND (sqlc.arg(search_query)::text = '' OR c.display_name ILIKE '%' || sqlc.arg(search_query) || '%'
@@ -16,12 +22,18 @@ LIMIT sqlc.arg(page_limit);
 
 -- name: GetContact :one
 SELECT c.id, c.first_name, c.last_name, c.display_name, c.email, c.phone,
-       c.job_title, c.company_id, co.name AS company_name, c.owner_user_id,
+       c.job_title, c.company_id, COALESCE(co.name, '') AS company_name, c.owner_user_id,
        c.status, c.source, c.address, c.custom_fields, c.last_contacted_at,
        c.next_activity_at, c.version, c.created_at, c.updated_at
 FROM customers.contacts c
-LEFT JOIN customers.companies co
-  ON co.workspace_id = c.workspace_id AND co.id = c.company_id AND co.deleted_at IS NULL
+LEFT JOIN LATERAL (
+  SELECT company.name
+  FROM customers.companies company
+  WHERE company.workspace_id = c.workspace_id
+    AND company.id = c.company_id
+    AND company.deleted_at IS NULL
+  LIMIT 1
+) co ON true
 WHERE c.workspace_id = $1 AND c.id = $2 AND c.deleted_at IS NULL;
 
 -- name: CreateContact :one

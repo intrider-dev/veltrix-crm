@@ -38,6 +38,13 @@ func apiEmail(value *string) *openapi_types.Email {
 	return &email
 }
 
+func apiOptionalText(value string) *string {
+	if value == "" {
+		return nil
+	}
+	return &value
+}
+
 func apiTime(value pgtype.Timestamptz) *time.Time {
 	if !value.Valid {
 		return nil
@@ -80,7 +87,7 @@ func contactFromList(row dbgen.ListContactsRow) apigen.Contact {
 	return apigen.Contact{
 		Id: apiID(row.ID), FirstName: row.FirstName, LastName: row.LastName,
 		DisplayName: row.DisplayName, Email: apiEmail(row.Email), Phone: row.Phone,
-		CompanyId: apiIDPointer(row.CompanyID), CompanyName: row.CompanyName,
+		CompanyId: apiIDPointer(row.CompanyID), CompanyName: apiOptionalText(row.CompanyName),
 		OwnerId: apiIDPointer(row.OwnerUserID), Status: row.Status, Source: row.Source,
 		CustomFields: jsonObject(row.CustomFields), Version: row.Version,
 		CreatedAt: row.CreatedAt.Time.UTC(), UpdatedAt: row.UpdatedAt.Time.UTC(),
@@ -111,7 +118,7 @@ func contactDetails(row dbgen.GetContactRow) apigen.ContactDetails {
 	return apigen.ContactDetails{
 		Id: apiID(row.ID), FirstName: row.FirstName, LastName: row.LastName,
 		DisplayName: row.DisplayName, Email: apiEmail(row.Email), Phone: row.Phone,
-		JobTitle: row.JobTitle, CompanyId: apiIDPointer(row.CompanyID), CompanyName: row.CompanyName,
+		JobTitle: row.JobTitle, CompanyId: apiIDPointer(row.CompanyID), CompanyName: apiOptionalText(row.CompanyName),
 		OwnerId: apiIDPointer(row.OwnerUserID), Status: row.Status, Source: row.Source,
 		Address: jsonObject(row.Address), CustomFields: jsonObject(row.CustomFields),
 		LastContactedAt: apiTime(row.LastContactedAt), NextActivityAt: apiTime(row.NextActivityAt),

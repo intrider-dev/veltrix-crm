@@ -13,6 +13,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { ActivatedRoute } from '@angular/router';
 import type { SupportedLocale } from '@veltrix-crm/product-config';
 
 import type { ContentTranslation, TranslationStatus } from '../../core/api/api.types';
@@ -242,8 +243,11 @@ export class TranslationsPage implements OnInit {
 
   private editorTrigger: HTMLButtonElement | null = null;
   private readonly injector = inject(Injector);
+  private readonly route = inject(ActivatedRoute);
 
   private async initialize(): Promise<void> {
+    const requestedNamespace = this.route.snapshot.queryParamMap.get('namespace')?.trim();
+    if (requestedNamespace) this.store.namespace.set(requestedNamespace);
     await this.store.load();
     const sourceLocale = this.store.defaultLocale();
     const locale =

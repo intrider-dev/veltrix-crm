@@ -25,7 +25,7 @@ export default defineConfig({
     locale: "en-US",
     timezoneId: "UTC",
     colorScheme: "light",
-    serviceWorkers: "allow",
+    serviceWorkers: "block",
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
@@ -38,7 +38,7 @@ export default defineConfig({
     },
     {
       name: "desktop-1440",
-      testIgnore: [/auth\.setup\.ts/, /invitation\.spec\.ts/],
+      testIgnore: [/auth\.setup\.ts/, /invitation\.spec\.ts/, /pwa\.spec\.ts/],
       dependencies: ["setup"],
       use: {
         browserName: "chromium",
@@ -52,6 +52,7 @@ export default defineConfig({
         /auth\.setup\.ts/,
         /invitation\.spec\.ts/,
         /kanban-drag\.spec\.ts/,
+        /pwa\.spec\.ts/,
       ],
       dependencies: ["setup"],
       use: {
@@ -66,6 +67,7 @@ export default defineConfig({
         /auth\.setup\.ts/,
         /invitation\.spec\.ts/,
         /kanban-drag\.spec\.ts/,
+        /pwa\.spec\.ts/,
         /workspace-isolation\.spec\.ts/,
       ],
       dependencies: ["setup"],
@@ -75,6 +77,17 @@ export default defineConfig({
         isMobile: true,
         hasTouch: true,
         storageState: authStatePath,
+      },
+    },
+    {
+      name: "pwa-shell",
+      testMatch: /pwa\.spec\.ts/,
+      dependencies: ["setup"],
+      use: {
+        browserName: "chromium",
+        viewport: { width: 1440, height: 900 },
+        storageState: authStatePath,
+        serviceWorkers: "allow",
       },
     },
     {

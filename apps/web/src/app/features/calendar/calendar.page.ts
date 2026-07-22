@@ -56,7 +56,11 @@ import { CalendarStore, type CalendarView } from './calendar.store';
       </header>
 
       <section class="panel calendar-toolbar" [attr.aria-label]="i18n.t('calendar.controls')">
-        <div class="segmented" role="group" [attr.aria-label]="i18n.t('calendar.view')">
+        <div
+          class="segmented segmented-control"
+          role="group"
+          [attr.aria-label]="i18n.t('calendar.view')"
+        >
           @for (view of views; track view) {
             <button
               mat-button

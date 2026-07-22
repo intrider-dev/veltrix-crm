@@ -87,6 +87,77 @@ func (q *Queries) GetDashboardSummary(ctx context.Context, workspaceID pgtype.UU
 	return i, err
 }
 
+const getDashboardSummaryWithStageAccess = `-- name: GetDashboardSummaryWithStageAccess :one
+WITH visible_deals AS MATERIALIZED (
+  SELECT deal.id, deal.stage_id, deal.amount_minor, deal.status, deal.version
+  FROM sales.deals deal
+  WHERE deal.workspace_id = $1
+    AND deal.deleted_at IS NULL
+    AND sales.pipeline_stage_access_allowed(deal.workspace_id, deal.stage_id, 'view')
+)
+SELECT workspace.default_currency AS currency,
+       COALESCE((SELECT sum(deal.amount_minor) FROM visible_deals deal WHERE deal.status = 'open'), 0)::bigint AS open_pipeline_minor,
+       COALESCE((
+         SELECT sum((deal.amount_minor * stage.probability) / 100)
+         FROM visible_deals deal
+         JOIN sales.pipeline_stages stage
+           ON stage.workspace_id = workspace.id AND stage.id = deal.stage_id
+         WHERE deal.status = 'open'
+       ), 0)::bigint AS weighted_forecast_minor,
+       (SELECT count(*) FROM visible_deals deal WHERE deal.status = 'won')::bigint AS won_count,
+       (SELECT count(*) FROM visible_deals deal WHERE deal.status = 'lost')::bigint AS lost_count,
+       (SELECT count(*) FROM activities.activities activity
+        WHERE activity.workspace_id = workspace.id
+          AND activity.activity_type = 'task'
+          AND activity.status = 'open'
+          AND activity.due_at < now()
+          AND activity.deleted_at IS NULL)::bigint AS overdue_tasks,
+       COALESCE((
+         SELECT jsonb_agg(jsonb_build_object(
+           'stageId', stage.id,
+           'stageName', stage.name,
+           'count', (SELECT count(*) FROM visible_deals deal WHERE deal.stage_id = stage.id AND deal.status = 'open'),
+           'amountMinor', COALESCE((SELECT sum(deal.amount_minor) FROM visible_deals deal WHERE deal.stage_id = stage.id AND deal.status = 'open'), 0)
+         ) ORDER BY stage.position)
+         FROM sales.pipeline_stages stage
+         WHERE stage.workspace_id = workspace.id
+           AND sales.pipeline_stage_access_allowed(stage.workspace_id, stage.id, 'view')
+       ), '[]'::jsonb)::jsonb AS deals_by_stage,
+       now()::timestamptz AS computed_at,
+       COALESCE((SELECT max(deal.version) FROM visible_deals deal), 1)::bigint AS source_version
+FROM tenancy.workspaces workspace
+WHERE workspace.id = $1
+`
+
+type GetDashboardSummaryWithStageAccessRow struct {
+	Currency              string             `json:"currency"`
+	OpenPipelineMinor     int64              `json:"open_pipeline_minor"`
+	WeightedForecastMinor int64              `json:"weighted_forecast_minor"`
+	WonCount              int64              `json:"won_count"`
+	LostCount             int64              `json:"lost_count"`
+	OverdueTasks          int64              `json:"overdue_tasks"`
+	DealsByStage          []byte             `json:"deals_by_stage"`
+	ComputedAt            pgtype.Timestamptz `json:"computed_at"`
+	SourceVersion         int64              `json:"source_version"`
+}
+
+func (q *Queries) GetDashboardSummaryWithStageAccess(ctx context.Context, workspaceID pgtype.UUID) (GetDashboardSummaryWithStageAccessRow, error) {
+	row := q.db.QueryRow(ctx, getDashboardSummaryWithStageAccess, workspaceID)
+	var i GetDashboardSummaryWithStageAccessRow
+	err := row.Scan(
+		&i.Currency,
+		&i.OpenPipelineMinor,
+		&i.WeightedForecastMinor,
+		&i.WonCount,
+		&i.LostCount,
+		&i.OverdueTasks,
+		&i.DealsByStage,
+		&i.ComputedAt,
+		&i.SourceVersion,
+	)
+	return i, err
+}
+
 const getIdempotencyKey = `-- name: GetIdempotencyKey :one
 SELECT key, actor_id, operation, request_hash, response_status, response_body,
        expires_at, created_at
@@ -159,36 +230,35 @@ func (q *Queries) GetSSEEventForDispatch(ctx context.Context, arg GetSSEEventFor
 }
 
 const globalSearch = `-- name: GlobalSearch :many
-WITH query AS (
-  SELECT websearch_to_tsquery('simple', $1::text) AS tsq
-)
-SELECT entity_type, entity_id, title, subtitle,
-       left(searchable_text, 240) AS snippet,
-       (ts_rank(search_vector, query.tsq) * rank_boost
-         + similarity(searchable_text, $1))::real AS rank
-FROM search.documents, query
-WHERE workspace_id = $2
-  AND (search_vector @@ query.tsq OR searchable_text % $1)
-ORDER BY rank DESC, title, entity_id
-LIMIT 50
+SELECT (query_result).entity_type::text AS entity_type,
+       (query_result).entity_id::uuid AS entity_id,
+       (query_result).title::text AS title,
+       (query_result).subtitle::text AS subtitle,
+       (query_result).snippet::text AS snippet,
+       (query_result).rank::real AS rank
+FROM (
+  SELECT search.query_documents(
+    $1, $2::text, 50
+  ) AS query_result
+) AS results
 `
 
 type GlobalSearchParams struct {
-	SearchQuery string      `json:"search_query"`
 	WorkspaceID pgtype.UUID `json:"workspace_id"`
+	SearchQuery string      `json:"search_query"`
 }
 
 type GlobalSearchRow struct {
 	EntityType string      `json:"entity_type"`
 	EntityID   pgtype.UUID `json:"entity_id"`
 	Title      string      `json:"title"`
-	Subtitle   *string     `json:"subtitle"`
+	Subtitle   string      `json:"subtitle"`
 	Snippet    string      `json:"snippet"`
 	Rank       float32     `json:"rank"`
 }
 
 func (q *Queries) GlobalSearch(ctx context.Context, arg GlobalSearchParams) ([]GlobalSearchRow, error) {
-	rows, err := q.db.Query(ctx, globalSearch, arg.SearchQuery, arg.WorkspaceID)
+	rows, err := q.db.Query(ctx, globalSearch, arg.WorkspaceID, arg.SearchQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -212,6 +282,21 @@ func (q *Queries) GlobalSearch(ctx context.Context, arg GlobalSearchParams) ([]G
 		return nil, err
 	}
 	return items, nil
+}
+
+const hasPipelineStageAccessRules = `-- name: HasPipelineStageAccessRules :one
+SELECT EXISTS (
+  SELECT 1
+  FROM sales.pipeline_stage_role_access access
+  WHERE access.workspace_id = $1
+)
+`
+
+func (q *Queries) HasPipelineStageAccessRules(ctx context.Context, workspaceID pgtype.UUID) (bool, error) {
+	row := q.db.QueryRow(ctx, hasPipelineStageAccessRules, workspaceID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
 }
 
 const insertAuditEvent = `-- name: InsertAuditEvent :exec

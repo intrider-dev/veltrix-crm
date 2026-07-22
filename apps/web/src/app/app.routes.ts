@@ -110,6 +110,12 @@ export const routes: Routes = [
           import('./features/calendar/calendar.page').then((module) => module.CalendarPage),
       },
       {
+        path: 'mail',
+        resolve: { translations: i18nNamespaces(['mailbox']) },
+        loadComponent: () =>
+          import('./features/mailbox/mailbox.page').then((module) => module.MailboxPage),
+      },
+      {
         path: 'automations',
         resolve: { translations: i18nNamespaces(['automations']) },
         loadComponent: () =>

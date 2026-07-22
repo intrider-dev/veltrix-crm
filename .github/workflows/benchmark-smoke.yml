@@ -37,7 +37,7 @@ jobs:
           exit 1
 
       - name: Load deterministic small dataset
-        run: docker compose exec -T app /app/veltrix-crm seed --profile small
+        run: docker compose run --rm --no-deps benchmark-seed seed --profile small
 
       - name: Run short k6 smoke profile
         run: |

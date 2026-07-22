@@ -187,7 +187,13 @@ WHERE membership.workspace_id = sqlc.arg(workspace_id)
     membership.user_id = sqlc.arg(created_by)
     OR membership.user_id = sqlc.narg(scope_user_id)
     OR membership.user_id = sqlc.narg(assignee_user_id)
-    OR membership.role IN ('owner', 'admin')
+    OR EXISTS (
+      SELECT 1 FROM tenancy.workspace_roles role
+      WHERE role.workspace_id = membership.workspace_id
+        AND role.id = membership.role_id
+        AND role.is_system
+        AND role.role_key IN ('owner', 'admin')
+    )
     OR (
       sqlc.arg(visibility_scope)::text = 'department'
       AND EXISTS (

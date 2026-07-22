@@ -566,6 +566,116 @@ type LocalizationContentTranslation struct {
 	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
 }
 
+type MailboxAccount struct {
+	WorkspaceID          pgtype.UUID        `json:"workspace_id"`
+	ID                   pgtype.UUID        `json:"id"`
+	UserID               pgtype.UUID        `json:"user_id"`
+	DisplayName          string             `json:"display_name"`
+	Email                string             `json:"email"`
+	Username             string             `json:"username"`
+	ImapHost             string             `json:"imap_host"`
+	ImapPort             int32              `json:"imap_port"`
+	ImapSecurity         string             `json:"imap_security"`
+	SmtpHost             string             `json:"smtp_host"`
+	SmtpPort             int32              `json:"smtp_port"`
+	SmtpSecurity         string             `json:"smtp_security"`
+	CredentialCiphertext []byte             `json:"credential_ciphertext"`
+	CredentialNonce      []byte             `json:"credential_nonce"`
+	KeyID                string             `json:"key_id"`
+	SyncEnabled          bool               `json:"sync_enabled"`
+	SyncState            string             `json:"sync_state"`
+	LastSyncAt           pgtype.Timestamptz `json:"last_sync_at"`
+	NextSyncAt           pgtype.Timestamptz `json:"next_sync_at"`
+	LastErrorCode        *string            `json:"last_error_code"`
+	Version              int64              `json:"version"`
+	CreatedAt            pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt            pgtype.Timestamptz `json:"updated_at"`
+}
+
+type MailboxFolder struct {
+	WorkspaceID pgtype.UUID        `json:"workspace_id"`
+	UserID      pgtype.UUID        `json:"user_id"`
+	AccountID   pgtype.UUID        `json:"account_id"`
+	ID          pgtype.UUID        `json:"id"`
+	RemoteName  string             `json:"remote_name"`
+	DisplayName string             `json:"display_name"`
+	Delimiter   *string            `json:"delimiter"`
+	SpecialUse  *string            `json:"special_use"`
+	SyncEnabled bool               `json:"sync_enabled"`
+	UidValidity *int64             `json:"uid_validity"`
+	UidNext     *int64             `json:"uid_next"`
+	HighestUid  int64              `json:"highest_uid"`
+	TotalCount  int32              `json:"total_count"`
+	UnreadCount int32              `json:"unread_count"`
+	LastSyncAt  pgtype.Timestamptz `json:"last_sync_at"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+type MailboxMessage struct {
+	WorkspaceID       pgtype.UUID        `json:"workspace_id"`
+	UserID            pgtype.UUID        `json:"user_id"`
+	AccountID         pgtype.UUID        `json:"account_id"`
+	FolderID          pgtype.UUID        `json:"folder_id"`
+	ID                pgtype.UUID        `json:"id"`
+	UidValidity       int64              `json:"uid_validity"`
+	RemoteUid         int64              `json:"remote_uid"`
+	InternetMessageID *string            `json:"internet_message_id"`
+	Subject           string             `json:"subject"`
+	SenderName        string             `json:"sender_name"`
+	SenderAddress     string             `json:"sender_address"`
+	Recipients        []byte             `json:"recipients"`
+	SentAt            pgtype.Timestamptz `json:"sent_at"`
+	ReceivedAt        pgtype.Timestamptz `json:"received_at"`
+	Flags             []string           `json:"flags"`
+	SizeBytes         int64              `json:"size_bytes"`
+	Snippet           string             `json:"snippet"`
+	HasAttachments    bool               `json:"has_attachments"`
+	BodyState         string             `json:"body_state"`
+	CreatedAt         pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
+}
+
+type MailboxMessageBody struct {
+	WorkspaceID pgtype.UUID        `json:"workspace_id"`
+	UserID      pgtype.UUID        `json:"user_id"`
+	AccountID   pgtype.UUID        `json:"account_id"`
+	MessageID   pgtype.UUID        `json:"message_id"`
+	PlainText   string             `json:"plain_text"`
+	FetchedAt   pgtype.Timestamptz `json:"fetched_at"`
+}
+
+type MailboxMessagePart struct {
+	WorkspaceID pgtype.UUID        `json:"workspace_id"`
+	UserID      pgtype.UUID        `json:"user_id"`
+	AccountID   pgtype.UUID        `json:"account_id"`
+	MessageID   pgtype.UUID        `json:"message_id"`
+	PartSpec    string             `json:"part_spec"`
+	DisplayName string             `json:"display_name"`
+	MediaType   string             `json:"media_type"`
+	SizeBytes   int64              `json:"size_bytes"`
+	ContentID   *string            `json:"content_id"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+}
+
+type MailboxOutgoingMessage struct {
+	WorkspaceID       pgtype.UUID        `json:"workspace_id"`
+	UserID            pgtype.UUID        `json:"user_id"`
+	AccountID         pgtype.UUID        `json:"account_id"`
+	ID                pgtype.UUID        `json:"id"`
+	InternetMessageID string             `json:"internet_message_id"`
+	Recipients        []byte             `json:"recipients"`
+	Subject           string             `json:"subject"`
+	PlainText         string             `json:"plain_text"`
+	State             string             `json:"state"`
+	Attempts          int32              `json:"attempts"`
+	LastErrorCode     *string            `json:"last_error_code"`
+	SentAt            pgtype.Timestamptz `json:"sent_at"`
+	Version           int64              `json:"version"`
+	CreatedAt         pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
+}
+
 type NotificationsNotification struct {
 	WorkspaceID     pgtype.UUID        `json:"workspace_id"`
 	ID              pgtype.UUID        `json:"id"`
@@ -836,6 +946,17 @@ type SalesLeadStageHistory struct {
 	ChangedAt   pgtype.Timestamptz `json:"changed_at"`
 }
 
+type SalesLeadStageRoleAccess struct {
+	WorkspaceID pgtype.UUID        `json:"workspace_id"`
+	StageID     pgtype.UUID        `json:"stage_id"`
+	RoleID      pgtype.UUID        `json:"role_id"`
+	CanView     bool               `json:"can_view"`
+	CanEnter    bool               `json:"can_enter"`
+	CanLeave    bool               `json:"can_leave"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
 type SalesPipeline struct {
 	WorkspaceID pgtype.UUID        `json:"workspace_id"`
 	ID          pgtype.UUID        `json:"id"`
@@ -857,6 +978,17 @@ type SalesPipelineStage struct {
 	CreatedAt        pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
 	Version          int64              `json:"version"`
+}
+
+type SalesPipelineStageRoleAccess struct {
+	WorkspaceID pgtype.UUID        `json:"workspace_id"`
+	StageID     pgtype.UUID        `json:"stage_id"`
+	RoleID      pgtype.UUID        `json:"role_id"`
+	CanView     bool               `json:"can_view"`
+	CanEnter    bool               `json:"can_enter"`
+	CanLeave    bool               `json:"can_leave"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }
 
 type SearchDocument struct {

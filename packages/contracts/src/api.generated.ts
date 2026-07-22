@@ -1140,6 +1140,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/workspaces/{workspaceId}/pipeline-stages/{stageId}/access": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["salesListPipelineStageAccess"];
+        put: operations["salesReplacePipelineStageAccess"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/workspaces/{workspaceId}/lead-stages": {
         parameters: {
             query?: never;
@@ -1150,6 +1166,22 @@ export interface paths {
         get: operations["salesListLeadStages"];
         put?: never;
         post: operations["salesCreateLeadStage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workspaces/{workspaceId}/lead-stages/order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["salesReorderLeadStages"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1183,6 +1215,22 @@ export interface paths {
         put: operations["salesUpdateLeadStage"];
         post?: never;
         delete: operations["salesDeleteLeadStage"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workspaces/{workspaceId}/lead-stages/{stageId}/access": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["salesListLeadStageAccess"];
+        put: operations["salesReplaceLeadStageAccess"];
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -2397,10 +2445,236 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/workspaces/{workspaceId}/mail/accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["mailboxListAccounts"];
+        put?: never;
+        post: operations["mailboxCreateAccount"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workspaces/{workspaceId}/mail/accounts/{accountId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["mailboxUpdateAccount"];
+        post?: never;
+        delete: operations["mailboxDeleteAccount"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workspaces/{workspaceId}/mail/accounts/{accountId}/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["mailboxSyncAccount"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workspaces/{workspaceId}/mail/accounts/{accountId}/folders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["mailboxListFolders"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workspaces/{workspaceId}/mail/folders/{folderId}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["mailboxListMessages"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workspaces/{workspaceId}/mail/messages/{messageId}/body": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["mailboxReadMessageBody"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workspaces/{workspaceId}/mail/accounts/{accountId}/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["mailboxSendMessage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @enum {string} */
+        MailboxSecurity: "tls" | "starttls";
+        MailboxAccountInput: {
+            displayName: string;
+            /** Format: email */
+            email: string;
+            username: string;
+            imapHost: string;
+            /** @enum {integer} */
+            imapPort: 143 | 993;
+            imapSecurity: components["schemas"]["MailboxSecurity"];
+            smtpHost: string;
+            /** @enum {integer} */
+            smtpPort: 465 | 587;
+            smtpSecurity: components["schemas"]["MailboxSecurity"];
+            password: string;
+            syncEnabled: boolean;
+        };
+        /** @description Same settings as create; an empty password preserves the encrypted credential. */
+        MailboxAccountUpdate: components["schemas"]["MailboxAccountInput"];
+        MailboxAccount: {
+            /** Format: uuid */
+            id: string;
+            displayName: string;
+            /** Format: email */
+            email: string;
+            username: string;
+            imapHost: string;
+            /** @enum {integer} */
+            imapPort: 143 | 993;
+            imapSecurity: components["schemas"]["MailboxSecurity"];
+            smtpHost: string;
+            /** @enum {integer} */
+            smtpPort: 465 | 587;
+            smtpSecurity: components["schemas"]["MailboxSecurity"];
+            syncEnabled: boolean;
+            /** @enum {string} */
+            syncState: "idle" | "syncing" | "ready" | "error";
+            /** Format: date-time */
+            lastSyncAt?: string;
+            lastErrorCode?: string;
+            /** Format: int64 */
+            version: number;
+        };
+        MailboxFolder: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            accountId: string;
+            remoteName: string;
+            displayName: string;
+            specialUse?: string;
+            /** Format: int64 */
+            uidValidity?: number;
+            /** Format: int64 */
+            uidNext?: number;
+            /** Format: int64 */
+            highestUid: number;
+            totalCount: number;
+            unreadCount: number;
+            /** Format: date-time */
+            lastSyncAt?: string;
+        };
+        MailboxAddress: {
+            name?: string;
+            /** Format: email */
+            address: string;
+        };
+        MailboxMessage: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            accountId: string;
+            /** Format: uuid */
+            folderId: string;
+            /** Format: int64 */
+            remoteUid: number;
+            internetMessageId?: string;
+            subject: string;
+            sender: components["schemas"]["MailboxAddress"];
+            recipients: components["schemas"]["MailboxAddress"][];
+            /** Format: date-time */
+            sentAt?: string;
+            /** Format: date-time */
+            receivedAt: string;
+            flags: string[];
+            /** Format: int64 */
+            sizeBytes: number;
+            snippet: string;
+            hasAttachments: boolean;
+            /** @enum {string} */
+            bodyState: "metadata" | "cached" | "unavailable";
+        };
+        MailboxMessagePage: {
+            items: components["schemas"]["MailboxMessage"][];
+            nextCursor?: string;
+        };
+        MailboxMessageBody: {
+            plainText: string;
+        };
+        MailboxSendInput: {
+            to: components["schemas"]["MailboxAddress"][];
+            cc?: components["schemas"]["MailboxAddress"][];
+            bcc?: components["schemas"]["MailboxAddress"][];
+            subject: string;
+            plainText: string;
+        };
+        MailboxSendResult: {
+            /** Format: uuid */
+            outgoingId: string;
+            sent: boolean;
+            queued?: boolean;
+            errorCode?: string;
+        };
         Locale: string;
         Health: {
             /** @enum {string} */
@@ -3185,6 +3459,30 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
+        LeadStageOrderRequest: {
+            stages: components["schemas"]["VersionedRecordInput"][];
+        };
+        StageAccessRuleInput: {
+            /** Format: uuid */
+            roleId: string;
+            canView: boolean;
+            canEnter: boolean;
+            canLeave: boolean;
+        };
+        StageAccessRequest: {
+            rules: components["schemas"]["StageAccessRuleInput"][];
+        };
+        StageAccessRule: components["schemas"]["StageAccessRuleInput"] & {
+            roleKey: string;
+            roleName: string;
+            /** @enum {string} */
+            baseRole: "owner" | "admin" | "manager" | "sales" | "viewer";
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        StageAccessRules: components["schemas"]["StageAccessRule"][];
         LeadStageMoveInput: {
             /** Format: uuid */
             stageId: string;
@@ -6946,6 +7244,58 @@ export interface operations {
             409: components["responses"]["Problem"];
         };
     };
+    salesListPipelineStageAccess: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: components["parameters"]["WorkspaceId"];
+                stageId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Explicit role access rules; an empty list inherits the deal resource permission */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StageAccessRules"];
+                };
+            };
+            403: components["responses"]["Problem"];
+        };
+    };
+    salesReplacePipelineStageAccess: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: components["parameters"]["WorkspaceId"];
+                stageId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StageAccessRequest"];
+            };
+        };
+        responses: {
+            /** @description Full explicit role access set replaced atomically */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StageAccessRules"];
+                };
+            };
+            403: components["responses"]["Problem"];
+        };
+    };
     salesListLeadStages: {
         parameters: {
             query?: never;
@@ -6995,6 +7345,34 @@ export interface operations {
                     "application/json": components["schemas"]["LeadStage"];
                 };
             };
+        };
+    };
+    salesReorderLeadStages: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: components["parameters"]["WorkspaceId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeadStageOrderRequest"];
+            };
+        };
+        responses: {
+            /** @description Lead stages reordered */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadStage"][];
+                };
+            };
+            403: components["responses"]["Problem"];
+            412: components["responses"]["Problem"];
         };
     };
     assignmentsListSubjects: {
@@ -7071,6 +7449,58 @@ export interface operations {
                 content?: never;
             };
             409: components["responses"]["Problem"];
+        };
+    };
+    salesListLeadStageAccess: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: components["parameters"]["WorkspaceId"];
+                stageId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Explicit role access rules; an empty list inherits the lead resource permission */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StageAccessRules"];
+                };
+            };
+            403: components["responses"]["Problem"];
+        };
+    };
+    salesReplaceLeadStageAccess: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: components["parameters"]["WorkspaceId"];
+                stageId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StageAccessRequest"];
+            };
+        };
+        responses: {
+            /** @description Full explicit role access set replaced atomically */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StageAccessRules"];
+                };
+            };
+            403: components["responses"]["Problem"];
         };
     };
     salesListLeads: {
@@ -9956,6 +10386,245 @@ export interface operations {
             };
             400: components["responses"]["Problem"];
             412: components["responses"]["Problem"];
+        };
+    };
+    mailboxListAccounts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: components["parameters"]["WorkspaceId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current user's bounded corporate mail accounts */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MailboxAccount"][];
+                };
+            };
+            503: components["responses"]["Problem"];
+        };
+    };
+    mailboxCreateAccount: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                workspaceId: components["parameters"]["WorkspaceId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MailboxAccountInput"];
+            };
+        };
+        responses: {
+            /** @description Encrypted personal mail account created */
+            201: {
+                headers: {
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MailboxAccount"];
+                };
+            };
+            422: components["responses"]["Problem"];
+        };
+    };
+    mailboxUpdateAccount: {
+        parameters: {
+            query?: never;
+            header: {
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                workspaceId: components["parameters"]["WorkspaceId"];
+                accountId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MailboxAccountUpdate"];
+            };
+        };
+        responses: {
+            /** @description Mail account updated without returning its credential */
+            200: {
+                headers: {
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MailboxAccount"];
+                };
+            };
+            409: components["responses"]["Problem"];
+        };
+    };
+    mailboxDeleteAccount: {
+        parameters: {
+            query?: never;
+            header: {
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                workspaceId: components["parameters"]["WorkspaceId"];
+                accountId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Personal mail account and cached mail deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            409: components["responses"]["Problem"];
+        };
+    };
+    mailboxSyncAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: components["parameters"]["WorkspaceId"];
+                accountId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Bounded incremental synchronization completed */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @constant */
+                        synced: true;
+                    };
+                };
+            };
+            503: components["responses"]["Problem"];
+        };
+    };
+    mailboxListFolders: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: components["parameters"]["WorkspaceId"];
+                accountId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Cached folders for the current user's account */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MailboxFolder"][];
+                };
+            };
+        };
+    };
+    mailboxListMessages: {
+        parameters: {
+            query?: {
+                cursor?: components["parameters"]["Cursor"];
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                workspaceId: components["parameters"]["WorkspaceId"];
+                folderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Cursor-paginated cached message metadata */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MailboxMessagePage"];
+                };
+            };
+        };
+    };
+    mailboxReadMessageBody: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: components["parameters"]["WorkspaceId"];
+                messageId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Sanitized plain-text message body, fetched and cached on demand */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MailboxMessageBody"];
+                };
+            };
+            503: components["responses"]["Problem"];
+        };
+    };
+    mailboxSendMessage: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                workspaceId: components["parameters"]["WorkspaceId"];
+                accountId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MailboxSendInput"];
+            };
+        };
+        responses: {
+            /** @description Message durably queued with a persisted stable Message-ID */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MailboxSendResult"];
+                };
+            };
+            422: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
         };
     };
 }

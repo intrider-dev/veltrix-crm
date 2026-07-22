@@ -156,6 +156,11 @@ func (service *Service) CreateDeal(ctx context.Context, workspace *tenancy.Works
 	} else if err != nil {
 		return dbgen.CreateDealRow{}, err
 	}
+	if err := service.RequirePipelineStageAccess(
+		ctx, workspace, metadata.WorkspaceID, input.StageID, StageAccessEnter,
+	); err != nil {
+		return dbgen.CreateDealRow{}, err
+	}
 	position, err := workspace.Queries.NextDealPosition(ctx, dbgen.NextDealPositionParams{
 		WorkspaceID: metadata.WorkspaceID.PG(), PipelineID: input.PipelineID.PG(), StageID: input.StageID.PG(),
 	})
@@ -224,6 +229,15 @@ func (service *Service) MoveDeal(
 	}
 	if position < 0 {
 		return dbgen.MoveDealRow{}, &errx.ValidationError{Fields: []errx.FieldError{{Pointer: "/position", Code: "validation.minimum"}}}
+	}
+	existingStageID, ok := ids.FromPG(existing.StageID)
+	if !ok {
+		return dbgen.MoveDealRow{}, fmt.Errorf("deal has an invalid stage identifier")
+	}
+	if err := service.RequirePipelineStageTransition(
+		ctx, workspace, metadata.WorkspaceID, existingStageID, stageID,
+	); err != nil {
+		return dbgen.MoveDealRow{}, err
 	}
 	if _, err := workspace.Queries.GetPipelineStage(ctx, dbgen.GetPipelineStageParams{
 		WorkspaceID: metadata.WorkspaceID.PG(), PipelineID: existing.PipelineID, ID: stageID.PG(),

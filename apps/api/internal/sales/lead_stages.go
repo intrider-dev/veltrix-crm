@@ -42,6 +42,9 @@ func (service *Service) CreateLeadStage(
 	if err != nil {
 		return LeadStageRecord{}, err
 	}
+	if err := lockSalesConfiguration(ctx, workspace, metadata.WorkspaceID, "lead-stages"); err != nil {
+		return LeadStageRecord{}, err
+	}
 	id, err := ids.NewV7()
 	if err != nil {
 		return LeadStageRecord{}, err
@@ -88,6 +91,9 @@ func (service *Service) UpdateLeadStage(
 	}
 	if existing.Version != version {
 		return LeadStageRecord{}, errx.ErrVersionConflict
+	}
+	if validated.Category != existing.Category {
+		return LeadStageRecord{}, validation("/category", "validation.immutable")
 	}
 	row, err := workspace.Queries.UpdateLeadStage(ctx, dbgen.UpdateLeadStageParams{
 		WorkspaceID: metadata.WorkspaceID.PG(), ID: stageID.PG(),
@@ -145,6 +151,77 @@ func (service *Service) DeleteLeadStage(
 		AggregateType: "lead_stage", AggregateID: stageID,
 		Summary: map[string]any{"deleted": true}, Payload: map[string]any{"stageId": stageID.String()},
 	})
+}
+
+func (service *Service) ReorderLeadStages(
+	ctx context.Context,
+	workspace *tenancy.WorkspaceTx,
+	metadata events.Metadata,
+	order []StageOrderItem,
+) ([]LeadStageRecord, error) {
+	if err := validateStageOrder(order); err != nil {
+		return nil, err
+	}
+	rows, err := workspace.Tx.Query(ctx, `
+		SELECT id, version FROM sales.lead_stages
+		WHERE workspace_id = $1 AND archived_at IS NULL
+		ORDER BY position, id
+		FOR UPDATE`, metadata.WorkspaceID.PG())
+	if err != nil {
+		return nil, fmt.Errorf("lock lead stages: %w", err)
+	}
+	defer rows.Close()
+	current := make(map[ids.UUID]int64, len(order))
+	for rows.Next() {
+		var stageIDValue pgtype.UUID
+		var stageVersion int64
+		if err := rows.Scan(&stageIDValue, &stageVersion); err != nil {
+			return nil, fmt.Errorf("scan lead stage lock: %w", err)
+		}
+		stageID, ok := ids.FromPG(stageIDValue)
+		if !ok {
+			return nil, fmt.Errorf("lock lead stages: invalid id")
+		}
+		current[stageID] = stageVersion
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("lock lead stages: %w", err)
+	}
+	if len(current) != len(order) {
+		return nil, validation("/stages", "validation.pipeline_stage.complete_order_required")
+	}
+	for _, stage := range order {
+		currentVersion, exists := current[stage.ID]
+		if !exists {
+			return nil, validation("/stages", "validation.reference.invalid")
+		}
+		if currentVersion != stage.Version {
+			return nil, errx.ErrVersionConflict
+		}
+	}
+	if err := workspace.Queries.OffsetLeadStagePositions(ctx, metadata.WorkspaceID.PG()); err != nil {
+		return nil, fmt.Errorf("offset lead stage positions: %w", err)
+	}
+	result := make([]LeadStageRecord, 0, len(order))
+	for position, stage := range order {
+		row, err := workspace.Queries.ApplyLeadStagePosition(ctx, dbgen.ApplyLeadStagePositionParams{
+			WorkspaceID: metadata.WorkspaceID.PG(), ID: stage.ID.PG(), Position: int32(position),
+		})
+		if err != nil {
+			return nil, fmt.Errorf("apply lead stage position: %w", err)
+		}
+		result = append(result, leadStageRecord(row.ID, row.Name, row.Category, row.Color, row.Position,
+			row.SystemKey, row.IsDefault, row.Version, row.CreatedAt.Time, row.UpdatedAt.Time))
+	}
+	if err := events.Record(ctx, workspace.Queries, metadata, events.Mutation{
+		Action: "lead_stages.reordered", EventType: "sales.lead_stages.reordered",
+		AggregateType: "workspace", AggregateID: metadata.WorkspaceID,
+		Summary: map[string]any{"stageCount": len(order)},
+		Payload: map[string]any{"workspaceId": metadata.WorkspaceID.String(), "stageCount": len(order)},
+	}); err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 func validateLeadStageInput(input LeadStageInput, creating bool) (LeadStageInput, error) {

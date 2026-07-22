@@ -1,4 +1,5 @@
 {
+  "access": "Access",
   "addPipeline": "Add pipeline",
   "addStage": "Add stage",
   "createPipeline": "Create pipeline",
@@ -19,5 +20,7 @@
   "probability": "Probability, %",
   "saved": "Sales process saved.",
   "subtitle": "Configure deal pipelines, ordered stages, probabilities, and forecast categories.",
-  "title": "Deal pipelines and stages"
+  "title": "Deal pipelines and stages",
+  "translatePipelines": "Translate pipeline names",
+  "translateStages": "Translate stage names"
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/veltrixcrm/veltrix-crm/apps/api/internal/customers"
 	"github.com/veltrixcrm/veltrix-crm/apps/api/internal/identity"
 	"github.com/veltrixcrm/veltrix-crm/apps/api/internal/integrations"
+	"github.com/veltrixcrm/veltrix-crm/apps/api/internal/mailbox"
 	"github.com/veltrixcrm/veltrix-crm/apps/api/internal/notifications"
 	"github.com/veltrixcrm/veltrix-crm/apps/api/internal/platform/brand"
 	"github.com/veltrixcrm/veltrix-crm/apps/api/internal/platform/config"
@@ -29,6 +30,7 @@ func BuildAdvancedComponents(
 	pool *pgxpool.Pool,
 	tenancyService *tenancy.Service,
 	actionExecutor automation.ActionExecutor,
+	mailboxServices ...*mailbox.Service,
 ) (*AdvancedHandlers, map[string]worker.Handler, error) {
 	cipher, err := integrationCipher(cfg)
 	if err != nil {
@@ -37,7 +39,7 @@ func BuildAdvancedComponents(
 	urlValidator := integrations.URLValidator{AllowHTTP: cfg.Environment != "production"}
 	integrationManager := integrations.NewManager(cipher, urlValidator)
 	httpHandlers := NewAdvancedHandlers(logger, tenancyService, automation.NewManager(), integrationManager)
-	workerHandlers, err := BuildWorkerHandlers(cfg, logger, pool, actionExecutor)
+	workerHandlers, err := BuildWorkerHandlers(cfg, logger, pool, actionExecutor, mailboxServices...)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -52,6 +54,7 @@ func BuildWorkerHandlers(
 	logger *slog.Logger,
 	pool *pgxpool.Pool,
 	actionExecutor automation.ActionExecutor,
+	mailboxServices ...*mailbox.Service,
 ) (map[string]worker.Handler, error) {
 	cipher, err := integrationCipher(cfg)
 	if err != nil {
@@ -94,6 +97,22 @@ func BuildWorkerHandlers(
 		sender, notifications.CatalogRenderer{ProductName: brand.Config.ProductName},
 	)); err != nil {
 		return nil, err
+	}
+	var mailboxService *mailbox.Service
+	if len(mailboxServices) > 0 {
+		mailboxService = mailboxServices[0]
+	} else {
+		mailboxService, err = buildMailboxService(cfg)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if mailboxService != nil {
+		if err := mergeWorkerHandlers(workerHandlers, map[string]worker.Handler{
+			mailbox.DeliveryJobKind: mailbox.NewDeliveryJobHandler(tenancy.NewService(pool), mailboxService),
+		}); err != nil {
+			return nil, err
+		}
 	}
 	return workerHandlers, nil
 }

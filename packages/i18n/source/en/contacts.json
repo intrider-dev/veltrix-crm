@@ -41,6 +41,7 @@
   "duplicates.title": "Possible duplicates",
   "export.action": "Export current view",
   "filter.allStatuses": "All statuses",
+  "filter.toolbarLabel": "Contact filters",
   "grid.label": "Contacts table. Use Space to select a row and Enter to open it.",
   "grid.readonlyLabel": "Contacts table. Use Enter to open a contact.",
   "import.action": "Import CSV",

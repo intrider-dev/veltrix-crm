@@ -2,8 +2,7 @@
 .saved-views,
 .saved-view-form,
 .bulk-bar,
-.persistent-message,
-.view-switcher {
+.persistent-message {
   display: flex;
   align-items: center;
   gap: 0.55rem;
@@ -14,45 +13,8 @@
   justify-content: flex-end;
 }
 
-.view-switcher {
-  width: fit-content;
-  padding: 0.25rem;
-  border-radius: 0.6rem;
-}
-
-.view-switcher button {
-  min-height: 2rem;
-  padding: 0 0.7rem;
-  border: 0;
-  border-radius: 0.4rem;
-  color: var(--text-muted);
-  background: transparent;
-  cursor: pointer;
-}
-
-.view-switcher button.active {
-  color: var(--text);
-  background: var(--surface-selected);
-  font-weight: 650;
-}
-
-.toolbar {
-  display: flex;
-  align-items: center;
-  min-height: 3.75rem;
-  padding: 0.55rem 0.7rem;
-}
-
-.toolbar form {
-  display: flex;
-  align-items: end;
-  gap: 0.55rem;
-  width: 100%;
-}
-
-.toolbar mat-form-field {
-  flex: 1;
-  max-width: 32rem;
+.contacts-filter-toolbar .saved-view-picker {
+  min-width: 11rem;
 }
 
 .compact-field,
@@ -150,6 +112,7 @@
 ag-grid-angular {
   display: block;
   width: 100%;
+  height: clamp(20rem, calc(100dvh - 20rem), 38rem);
 }
 
 .grid-skeleton {
@@ -391,14 +354,12 @@ th {
 }
 
 @media (max-width: 800px) {
-  .toolbar form,
   .saved-view-form,
   .bulk-bar {
     align-items: stretch;
     flex-direction: column;
   }
 
-  .toolbar mat-form-field,
   .saved-view-picker,
   .saved-view-form label {
     width: 100%;
@@ -417,13 +378,8 @@ th {
   }
 
   .header-actions button,
-  .toolbar button,
+  .contacts-filter-toolbar > button,
   .saved-views > button {
-    width: 100%;
-  }
-
-  .view-switcher,
-  .view-switcher button {
     width: 100%;
   }
 

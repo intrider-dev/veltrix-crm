@@ -7,8 +7,9 @@ ORDER BY is_default DESC, name, id;
 -- name: ListPipelineStages :many
 SELECT id, pipeline_id, name, probability, forecast_category, position,
        created_at, updated_at
-FROM sales.pipeline_stages
-WHERE workspace_id = $1 AND pipeline_id = $2
+FROM sales.pipeline_stages stage
+WHERE stage.workspace_id = $1 AND stage.pipeline_id = $2
+  AND sales.pipeline_stage_access_allowed(stage.workspace_id, stage.id, 'view')
 ORDER BY position, id;
 
 -- name: GetPipelineStage :one
@@ -33,21 +34,23 @@ RETURNING id, pipeline_id, name, probability, forecast_category, position,
 SELECT id, pipeline_id, stage_id, name, contact_id, company_id, owner_user_id,
        amount_minor, currency, planned_start_date, expected_close_date, position, status, lost_reason,
        version, created_at, updated_at
-FROM sales.deals
-WHERE workspace_id = sqlc.arg(workspace_id)
-  AND deleted_at IS NULL
-  AND (sqlc.arg(pipeline_id)::uuid IS NULL OR pipeline_id = sqlc.arg(pipeline_id))
-  AND (sqlc.arg(stage_id)::uuid IS NULL OR stage_id = sqlc.arg(stage_id))
-  AND (updated_at, id) < (sqlc.arg(cursor_updated_at)::timestamptz, sqlc.arg(cursor_id)::uuid)
-ORDER BY updated_at DESC, id DESC
+FROM sales.deals deal
+WHERE deal.workspace_id = sqlc.arg(workspace_id)
+  AND deal.deleted_at IS NULL
+  AND sales.pipeline_stage_access_allowed(deal.workspace_id, deal.stage_id, 'view')
+  AND (sqlc.arg(pipeline_id)::uuid IS NULL OR deal.pipeline_id = sqlc.arg(pipeline_id))
+  AND (sqlc.arg(stage_id)::uuid IS NULL OR deal.stage_id = sqlc.arg(stage_id))
+  AND (deal.updated_at, deal.id) < (sqlc.arg(cursor_updated_at)::timestamptz, sqlc.arg(cursor_id)::uuid)
+ORDER BY deal.updated_at DESC, deal.id DESC
 LIMIT sqlc.arg(page_limit);
 
 -- name: GetDeal :one
 SELECT id, pipeline_id, stage_id, name, contact_id, company_id, owner_user_id,
        amount_minor, currency, planned_start_date, expected_close_date, position, status, lost_reason,
        custom_fields, version, created_at, updated_at
-FROM sales.deals
-WHERE workspace_id = $1 AND id = $2 AND deleted_at IS NULL;
+FROM sales.deals deal
+WHERE deal.workspace_id = $1 AND deal.id = $2 AND deal.deleted_at IS NULL
+  AND sales.pipeline_stage_access_allowed(deal.workspace_id, deal.stage_id, 'view');
 
 -- name: CreateDeal :one
 INSERT INTO sales.deals (

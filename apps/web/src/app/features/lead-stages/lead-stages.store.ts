@@ -30,26 +30,27 @@ export class LeadStagesStore {
     }
   }
 
-  async create(input: LeadStageInput): Promise<void> {
+  async create(input: LeadStageInput): Promise<boolean> {
     const workspaceId = this.workspace.id();
-    if (!workspaceId) return;
+    if (!workspaceId) return false;
     this.saving.set(true);
     this.error.set(null);
     try {
       const created = await this.api.createLeadStage(workspaceId, input);
       this.stages.update((items) => [...items, created].sort((a, b) => a.position - b.position));
       this.toasts.show({ messageKey: 'leadStages.created', messageParams: {} });
+      return true;
     } catch (error) {
       this.error.set(error);
-      throw error;
+      return false;
     } finally {
       this.saving.set(false);
     }
   }
 
-  async update(stage: LeadStage, input: LeadStageInput): Promise<void> {
+  async update(stage: LeadStage, input: LeadStageInput): Promise<boolean> {
     const workspaceId = this.workspace.id();
-    if (!workspaceId) return;
+    if (!workspaceId) return false;
     this.saving.set(true);
     this.error.set(null);
     try {
@@ -58,24 +59,51 @@ export class LeadStagesStore {
         items.map((candidate) => (candidate.id === updated.id ? updated : candidate)),
       );
       this.toasts.show({ messageKey: 'leadStages.updated', messageParams: {} });
+      return true;
     } catch (error) {
       this.error.set(error);
-      throw error;
+      return false;
     } finally {
       this.saving.set(false);
     }
   }
 
-  async remove(stage: LeadStage): Promise<void> {
+  async remove(stage: LeadStage): Promise<boolean> {
     const workspaceId = this.workspace.id();
-    if (!workspaceId || stage.systemKey) return;
+    if (!workspaceId || stage.systemKey || this.saving()) return false;
+    this.saving.set(true);
     this.error.set(null);
     try {
       await this.api.deleteLeadStage(workspaceId, stage);
       this.stages.update((items) => items.filter((candidate) => candidate.id !== stage.id));
       this.toasts.show({ messageKey: 'leadStages.deleted', messageParams: {} });
+      return true;
     } catch (error) {
       this.error.set(error);
+      return false;
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  async move(stage: LeadStage, direction: -1 | 1): Promise<void> {
+    const workspaceId = this.workspace.id();
+    const current = [...this.stages()];
+    const index = current.findIndex((candidate) => candidate.id === stage.id);
+    const destination = index + direction;
+    if (!workspaceId || index < 0 || destination < 0 || destination >= current.length) return;
+    [current[index], current[destination]] = [current[destination], current[index]];
+    this.saving.set(true);
+    this.error.set(null);
+    try {
+      const reordered = await this.api.reorderLeadStages(workspaceId, {
+        stages: current.map((candidate) => ({ id: candidate.id, version: candidate.version })),
+      });
+      this.stages.set(reordered);
+    } catch (error) {
+      this.error.set(error);
+    } finally {
+      this.saving.set(false);
     }
   }
 }

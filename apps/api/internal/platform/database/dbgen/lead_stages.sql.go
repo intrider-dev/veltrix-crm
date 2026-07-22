@@ -11,6 +11,53 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const applyLeadStagePosition = `-- name: ApplyLeadStagePosition :one
+UPDATE sales.lead_stages
+SET position = $1, version = version + 1, updated_at = now()
+WHERE workspace_id = $2
+  AND id = $3
+  AND archived_at IS NULL
+RETURNING id, name, category, color, position, system_key, is_default, version,
+          created_at, updated_at
+`
+
+type ApplyLeadStagePositionParams struct {
+	Position    int32       `json:"position"`
+	WorkspaceID pgtype.UUID `json:"workspace_id"`
+	ID          pgtype.UUID `json:"id"`
+}
+
+type ApplyLeadStagePositionRow struct {
+	ID        pgtype.UUID        `json:"id"`
+	Name      string             `json:"name"`
+	Category  string             `json:"category"`
+	Color     string             `json:"color"`
+	Position  int32              `json:"position"`
+	SystemKey *string            `json:"system_key"`
+	IsDefault bool               `json:"is_default"`
+	Version   int64              `json:"version"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) ApplyLeadStagePosition(ctx context.Context, arg ApplyLeadStagePositionParams) (ApplyLeadStagePositionRow, error) {
+	row := q.db.QueryRow(ctx, applyLeadStagePosition, arg.Position, arg.WorkspaceID, arg.ID)
+	var i ApplyLeadStagePositionRow
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Category,
+		&i.Color,
+		&i.Position,
+		&i.SystemKey,
+		&i.IsDefault,
+		&i.Version,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const createLeadStage = `-- name: CreateLeadStage :one
 INSERT INTO sales.lead_stages (
   workspace_id, id, name, category, color, position, system_key, is_default
@@ -208,8 +255,9 @@ func (q *Queries) InsertLeadStageHistory(ctx context.Context, arg InsertLeadStag
 const listLeadStages = `-- name: ListLeadStages :many
 SELECT id, name, category, color, position, system_key, is_default, version,
        created_at, updated_at
-FROM sales.lead_stages
-WHERE workspace_id = $1 AND archived_at IS NULL
+FROM sales.lead_stages stage
+WHERE stage.workspace_id = $1 AND stage.archived_at IS NULL
+  AND sales.lead_stage_access_allowed(stage.workspace_id, stage.id, 'view')
 ORDER BY position, id
 `
 
@@ -348,6 +396,17 @@ func (q *Queries) NextLeadStagePosition(ctx context.Context, workspaceID pgtype.
 	var column_1 int32
 	err := row.Scan(&column_1)
 	return column_1, err
+}
+
+const offsetLeadStagePositions = `-- name: OffsetLeadStagePositions :exec
+UPDATE sales.lead_stages
+SET position = position + 1000
+WHERE workspace_id = $1 AND archived_at IS NULL
+`
+
+func (q *Queries) OffsetLeadStagePositions(ctx context.Context, workspaceID pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, offsetLeadStagePositions, workspaceID)
+	return err
 }
 
 const updateLeadStage = `-- name: UpdateLeadStage :one

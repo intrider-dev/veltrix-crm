@@ -148,33 +148,35 @@ func (service *Service) WithWorkspace(
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 	queries := dbgen.New(tx)
-	if err := queries.SetActorContext(ctx, principal.UserID.String()); err != nil {
-		return fmt.Errorf("set actor context: %w", err)
+	if err := queries.SetWorkspaceContext(ctx, dbgen.SetWorkspaceContextParams{
+		ActorID: principal.UserID.String(), WorkspaceID: workspaceID.String(), RequestID: requestID,
+	}); err != nil {
+		return fmt.Errorf("set workspace context: %w", err)
 	}
-	membership, err := queries.GetActiveMembership(ctx, dbgen.GetActiveMembershipParams{
+	authorization, err := queries.AuthorizeWorkspace(ctx, dbgen.AuthorizeWorkspaceParams{
 		WorkspaceID: workspaceID.PG(),
-		UserID:      principal.UserID.PG(),
+		ActorID:     principal.UserID.PG(),
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return errx.ErrNotFound
 	}
 	if err != nil {
-		return fmt.Errorf("load membership: %w", err)
+		return fmt.Errorf("authorize workspace: %w", err)
 	}
-	if err := queries.SetTenantContext(ctx, dbgen.SetTenantContextParams{
-		WorkspaceID: workspaceID.String(),
-		RequestID:   requestID,
-	}); err != nil {
-		return fmt.Errorf("set tenant context: %w", err)
+	membership := dbgen.TenancyMembership{
+		WorkspaceID:      authorization.WorkspaceID,
+		ID:               authorization.ID,
+		UserID:           authorization.UserID,
+		Role:             authorization.Role,
+		Status:           authorization.Status,
+		LocaleOverride:   authorization.LocaleOverride,
+		TimezoneOverride: authorization.TimezoneOverride,
+		CreatedAt:        authorization.CreatedAt,
+		UpdatedAt:        authorization.UpdatedAt,
+		RoleID:           authorization.RoleID,
 	}
-	grants, err := queries.ListMembershipPermissions(ctx, dbgen.ListMembershipPermissionsParams{
-		WorkspaceID: workspaceID.PG(), MembershipID: membership.ID,
-	})
-	if err != nil {
-		return fmt.Errorf("load effective permissions: %w", err)
-	}
-	effective := make(map[Permission]struct{}, len(grants))
-	for _, grant := range grants {
+	effective := make(map[Permission]struct{}, len(authorization.Permissions))
+	for _, grant := range authorization.Permissions {
 		effective[Permission(grant)] = struct{}{}
 	}
 	if _, allowed := effective[permission]; !allowed {

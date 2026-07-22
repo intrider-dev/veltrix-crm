@@ -5,6 +5,33 @@ SELECT set_config('app.actor_id', $1, true);
 SELECT set_config('app.workspace_id', sqlc.arg(workspace_id)::text, true),
        set_config('app.request_id', sqlc.arg(request_id)::text, true);
 
+-- name: SetWorkspaceContext :exec
+SELECT set_config('app.actor_id', sqlc.arg(actor_id)::text, true),
+       set_config('app.workspace_id', sqlc.arg(workspace_id)::text, true),
+       set_config('app.request_id', sqlc.arg(request_id)::text, true);
+
+-- name: AuthorizeWorkspace :one
+SELECT membership.workspace_id, membership.id, membership.user_id,
+       membership.role, membership.status, membership.locale_override,
+       membership.timezone_override, membership.created_at,
+       membership.updated_at, membership.role_id,
+       COALESCE(
+         array_agg(permission.permission ORDER BY permission.permission)
+           FILTER (WHERE permission.permission IS NOT NULL),
+         ARRAY[]::text[]
+       )::text[] AS permissions
+FROM tenancy.memberships membership
+LEFT JOIN tenancy.role_permissions permission
+  ON permission.workspace_id = membership.workspace_id
+ AND permission.role_id = membership.role_id
+WHERE membership.workspace_id = sqlc.arg(workspace_id)
+  AND membership.user_id = sqlc.arg(actor_id)
+  AND membership.status = 'active'
+GROUP BY membership.workspace_id, membership.id, membership.user_id,
+         membership.role, membership.status, membership.locale_override,
+         membership.timezone_override, membership.created_at,
+         membership.updated_at, membership.role_id;
+
 -- name: ListUserWorkspaces :many
 SELECT w.id, w.name, w.slug, w.default_locale, w.timezone, w.default_currency,
        m.role, m.role_id, role.name AS role_name, m.status, m.locale_override, m.timezone_override,
