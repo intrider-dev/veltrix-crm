@@ -38,7 +38,6 @@ INSERT INTO collaboration.conversation_members (
 ) VALUES (
   $1, $2, $3, $4
 )
-ON CONFLICT (workspace_id, conversation_id, user_id) DO NOTHING
 `
 
 type AddConversationMemberParams struct {
@@ -90,6 +89,29 @@ func (q *Queries) AddMessageReaction(ctx context.Context, arg AddMessageReaction
 	return err
 }
 
+const chatMessageOwnedByActor = `-- name: ChatMessageOwnedByActor :one
+SELECT EXISTS (
+  SELECT 1 FROM collaboration.messages
+  WHERE workspace_id = $1
+    AND id = $2
+    AND sender_user_id = $3
+    AND deleted_at IS NULL
+)
+`
+
+type ChatMessageOwnedByActorParams struct {
+	WorkspaceID pgtype.UUID `json:"workspace_id"`
+	MessageID   pgtype.UUID `json:"message_id"`
+	ActorUserID pgtype.UUID `json:"actor_user_id"`
+}
+
+func (q *Queries) ChatMessageOwnedByActor(ctx context.Context, arg ChatMessageOwnedByActorParams) (bool, error) {
+	row := q.db.QueryRow(ctx, chatMessageOwnedByActor, arg.WorkspaceID, arg.MessageID, arg.ActorUserID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const chatMessageVisible = `-- name: ChatMessageVisible :one
 SELECT EXISTS (
   SELECT 1
@@ -137,6 +159,25 @@ func (q *Queries) ConversationMemberExists(ctx context.Context, arg Conversation
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err
+}
+
+const countConversationMembers = `-- name: CountConversationMembers :one
+SELECT count(*)::integer AS member_count
+FROM collaboration.conversation_members
+WHERE workspace_id = $1
+  AND conversation_id = $2
+`
+
+type CountConversationMembersParams struct {
+	WorkspaceID    pgtype.UUID `json:"workspace_id"`
+	ConversationID pgtype.UUID `json:"conversation_id"`
+}
+
+func (q *Queries) CountConversationMembers(ctx context.Context, arg CountConversationMembersParams) (int32, error) {
+	row := q.db.QueryRow(ctx, countConversationMembers, arg.WorkspaceID, arg.ConversationID)
+	var member_count int32
+	err := row.Scan(&member_count)
+	return member_count, err
 }
 
 const createConversation = `-- name: CreateConversation :one
@@ -269,6 +310,37 @@ func (q *Queries) CreateMessage(ctx context.Context, arg CreateMessageParams) (C
 	return i, err
 }
 
+const deleteOwnUnattachedMediaMessage = `-- name: DeleteOwnUnattachedMediaMessage :one
+UPDATE collaboration.messages message
+SET deleted_at = now(), body = '', edited_at = now(), version = version + 1
+WHERE message.workspace_id = $1
+  AND message.id = $2
+  AND message.sender_user_id = $3
+  AND message.message_kind IN ('file', 'voice', 'video')
+  AND message.deleted_at IS NULL
+  AND NOT EXISTS (
+    SELECT 1 FROM files.attachments attachment
+    WHERE attachment.workspace_id = message.workspace_id
+      AND attachment.entity_type = 'chat_message'
+      AND attachment.entity_id = message.id
+      AND attachment.deleted_at IS NULL
+  )
+RETURNING message.conversation_id
+`
+
+type DeleteOwnUnattachedMediaMessageParams struct {
+	WorkspaceID  pgtype.UUID `json:"workspace_id"`
+	MessageID    pgtype.UUID `json:"message_id"`
+	SenderUserID pgtype.UUID `json:"sender_user_id"`
+}
+
+func (q *Queries) DeleteOwnUnattachedMediaMessage(ctx context.Context, arg DeleteOwnUnattachedMediaMessageParams) (pgtype.UUID, error) {
+	row := q.db.QueryRow(ctx, deleteOwnUnattachedMediaMessage, arg.WorkspaceID, arg.MessageID, arg.SenderUserID)
+	var conversation_id pgtype.UUID
+	err := row.Scan(&conversation_id)
+	return conversation_id, err
+}
+
 const findDirectConversation = `-- name: FindDirectConversation :one
 SELECT id
 FROM collaboration.conversations
@@ -290,6 +362,47 @@ func (q *Queries) FindDirectConversation(ctx context.Context, arg FindDirectConv
 	return id, err
 }
 
+const findEntityConversation = `-- name: FindEntityConversation :one
+SELECT conversation_id
+FROM collaboration.entity_conversations
+WHERE workspace_id = $1
+  AND entity_type = $2
+  AND entity_id = $3
+`
+
+type FindEntityConversationParams struct {
+	WorkspaceID pgtype.UUID `json:"workspace_id"`
+	EntityType  string      `json:"entity_type"`
+	EntityID    pgtype.UUID `json:"entity_id"`
+}
+
+func (q *Queries) FindEntityConversation(ctx context.Context, arg FindEntityConversationParams) (pgtype.UUID, error) {
+	row := q.db.QueryRow(ctx, findEntityConversation, arg.WorkspaceID, arg.EntityType, arg.EntityID)
+	var conversation_id pgtype.UUID
+	err := row.Scan(&conversation_id)
+	return conversation_id, err
+}
+
+const getChatMessageConversation = `-- name: GetChatMessageConversation :one
+SELECT conversation_id
+FROM collaboration.messages
+WHERE workspace_id = $1
+  AND id = $2
+  AND deleted_at IS NULL
+`
+
+type GetChatMessageConversationParams struct {
+	WorkspaceID pgtype.UUID `json:"workspace_id"`
+	MessageID   pgtype.UUID `json:"message_id"`
+}
+
+func (q *Queries) GetChatMessageConversation(ctx context.Context, arg GetChatMessageConversationParams) (pgtype.UUID, error) {
+	row := q.db.QueryRow(ctx, getChatMessageConversation, arg.WorkspaceID, arg.MessageID)
+	var conversation_id pgtype.UUID
+	err := row.Scan(&conversation_id)
+	return conversation_id, err
+}
+
 const getUserConversation = `-- name: GetUserConversation :one
 SELECT conversation.id, conversation.conversation_type, conversation.title,
        conversation.last_message_at, conversation.version,
@@ -303,6 +416,9 @@ SELECT conversation.id, conversation.conversation_type, conversation.title,
          JOIN identity.users users ON users.id = member.user_id
          WHERE member.workspace_id = conversation.workspace_id
            AND member.conversation_id = conversation.id
+           AND security.chat_entity_conversation_user_allowed(
+             member.workspace_id, member.conversation_id, member.user_id
+           )
        ), '[]'::jsonb)::text AS members,
        (SELECT count(*)
         FROM collaboration.messages message
@@ -357,6 +473,56 @@ func (q *Queries) GetUserConversation(ctx context.Context, arg GetUserConversati
 	return i, err
 }
 
+const isOwnDeletedMediaMessage = `-- name: IsOwnDeletedMediaMessage :one
+SELECT EXISTS (
+  SELECT 1
+  FROM collaboration.messages message
+  WHERE message.workspace_id = $1
+    AND message.id = $2
+    AND message.sender_user_id = $3
+    AND message.message_kind IN ('file', 'voice', 'video')
+    AND message.deleted_at IS NOT NULL
+)
+`
+
+type IsOwnDeletedMediaMessageParams struct {
+	WorkspaceID  pgtype.UUID `json:"workspace_id"`
+	MessageID    pgtype.UUID `json:"message_id"`
+	SenderUserID pgtype.UUID `json:"sender_user_id"`
+}
+
+func (q *Queries) IsOwnDeletedMediaMessage(ctx context.Context, arg IsOwnDeletedMediaMessageParams) (bool, error) {
+	row := q.db.QueryRow(ctx, isOwnDeletedMediaMessage, arg.WorkspaceID, arg.MessageID, arg.SenderUserID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
+const linkEntityConversation = `-- name: LinkEntityConversation :exec
+INSERT INTO collaboration.entity_conversations (
+  workspace_id, entity_type, entity_id, conversation_id
+) VALUES (
+  $1, $2, $3, $4
+)
+`
+
+type LinkEntityConversationParams struct {
+	WorkspaceID    pgtype.UUID `json:"workspace_id"`
+	EntityType     string      `json:"entity_type"`
+	EntityID       pgtype.UUID `json:"entity_id"`
+	ConversationID pgtype.UUID `json:"conversation_id"`
+}
+
+func (q *Queries) LinkEntityConversation(ctx context.Context, arg LinkEntityConversationParams) error {
+	_, err := q.db.Exec(ctx, linkEntityConversation,
+		arg.WorkspaceID,
+		arg.EntityType,
+		arg.EntityID,
+		arg.ConversationID,
+	)
+	return err
+}
+
 const listConversationAttachments = `-- name: ListConversationAttachments :many
 SELECT attachment.id, attachment.entity_id AS message_id, attachment.display_name,
        attachment.media_type, attachment.size_bytes, attachment.scan_state,
@@ -366,22 +532,24 @@ JOIN collaboration.messages message
   ON message.workspace_id = attachment.workspace_id
  AND message.id = attachment.entity_id
  AND message.conversation_id = $1
+ AND message.id = ANY($2::uuid[])
  AND message.deleted_at IS NULL
 JOIN collaboration.conversation_members member
   ON member.workspace_id = message.workspace_id
  AND member.conversation_id = message.conversation_id
- AND member.user_id = $2
-WHERE attachment.workspace_id = $3
+ AND member.user_id = $3
+WHERE attachment.workspace_id = $4
   AND attachment.entity_type = 'chat_message'
   AND attachment.deleted_at IS NULL
 ORDER BY attachment.created_at, attachment.id
-LIMIT 500
+LIMIT 100
 `
 
 type ListConversationAttachmentsParams struct {
-	ConversationID pgtype.UUID `json:"conversation_id"`
-	UserID         pgtype.UUID `json:"user_id"`
-	WorkspaceID    pgtype.UUID `json:"workspace_id"`
+	ConversationID pgtype.UUID   `json:"conversation_id"`
+	MessageIds     []pgtype.UUID `json:"message_ids"`
+	UserID         pgtype.UUID   `json:"user_id"`
+	WorkspaceID    pgtype.UUID   `json:"workspace_id"`
 }
 
 type ListConversationAttachmentsRow struct {
@@ -395,7 +563,12 @@ type ListConversationAttachmentsRow struct {
 }
 
 func (q *Queries) ListConversationAttachments(ctx context.Context, arg ListConversationAttachmentsParams) ([]ListConversationAttachmentsRow, error) {
-	rows, err := q.db.Query(ctx, listConversationAttachments, arg.ConversationID, arg.UserID, arg.WorkspaceID)
+	rows, err := q.db.Query(ctx, listConversationAttachments,
+		arg.ConversationID,
+		arg.MessageIds,
+		arg.UserID,
+		arg.WorkspaceID,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -526,6 +699,9 @@ SELECT user_id
 FROM collaboration.conversation_members
 WHERE workspace_id = $1
   AND conversation_id = $2
+  AND security.chat_entity_conversation_user_allowed(
+    workspace_id, conversation_id, user_id
+  )
 ORDER BY user_id
 `
 
@@ -567,6 +743,9 @@ SELECT conversation.id, conversation.conversation_type, conversation.title,
          JOIN identity.users users ON users.id = member.user_id
          WHERE member.workspace_id = conversation.workspace_id
            AND member.conversation_id = conversation.id
+           AND security.chat_entity_conversation_user_allowed(
+             member.workspace_id, member.conversation_id, member.user_id
+           )
        ), '[]'::jsonb)::text AS members,
        (SELECT count(*)
         FROM collaboration.messages message

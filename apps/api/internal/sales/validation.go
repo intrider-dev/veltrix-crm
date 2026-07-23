@@ -104,6 +104,9 @@ func validateLeadInput(input LeadInput) (LeadInput, string, string, []byte, erro
 	if !validLeadStatus(input.Status) || input.Status == "converted" {
 		fields = append(fields, errx.FieldError{Pointer: "/status", Code: "validation.enum"})
 	}
+	if input.PlannedStartDate != nil && input.ExpectedCloseDate != nil && input.PlannedStartDate.After(*input.ExpectedCloseDate) {
+		fields = append(fields, errx.FieldError{Pointer: "/plannedStartDate", Code: "validation.date.range"})
+	}
 	custom, err := boundedCustomFields(input.CustomFields)
 	if err != nil {
 		fields = append(fields, errx.FieldError{Pointer: "/customFields", Code: "validation.custom_fields.invalid"})

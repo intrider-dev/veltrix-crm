@@ -964,6 +964,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/workspaces/{workspaceId}/reference-users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["tenancyListReferenceUsers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/workspaces/{workspaceId}/custom-fields/{definitionId}": {
         parameters: {
             query?: never;
@@ -1578,6 +1594,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/workspaces/{workspaceId}/entity-conversations/{entityType}/{entityId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["collaborationResolveEntityConversation"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/workspaces/{workspaceId}/conversations/{conversationId}/messages": {
         parameters: {
             query?: never;
@@ -1752,6 +1784,22 @@ export interface paths {
         put: operations["collaborationAddReaction"];
         post?: never;
         delete: operations["collaborationRemoveReaction"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workspaces/{workspaceId}/chat/messages/{messageId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["collaborationDeleteProvisionalMediaMessage"];
         options?: never;
         head?: never;
         patch?: never;
@@ -3195,7 +3243,7 @@ export interface components {
             version: number;
         };
         /** @enum {string} */
-        CustomFieldValueType: "text" | "number" | "money" | "date" | "boolean" | "single_select" | "multi_select" | "user_reference";
+        CustomFieldValueType: "text" | "multiline_text" | "number" | "money" | "date" | "boolean" | "single_select" | "multi_select" | "user_reference";
         CustomFieldOption: {
             value: string;
             label: string;
@@ -3209,12 +3257,17 @@ export interface components {
         };
         CustomFieldDefinitionInput: {
             /** @enum {string} */
-            entityType: "contact" | "company";
+            entityType: "contact" | "company" | "lead" | "deal";
             fieldKey: string;
             label: string;
             valueType: components["schemas"]["CustomFieldValueType"];
             validation: components["schemas"]["CustomFieldValidation"];
             options: components["schemas"]["CustomFieldOption"][];
+        };
+        ReferenceUser: {
+            /** Format: uuid */
+            userId: string;
+            displayName: string;
         };
         CustomFieldDefinition: components["schemas"]["CustomFieldDefinitionInput"] & {
             /** Format: uuid */
@@ -3503,6 +3556,10 @@ export interface components {
             ownerId?: string | null;
             /** Format: uuid */
             teamId?: string | null;
+            /** Format: date */
+            plannedStartDate?: string | null;
+            /** Format: date */
+            expectedCloseDate?: string | null;
             customFields: {
                 [key: string]: unknown;
             };
@@ -3524,6 +3581,10 @@ export interface components {
             ownerId?: string;
             /** Format: uuid */
             teamId?: string;
+            /** Format: date */
+            plannedStartDate?: string | null;
+            /** Format: date */
+            expectedCloseDate?: string | null;
             /** Format: uuid */
             convertedContactId?: string;
             /** Format: uuid */
@@ -4000,7 +4061,7 @@ export interface components {
             senderUserId: string;
             senderDisplayName: string;
             /** @enum {string} */
-            kind: "text" | "system" | "file" | "voice";
+            kind: "text" | "system" | "file" | "voice" | "video";
             body: string;
             /** Format: uuid */
             replyToMessageId?: string | null;
@@ -4015,7 +4076,7 @@ export interface components {
         };
         CreateChatMessage: {
             /** @enum {string} */
-            kind: "text";
+            kind: "text" | "file" | "voice" | "video";
             body: string;
             /** Format: uuid */
             replyToMessageId?: string | null;
@@ -6673,7 +6734,7 @@ export interface operations {
     customersListCustomFieldDefinitions: {
         parameters: {
             query?: {
-                entityType?: "contact" | "company";
+                entityType?: "contact" | "company" | "lead" | "deal";
             };
             header?: never;
             path: {
@@ -6718,6 +6779,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CustomFieldDefinition"];
+                };
+            };
+        };
+    };
+    tenancyListReferenceUsers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: components["parameters"]["WorkspaceId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Active users available to resource custom fields */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReferenceUser"][];
                 };
             };
         };
@@ -7509,6 +7592,7 @@ export interface operations {
                 query?: string;
                 status?: "new" | "qualified" | "disqualified" | "converted";
                 ownerId?: string;
+                stageId?: string;
                 cursor?: components["parameters"]["Cursor"];
                 limit?: components["parameters"]["Limit"];
             };
@@ -8451,9 +8535,10 @@ export interface operations {
     collaborationCreateConversation: {
         parameters: {
             query?: never;
-            header?: {
+            header: {
                 /** @description Required for unsafe cookie-authenticated requests; validated bearer API keys do not use CSRF. */
                 "X-CSRF-Token"?: components["parameters"]["CSRFToken"];
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
             };
             path: {
                 workspaceId: components["parameters"]["WorkspaceId"];
@@ -8468,6 +8553,33 @@ export interface operations {
         responses: {
             /** @description Direct or group conversation created */
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatConversation"];
+                };
+            };
+        };
+    };
+    collaborationResolveEntityConversation: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required for unsafe cookie-authenticated requests; validated bearer API keys do not use CSRF. */
+                "X-CSRF-Token"?: components["parameters"]["CSRFToken"];
+            };
+            path: {
+                workspaceId: components["parameters"]["WorkspaceId"];
+                entityType: "lead" | "deal";
+                entityId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Entity discussion resolved and current user joined */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -8738,7 +8850,9 @@ export interface operations {
     };
     collaborationListAttachments: {
         parameters: {
-            query?: never;
+            query: {
+                messageId: string[];
+            };
             header?: never;
             path: {
                 workspaceId: components["parameters"]["WorkspaceId"];
@@ -8811,6 +8925,31 @@ export interface operations {
                 };
                 content?: never;
             };
+        };
+    };
+    collaborationDeleteProvisionalMediaMessage: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required for unsafe cookie-authenticated requests; validated bearer API keys do not use CSRF. */
+                "X-CSRF-Token"?: components["parameters"]["CSRFToken"];
+            };
+            path: {
+                workspaceId: components["parameters"]["WorkspaceId"];
+                messageId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Unattached media message discarded by its sender */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            409: components["responses"]["Problem"];
         };
     };
     collaborationPinMessage: {

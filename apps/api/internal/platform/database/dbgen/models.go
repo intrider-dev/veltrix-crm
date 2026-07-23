@@ -213,6 +213,14 @@ type CollaborationConversationMember struct {
 	JoinedAt       pgtype.Timestamptz `json:"joined_at"`
 }
 
+type CollaborationEntityConversation struct {
+	WorkspaceID    pgtype.UUID        `json:"workspace_id"`
+	EntityType     string             `json:"entity_type"`
+	EntityID       pgtype.UUID        `json:"entity_id"`
+	ConversationID pgtype.UUID        `json:"conversation_id"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+}
+
 type CollaborationMessage struct {
 	WorkspaceID      pgtype.UUID        `json:"workspace_id"`
 	ID               pgtype.UUID        `json:"id"`
@@ -907,6 +915,8 @@ type SalesLead struct {
 	TeamID             pgtype.UUID        `json:"team_id"`
 	DeletedBy          pgtype.UUID        `json:"deleted_by"`
 	StageID            pgtype.UUID        `json:"stage_id"`
+	PlannedStartDate   pgtype.Date        `json:"planned_start_date"`
+	ExpectedCloseDate  pgtype.Date        `json:"expected_close_date"`
 }
 
 type SalesLeadAssignment struct {

@@ -17,7 +17,11 @@ import { ToastService, type AppToast } from './toast.service';
       [attr.aria-label]="i18n.t('common.nav.notifications')"
     >
       @for (toast of toasts.items(); track toast.id) {
-        <article class="toast" role="status">
+        <article
+          class="toast"
+          [class.error]="toast.tone === 'error'"
+          [attr.role]="toast.tone === 'error' ? 'alert' : 'status'"
+        >
           <p>{{ message(toast) }}</p>
           <div class="actions">
             @if (toast.action && toast.actionLabelKey) {
@@ -68,6 +72,9 @@ import { ToastService, type AppToast } from './toast.service';
       pointer-events: auto;
       animation: toast-in 180ms var(--ease-out);
     }
+    .toast.error {
+      border-color: color-mix(in srgb, var(--danger) 52%, var(--border));
+    }
     p {
       margin: 0;
       line-height: 1.4;
@@ -103,13 +110,14 @@ export class ToastViewportComponent {
   readonly i18n = inject(I18nService);
 
   message(toast: AppToast): string {
+    if (toast.problemCode) return this.i18n.problem(toast.problemCode, toast.requestId);
     const params: Record<string, string | number | boolean> = {};
     for (const [key, value] of Object.entries(toast.messageParams)) {
       if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
         params[key] = value;
       }
     }
-    return this.i18n.t(toast.messageKey as AppMessageKey, params);
+    return this.i18n.t((toast.messageKey ?? 'web.status.error') as AppMessageKey, params);
   }
 
   label(key: AppMessageKey): string {

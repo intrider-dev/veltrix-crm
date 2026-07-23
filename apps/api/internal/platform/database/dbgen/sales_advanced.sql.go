@@ -159,29 +159,33 @@ func (q *Queries) CreateDealLineItem(ctx context.Context, arg CreateDealLineItem
 const createLeadAdvanced = `-- name: CreateLeadAdvanced :one
 INSERT INTO sales.leads (
   workspace_id, id, name, email, email_normalized, phone, phone_normalized,
-  company_name, job_title, source, status, stage_id, owner_user_id, team_id, custom_fields
-) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+  company_name, job_title, source, status, stage_id, owner_user_id, team_id,
+  planned_start_date, expected_close_date, custom_fields
+) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
 RETURNING id, name, email, phone, company_name, job_title, source, status, stage_id,
           owner_user_id, team_id, converted_contact_id, converted_company_id,
-          converted_deal_id, custom_fields, version, created_at, updated_at
+          converted_deal_id, planned_start_date, expected_close_date,
+          custom_fields, version, created_at, updated_at
 `
 
 type CreateLeadAdvancedParams struct {
-	WorkspaceID     pgtype.UUID `json:"workspace_id"`
-	ID              pgtype.UUID `json:"id"`
-	Name            string      `json:"name"`
-	Email           *string     `json:"email"`
-	EmailNormalized *string     `json:"email_normalized"`
-	Phone           *string     `json:"phone"`
-	PhoneNormalized *string     `json:"phone_normalized"`
-	CompanyName     *string     `json:"company_name"`
-	JobTitle        *string     `json:"job_title"`
-	Source          *string     `json:"source"`
-	Status          string      `json:"status"`
-	StageID         pgtype.UUID `json:"stage_id"`
-	OwnerUserID     pgtype.UUID `json:"owner_user_id"`
-	TeamID          pgtype.UUID `json:"team_id"`
-	CustomFields    []byte      `json:"custom_fields"`
+	WorkspaceID       pgtype.UUID `json:"workspace_id"`
+	ID                pgtype.UUID `json:"id"`
+	Name              string      `json:"name"`
+	Email             *string     `json:"email"`
+	EmailNormalized   *string     `json:"email_normalized"`
+	Phone             *string     `json:"phone"`
+	PhoneNormalized   *string     `json:"phone_normalized"`
+	CompanyName       *string     `json:"company_name"`
+	JobTitle          *string     `json:"job_title"`
+	Source            *string     `json:"source"`
+	Status            string      `json:"status"`
+	StageID           pgtype.UUID `json:"stage_id"`
+	OwnerUserID       pgtype.UUID `json:"owner_user_id"`
+	TeamID            pgtype.UUID `json:"team_id"`
+	PlannedStartDate  pgtype.Date `json:"planned_start_date"`
+	ExpectedCloseDate pgtype.Date `json:"expected_close_date"`
+	CustomFields      []byte      `json:"custom_fields"`
 }
 
 type CreateLeadAdvancedRow struct {
@@ -199,6 +203,8 @@ type CreateLeadAdvancedRow struct {
 	ConvertedContactID pgtype.UUID        `json:"converted_contact_id"`
 	ConvertedCompanyID pgtype.UUID        `json:"converted_company_id"`
 	ConvertedDealID    pgtype.UUID        `json:"converted_deal_id"`
+	PlannedStartDate   pgtype.Date        `json:"planned_start_date"`
+	ExpectedCloseDate  pgtype.Date        `json:"expected_close_date"`
 	CustomFields       []byte             `json:"custom_fields"`
 	Version            int64              `json:"version"`
 	CreatedAt          pgtype.Timestamptz `json:"created_at"`
@@ -221,6 +227,8 @@ func (q *Queries) CreateLeadAdvanced(ctx context.Context, arg CreateLeadAdvanced
 		arg.StageID,
 		arg.OwnerUserID,
 		arg.TeamID,
+		arg.PlannedStartDate,
+		arg.ExpectedCloseDate,
 		arg.CustomFields,
 	)
 	var i CreateLeadAdvancedRow
@@ -239,6 +247,8 @@ func (q *Queries) CreateLeadAdvanced(ctx context.Context, arg CreateLeadAdvanced
 		&i.ConvertedContactID,
 		&i.ConvertedCompanyID,
 		&i.ConvertedDealID,
+		&i.PlannedStartDate,
+		&i.ExpectedCloseDate,
 		&i.CustomFields,
 		&i.Version,
 		&i.CreatedAt,
@@ -431,7 +441,8 @@ func (q *Queries) GetDealAdvanced(ctx context.Context, arg GetDealAdvancedParams
 const getLeadAdvanced = `-- name: GetLeadAdvanced :one
 SELECT id, name, email, phone, company_name, job_title, source, status, stage_id,
        owner_user_id, team_id, converted_contact_id, converted_company_id,
-       converted_deal_id, custom_fields, version, deleted_at, deleted_by,
+       converted_deal_id, planned_start_date, expected_close_date,
+       custom_fields, version, deleted_at, deleted_by,
        created_at, updated_at
 FROM sales.leads lead
 WHERE lead.workspace_id = $1 AND lead.id = $2 AND lead.deleted_at IS NULL
@@ -458,6 +469,8 @@ type GetLeadAdvancedRow struct {
 	ConvertedContactID pgtype.UUID        `json:"converted_contact_id"`
 	ConvertedCompanyID pgtype.UUID        `json:"converted_company_id"`
 	ConvertedDealID    pgtype.UUID        `json:"converted_deal_id"`
+	PlannedStartDate   pgtype.Date        `json:"planned_start_date"`
+	ExpectedCloseDate  pgtype.Date        `json:"expected_close_date"`
 	CustomFields       []byte             `json:"custom_fields"`
 	Version            int64              `json:"version"`
 	DeletedAt          pgtype.Timestamptz `json:"deleted_at"`
@@ -484,6 +497,8 @@ func (q *Queries) GetLeadAdvanced(ctx context.Context, arg GetLeadAdvancedParams
 		&i.ConvertedContactID,
 		&i.ConvertedCompanyID,
 		&i.ConvertedDealID,
+		&i.PlannedStartDate,
+		&i.ExpectedCloseDate,
 		&i.CustomFields,
 		&i.Version,
 		&i.DeletedAt,
@@ -1071,7 +1086,8 @@ func (q *Queries) ListLeadTrash(ctx context.Context, arg ListLeadTrashParams) ([
 const listLeadsAdvanced = `-- name: ListLeadsAdvanced :many
 SELECT id, name, email, phone, company_name, job_title, source, status, stage_id,
        owner_user_id, team_id, converted_contact_id, converted_company_id,
-       converted_deal_id, custom_fields, version, created_at, updated_at
+       converted_deal_id, planned_start_date, expected_close_date,
+       custom_fields, version, created_at, updated_at
 FROM sales.leads lead
 WHERE lead.workspace_id = $1
   AND lead.deleted_at IS NULL
@@ -1081,9 +1097,10 @@ WHERE lead.workspace_id = $1
        OR COALESCE(lead.company_name, '') ILIKE '%' || $2 || '%')
   AND ($3::text = '' OR lead.status = $3)
   AND ($4::uuid IS NULL OR lead.owner_user_id = $4)
-  AND (lead.updated_at, lead.id) < ($5::timestamptz, $6::uuid)
+  AND ($5::uuid IS NULL OR lead.stage_id = $5)
+  AND (lead.updated_at, lead.id) < ($6::timestamptz, $7::uuid)
 ORDER BY lead.updated_at DESC, lead.id DESC
-LIMIT $7
+LIMIT $8
 `
 
 type ListLeadsAdvancedParams struct {
@@ -1091,6 +1108,7 @@ type ListLeadsAdvancedParams struct {
 	SearchQuery     string             `json:"search_query"`
 	StatusFilter    string             `json:"status_filter"`
 	OwnerID         pgtype.UUID        `json:"owner_id"`
+	StageFilter     pgtype.UUID        `json:"stage_filter"`
 	CursorUpdatedAt pgtype.Timestamptz `json:"cursor_updated_at"`
 	CursorID        pgtype.UUID        `json:"cursor_id"`
 	PageLimit       int32              `json:"page_limit"`
@@ -1111,6 +1129,8 @@ type ListLeadsAdvancedRow struct {
 	ConvertedContactID pgtype.UUID        `json:"converted_contact_id"`
 	ConvertedCompanyID pgtype.UUID        `json:"converted_company_id"`
 	ConvertedDealID    pgtype.UUID        `json:"converted_deal_id"`
+	PlannedStartDate   pgtype.Date        `json:"planned_start_date"`
+	ExpectedCloseDate  pgtype.Date        `json:"expected_close_date"`
 	CustomFields       []byte             `json:"custom_fields"`
 	Version            int64              `json:"version"`
 	CreatedAt          pgtype.Timestamptz `json:"created_at"`
@@ -1123,6 +1143,7 @@ func (q *Queries) ListLeadsAdvanced(ctx context.Context, arg ListLeadsAdvancedPa
 		arg.SearchQuery,
 		arg.StatusFilter,
 		arg.OwnerID,
+		arg.StageFilter,
 		arg.CursorUpdatedAt,
 		arg.CursorID,
 		arg.PageLimit,
@@ -1149,6 +1170,8 @@ func (q *Queries) ListLeadsAdvanced(ctx context.Context, arg ListLeadsAdvancedPa
 			&i.ConvertedContactID,
 			&i.ConvertedCompanyID,
 			&i.ConvertedDealID,
+			&i.PlannedStartDate,
+			&i.ExpectedCloseDate,
 			&i.CustomFields,
 			&i.Version,
 			&i.CreatedAt,
@@ -1228,7 +1251,8 @@ WHERE sales.leads.workspace_id = $1 AND sales.leads.id = $2
   AND sales.leads.status <> 'converted'
 RETURNING id, name, email, phone, company_name, job_title, source, status, stage_id,
           owner_user_id, team_id, converted_contact_id, converted_company_id,
-          converted_deal_id, custom_fields, version, created_at, updated_at
+          converted_deal_id, planned_start_date, expected_close_date,
+          custom_fields, version, created_at, updated_at
 `
 
 type MarkLeadConvertedParams struct {
@@ -1255,6 +1279,8 @@ type MarkLeadConvertedRow struct {
 	ConvertedContactID pgtype.UUID        `json:"converted_contact_id"`
 	ConvertedCompanyID pgtype.UUID        `json:"converted_company_id"`
 	ConvertedDealID    pgtype.UUID        `json:"converted_deal_id"`
+	PlannedStartDate   pgtype.Date        `json:"planned_start_date"`
+	ExpectedCloseDate  pgtype.Date        `json:"expected_close_date"`
 	CustomFields       []byte             `json:"custom_fields"`
 	Version            int64              `json:"version"`
 	CreatedAt          pgtype.Timestamptz `json:"created_at"`
@@ -1286,6 +1312,8 @@ func (q *Queries) MarkLeadConverted(ctx context.Context, arg MarkLeadConvertedPa
 		&i.ConvertedContactID,
 		&i.ConvertedCompanyID,
 		&i.ConvertedDealID,
+		&i.PlannedStartDate,
+		&i.ExpectedCloseDate,
 		&i.CustomFields,
 		&i.Version,
 		&i.CreatedAt,
@@ -1402,7 +1430,8 @@ SET deleted_at = NULL, deleted_by = NULL, version = version + 1, updated_at = no
 WHERE workspace_id = $1 AND id = $2 AND version = $3 AND deleted_at IS NOT NULL
 RETURNING id, name, email, phone, company_name, job_title, source, status, stage_id,
           owner_user_id, team_id, converted_contact_id, converted_company_id,
-          converted_deal_id, custom_fields, version, created_at, updated_at
+          converted_deal_id, planned_start_date, expected_close_date,
+          custom_fields, version, created_at, updated_at
 `
 
 type RestoreLeadParams struct {
@@ -1426,6 +1455,8 @@ type RestoreLeadRow struct {
 	ConvertedContactID pgtype.UUID        `json:"converted_contact_id"`
 	ConvertedCompanyID pgtype.UUID        `json:"converted_company_id"`
 	ConvertedDealID    pgtype.UUID        `json:"converted_deal_id"`
+	PlannedStartDate   pgtype.Date        `json:"planned_start_date"`
+	ExpectedCloseDate  pgtype.Date        `json:"expected_close_date"`
 	CustomFields       []byte             `json:"custom_fields"`
 	Version            int64              `json:"version"`
 	CreatedAt          pgtype.Timestamptz `json:"created_at"`
@@ -1450,6 +1481,8 @@ func (q *Queries) RestoreLead(ctx context.Context, arg RestoreLeadParams) (Resto
 		&i.ConvertedContactID,
 		&i.ConvertedCompanyID,
 		&i.ConvertedDealID,
+		&i.PlannedStartDate,
+		&i.ExpectedCloseDate,
 		&i.CustomFields,
 		&i.Version,
 		&i.CreatedAt,
@@ -1769,32 +1802,36 @@ const updateLeadAdvanced = `-- name: UpdateLeadAdvanced :one
 UPDATE sales.leads
 SET name = $3, email = $4, email_normalized = $5, phone = $6,
     phone_normalized = $7, company_name = $8, job_title = $9, source = $10,
-    status = $11, stage_id = $12, owner_user_id = $13, team_id = $14, custom_fields = $15,
+    status = $11, stage_id = $12, owner_user_id = $13, team_id = $14,
+    planned_start_date = $15, expected_close_date = $16, custom_fields = $17,
     version = version + 1, updated_at = now()
-WHERE workspace_id = $1 AND id = $2 AND version = $16 AND deleted_at IS NULL
+WHERE workspace_id = $1 AND id = $2 AND version = $18 AND deleted_at IS NULL
   AND status <> 'converted'
 RETURNING id, name, email, phone, company_name, job_title, source, status, stage_id,
           owner_user_id, team_id, converted_contact_id, converted_company_id,
-          converted_deal_id, custom_fields, version, created_at, updated_at
+          converted_deal_id, planned_start_date, expected_close_date,
+          custom_fields, version, created_at, updated_at
 `
 
 type UpdateLeadAdvancedParams struct {
-	WorkspaceID     pgtype.UUID `json:"workspace_id"`
-	ID              pgtype.UUID `json:"id"`
-	Name            string      `json:"name"`
-	Email           *string     `json:"email"`
-	EmailNormalized *string     `json:"email_normalized"`
-	Phone           *string     `json:"phone"`
-	PhoneNormalized *string     `json:"phone_normalized"`
-	CompanyName     *string     `json:"company_name"`
-	JobTitle        *string     `json:"job_title"`
-	Source          *string     `json:"source"`
-	Status          string      `json:"status"`
-	StageID         pgtype.UUID `json:"stage_id"`
-	OwnerUserID     pgtype.UUID `json:"owner_user_id"`
-	TeamID          pgtype.UUID `json:"team_id"`
-	CustomFields    []byte      `json:"custom_fields"`
-	Version         int64       `json:"version"`
+	WorkspaceID       pgtype.UUID `json:"workspace_id"`
+	ID                pgtype.UUID `json:"id"`
+	Name              string      `json:"name"`
+	Email             *string     `json:"email"`
+	EmailNormalized   *string     `json:"email_normalized"`
+	Phone             *string     `json:"phone"`
+	PhoneNormalized   *string     `json:"phone_normalized"`
+	CompanyName       *string     `json:"company_name"`
+	JobTitle          *string     `json:"job_title"`
+	Source            *string     `json:"source"`
+	Status            string      `json:"status"`
+	StageID           pgtype.UUID `json:"stage_id"`
+	OwnerUserID       pgtype.UUID `json:"owner_user_id"`
+	TeamID            pgtype.UUID `json:"team_id"`
+	PlannedStartDate  pgtype.Date `json:"planned_start_date"`
+	ExpectedCloseDate pgtype.Date `json:"expected_close_date"`
+	CustomFields      []byte      `json:"custom_fields"`
+	Version           int64       `json:"version"`
 }
 
 type UpdateLeadAdvancedRow struct {
@@ -1812,6 +1849,8 @@ type UpdateLeadAdvancedRow struct {
 	ConvertedContactID pgtype.UUID        `json:"converted_contact_id"`
 	ConvertedCompanyID pgtype.UUID        `json:"converted_company_id"`
 	ConvertedDealID    pgtype.UUID        `json:"converted_deal_id"`
+	PlannedStartDate   pgtype.Date        `json:"planned_start_date"`
+	ExpectedCloseDate  pgtype.Date        `json:"expected_close_date"`
 	CustomFields       []byte             `json:"custom_fields"`
 	Version            int64              `json:"version"`
 	CreatedAt          pgtype.Timestamptz `json:"created_at"`
@@ -1834,6 +1873,8 @@ func (q *Queries) UpdateLeadAdvanced(ctx context.Context, arg UpdateLeadAdvanced
 		arg.StageID,
 		arg.OwnerUserID,
 		arg.TeamID,
+		arg.PlannedStartDate,
+		arg.ExpectedCloseDate,
 		arg.CustomFields,
 		arg.Version,
 	)
@@ -1853,6 +1894,8 @@ func (q *Queries) UpdateLeadAdvanced(ctx context.Context, arg UpdateLeadAdvanced
 		&i.ConvertedContactID,
 		&i.ConvertedCompanyID,
 		&i.ConvertedDealID,
+		&i.PlannedStartDate,
+		&i.ExpectedCloseDate,
 		&i.CustomFields,
 		&i.Version,
 		&i.CreatedAt,

@@ -31,10 +31,13 @@ export class DealDetailsStore {
   readonly saving = signal(false);
   readonly error = signal<unknown>(null);
   readonly conflict = signal(false);
+  private loadSequence = 0;
 
-  async load(dealId: string): Promise<void> {
+  async load(dealId: string): Promise<DealRecord | null> {
     const workspaceId = this.workspace.id();
-    if (!workspaceId) return;
+    if (!workspaceId) return null;
+    const sequence = ++this.loadSequence;
+    this.saving.set(false);
     this.loading.set(true);
     this.error.set(null);
     try {
@@ -46,6 +49,7 @@ export class DealDetailsStore {
         this.api.listActivities(workspaceId, 'deal', dealId),
         this.api.listPipelines(workspaceId),
       ]);
+      if (sequence !== this.loadSequence || this.workspace.id() !== workspaceId) return null;
       this.deal.set(deal.body);
       this.lineItems.set(lineItems);
       this.participants.set(participants);
@@ -53,10 +57,16 @@ export class DealDetailsStore {
       this.activities.set(activities);
       this.pipelines.set(pipelines);
       this.conflict.set(false);
+      return deal.body;
     } catch (error) {
-      this.error.set(error);
+      if (sequence === this.loadSequence && this.workspace.id() === workspaceId) {
+        this.error.set(error);
+      }
+      return null;
     } finally {
-      this.loading.set(false);
+      if (sequence === this.loadSequence && this.workspace.id() === workspaceId) {
+        this.loading.set(false);
+      }
     }
   }
 
@@ -73,47 +83,55 @@ export class DealDetailsStore {
     const workspaceId = this.workspace.id();
     const deal = this.deal();
     if (!workspaceId || !deal) return;
-    await this.mutate(async () => {
-      const updated = await this.api.updateDeal(workspaceId, deal.id, deal.version, body);
-      this.deal.set(updated.body);
-    });
+    const sequence = this.loadSequence;
+    const updated = await this.mutate(workspaceId, deal.id, sequence, () =>
+      this.api.updateDeal(workspaceId, deal.id, deal.version, body),
+    );
+    if (updated) this.deal.set(updated.body);
   }
 
   async setOutcome(status: 'open' | 'won' | 'lost', lostReason: string | null): Promise<void> {
     const workspaceId = this.workspace.id();
     const deal = this.deal();
     if (!workspaceId || !deal) return;
-    await this.mutate(async () => {
+    const sequence = this.loadSequence;
+    const updated = await this.mutate(workspaceId, deal.id, sequence, async () => {
       const forecastCategory =
         status === 'won' ? 'commit' : status === 'lost' ? 'omitted' : 'pipeline';
-      const updated = await this.api.setDealOutcome(workspaceId, deal.id, deal.version, {
+      return this.api.setDealOutcome(workspaceId, deal.id, deal.version, {
         status,
         lostReason,
         forecastCategory,
       });
-      this.deal.set(updated.body);
     });
+    if (updated) this.deal.set(updated.body);
   }
 
   async addLineItem(body: DealLineItemInput): Promise<void> {
     const workspaceId = this.workspace.id();
     const deal = this.deal();
     if (!workspaceId || !deal) return;
-    await this.mutate(async () => {
-      const result = await this.api.createDealLineItem(workspaceId, deal.id, deal.version, body);
+    const sequence = this.loadSequence;
+    const result = await this.mutate(workspaceId, deal.id, sequence, () =>
+      this.api.createDealLineItem(workspaceId, deal.id, deal.version, body),
+    );
+    if (result) {
       this.lineItems.update((items) => [...items, result.body.item]);
       this.deal.update((current) =>
         current ? { ...current, version: result.body.version } : current,
       );
-    });
+    }
   }
 
   async addParticipant(body: DealParticipantInput): Promise<void> {
     const workspaceId = this.workspace.id();
     const deal = this.deal();
     if (!workspaceId || !deal) return;
-    await this.mutate(async () => {
-      const result = await this.api.upsertDealParticipant(workspaceId, deal.id, deal.version, body);
+    const sequence = this.loadSequence;
+    const result = await this.mutate(workspaceId, deal.id, sequence, () =>
+      this.api.upsertDealParticipant(workspaceId, deal.id, deal.version, body),
+    );
+    if (result) {
       this.participants.update((items) => [
         ...items.filter((item) => item.contactId !== result.body.participant.contactId),
         result.body.participant,
@@ -121,45 +139,69 @@ export class DealDetailsStore {
       this.deal.update((current) =>
         current ? { ...current, version: result.body.version } : current,
       );
-    });
+    }
   }
 
   async addActivity(body: CreateActivity): Promise<void> {
     const workspaceId = this.workspace.id();
-    if (!workspaceId) return;
-    await this.mutate(async () => {
-      const activity = await this.api.createActivity(workspaceId, body);
+    const deal = this.deal();
+    if (!workspaceId || !deal) return;
+    const sequence = this.loadSequence;
+    const activity = await this.mutate(workspaceId, deal.id, sequence, () =>
+      this.api.createActivity(workspaceId, body),
+    );
+    if (activity) {
       this.activities.update((items) => [activity, ...items]);
-    });
+    }
   }
 
   async completeActivity(activity: Activity): Promise<void> {
     const workspaceId = this.workspace.id();
-    if (!workspaceId) return;
-    await this.mutate(async () => {
-      const completed = await this.api.completeActivity(workspaceId, activity);
+    const deal = this.deal();
+    if (!workspaceId || !deal) return;
+    const sequence = this.loadSequence;
+    const completed = await this.mutate(workspaceId, deal.id, sequence, () =>
+      this.api.completeActivity(workspaceId, activity),
+    );
+    if (completed) {
       this.activities.update((items) =>
         items.map((item) => (item.id === completed.id ? completed : item)),
       );
-    });
+    }
   }
 
   setVersion(version: number): void {
     this.deal.update((deal) => (deal ? { ...deal, version } : deal));
   }
 
-  private async mutate(operation: () => Promise<void>): Promise<void> {
+  private async mutate<T>(
+    workspaceId: string,
+    dealId: string,
+    sequence: number,
+    operation: () => Promise<T>,
+  ): Promise<T | null> {
     this.saving.set(true);
     this.error.set(null);
     this.conflict.set(false);
     try {
-      await operation();
+      const result = await operation();
+      return this.isCurrent(workspaceId, dealId, sequence) ? result : null;
     } catch (error) {
-      this.error.set(error);
-      if (error instanceof ApiError && error.status === 412) this.conflict.set(true);
+      if (this.isCurrent(workspaceId, dealId, sequence)) {
+        this.error.set(error);
+        if (error instanceof ApiError && error.status === 412) this.conflict.set(true);
+      }
       throw error;
     } finally {
-      this.saving.set(false);
+      if (this.isCurrent(workspaceId, dealId, sequence)) this.saving.set(false);
     }
+  }
+
+  private isCurrent(workspaceId: string, dealId: string, sequence: number): boolean {
+    return (
+      this.workspace.id() === workspaceId &&
+      this.loadSequence === sequence &&
+      this.deal()?.id === dealId
+    );
   }
 }

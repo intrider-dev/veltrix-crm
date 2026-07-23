@@ -480,13 +480,19 @@ paths:
       operationId: tenancyAssignWorkspaceRole
       parameters:
         - { $ref: "#/components/parameters/WorkspaceId" }
-        - { name: membershipId, in: path, required: true, schema: { type: string, format: uuid } }
+        - {
+            name: membershipId,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
         - { $ref: "#/components/parameters/CSRFToken" }
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: "#/components/schemas/WorkspaceRoleAssignmentInput" }
+            schema:
+              { $ref: "#/components/schemas/WorkspaceRoleAssignmentInput" }
       responses:
         "200":
           description: Effective workspace role assigned
@@ -533,7 +539,12 @@ paths:
       operationId: tenancyUpdateWorkspaceRole
       parameters:
         - { $ref: "#/components/parameters/WorkspaceId" }
-        - { name: roleId, in: path, required: true, schema: { type: string, format: uuid } }
+        - {
+            name: roleId,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
         - { $ref: "#/components/parameters/IfMatch" }
         - { $ref: "#/components/parameters/CSRFToken" }
       requestBody:
@@ -556,7 +567,12 @@ paths:
       operationId: tenancyDeleteWorkspaceRole
       parameters:
         - { $ref: "#/components/parameters/WorkspaceId" }
-        - { name: roleId, in: path, required: true, schema: { type: string, format: uuid } }
+        - {
+            name: roleId,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
         - { $ref: "#/components/parameters/IfMatch" }
         - { $ref: "#/components/parameters/CSRFToken" }
       responses:
@@ -696,7 +712,12 @@ paths:
       operationId: tenancyListDepartmentMembers
       parameters:
         - { $ref: "#/components/parameters/WorkspaceId" }
-        - { name: teamId, in: path, required: true, schema: { type: string, format: uuid } }
+        - {
+            name: teamId,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
       responses:
         "200":
           description: Department membership list
@@ -710,8 +731,18 @@ paths:
       operationId: tenancyAddDepartmentMember
       parameters:
         - { $ref: "#/components/parameters/WorkspaceId" }
-        - { name: teamId, in: path, required: true, schema: { type: string, format: uuid } }
-        - { name: membershipId, in: path, required: true, schema: { type: string, format: uuid } }
+        - {
+            name: teamId,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
+        - {
+            name: membershipId,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
         - { $ref: "#/components/parameters/CSRFToken" }
       responses:
         "204": { description: Member added to department }
@@ -719,8 +750,18 @@ paths:
       operationId: tenancyRemoveDepartmentMember
       parameters:
         - { $ref: "#/components/parameters/WorkspaceId" }
-        - { name: teamId, in: path, required: true, schema: { type: string, format: uuid } }
-        - { name: membershipId, in: path, required: true, schema: { type: string, format: uuid } }
+        - {
+            name: teamId,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
+        - {
+            name: membershipId,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
         - { $ref: "#/components/parameters/CSRFToken" }
       responses:
         "204": { description: Member removed from department }
@@ -1681,7 +1722,7 @@ paths:
         - {
             name: entityType,
             in: query,
-            schema: { type: string, enum: [contact, company] },
+            schema: { type: string, enum: [contact, company, lead, deal] },
           }
       responses:
         "200":
@@ -1734,6 +1775,20 @@ paths:
                   },
               },
           }
+  /workspaces/{workspaceId}/reference-users:
+    get:
+      operationId: tenancyListReferenceUsers
+      parameters:
+        - { $ref: "#/components/parameters/WorkspaceId" }
+      responses:
+        "200":
+          description: Active users available to resource custom fields
+          content:
+            application/json:
+              schema:
+                type: array
+                maxItems: 500
+                items: { $ref: "#/components/schemas/ReferenceUser" }
   /workspaces/{workspaceId}/custom-fields/{definitionId}:
     patch:
       operationId: customersUpdateCustomFieldDefinition
@@ -2242,7 +2297,12 @@ paths:
       operationId: salesListPipelineStageAccess
       parameters:
         - { $ref: "#/components/parameters/WorkspaceId" }
-        - { name: stageId, in: path, required: true, schema: { type: string, format: uuid } }
+        - {
+            name: stageId,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
       responses:
         "200":
           description: Explicit role access rules; an empty list inherits the deal resource permission
@@ -2254,7 +2314,12 @@ paths:
       operationId: salesReplacePipelineStageAccess
       parameters:
         - { $ref: "#/components/parameters/WorkspaceId" }
-        - { name: stageId, in: path, required: true, schema: { type: string, format: uuid } }
+        - {
+            name: stageId,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
       requestBody:
         required: true
         content:
@@ -2368,7 +2433,12 @@ paths:
       operationId: salesListLeadStageAccess
       parameters:
         - { $ref: "#/components/parameters/WorkspaceId" }
-        - { name: stageId, in: path, required: true, schema: { type: string, format: uuid } }
+        - {
+            name: stageId,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
       responses:
         "200":
           description: Explicit role access rules; an empty list inherits the lead resource permission
@@ -2380,7 +2450,12 @@ paths:
       operationId: salesReplaceLeadStageAccess
       parameters:
         - { $ref: "#/components/parameters/WorkspaceId" }
-        - { name: stageId, in: path, required: true, schema: { type: string, format: uuid } }
+        - {
+            name: stageId,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
       requestBody:
         required: true
         content:
@@ -2406,6 +2481,7 @@ paths:
               { type: string, enum: [new, qualified, disqualified, converted] },
           }
         - { name: ownerId, in: query, schema: { type: string, format: uuid } }
+        - { name: stageId, in: query, schema: { type: string, format: uuid } }
         - { $ref: "#/components/parameters/Cursor" }
         - { $ref: "#/components/parameters/Limit" }
       responses:
@@ -3107,7 +3183,12 @@ paths:
   /workspaces/{workspaceId}/projects/{projectId}:
     parameters:
       - { $ref: "#/components/parameters/WorkspaceId" }
-      - { name: projectId, in: path, required: true, schema: { type: string, format: uuid } }
+      - {
+          name: projectId,
+          in: path,
+          required: true,
+          schema: { type: string, format: uuid },
+        }
     get:
       operationId: projectsGet
       security: [{ cookieSession: [] }, { bearerAPIKey: [] }]
@@ -3150,7 +3231,12 @@ paths:
   /workspaces/{workspaceId}/projects/{projectId}/assignments:
     parameters:
       - { $ref: "#/components/parameters/WorkspaceId" }
-      - { name: projectId, in: path, required: true, schema: { type: string, format: uuid } }
+      - {
+          name: projectId,
+          in: path,
+          required: true,
+          schema: { type: string, format: uuid },
+        }
     get:
       operationId: projectsListAssignments
       security: [{ cookieSession: [] }, { bearerAPIKey: [] }]
@@ -3197,6 +3283,7 @@ paths:
       parameters:
         - { $ref: "#/components/parameters/WorkspaceId" }
         - { $ref: "#/components/parameters/CSRFToken" }
+        - { $ref: "#/components/parameters/IdempotencyKey" }
       requestBody:
         required: true
         content:
@@ -3208,10 +3295,36 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ChatConversation" }
+  /workspaces/{workspaceId}/entity-conversations/{entityType}/{entityId}:
+    put:
+      operationId: collaborationResolveEntityConversation
+      security: [{ cookieSession: [] }]
+      parameters:
+        - { $ref: "#/components/parameters/WorkspaceId" }
+        - { $ref: "#/components/parameters/CSRFToken" }
+        - name: entityType
+          in: path
+          required: true
+          schema: { type: string, enum: [lead, deal] }
+        - name: entityId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Entity discussion resolved and current user joined
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ChatConversation" }
   /workspaces/{workspaceId}/conversations/{conversationId}/messages:
     parameters:
       - { $ref: "#/components/parameters/WorkspaceId" }
-      - { name: conversationId, in: path, required: true, schema: { type: string, format: uuid } }
+      - {
+          name: conversationId,
+          in: path,
+          required: true,
+          schema: { type: string, format: uuid },
+        }
     get:
       operationId: collaborationListMessages
       security: [{ cookieSession: [] }]
@@ -3247,7 +3360,12 @@ paths:
       security: [{ cookieSession: [] }]
       parameters:
         - { $ref: "#/components/parameters/WorkspaceId" }
-        - { name: conversationId, in: path, required: true, schema: { type: string, format: uuid } }
+        - {
+            name: conversationId,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
         - { $ref: "#/components/parameters/CSRFToken" }
       responses:
         "204": { description: Conversation marked read }
@@ -3268,7 +3386,12 @@ paths:
       security: [{ cookieSession: [] }]
       parameters:
         - { $ref: "#/components/parameters/WorkspaceId" }
-        - { name: conversationId, in: path, required: true, schema: { type: string, format: uuid } }
+        - {
+            name: conversationId,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
         - { $ref: "#/components/parameters/CSRFToken" }
         - { $ref: "#/components/parameters/IdempotencyKey" }
       requestBody:
@@ -3288,7 +3411,12 @@ paths:
       security: [{ cookieSession: [] }]
       parameters:
         - { $ref: "#/components/parameters/WorkspaceId" }
-        - { name: callId, in: path, required: true, schema: { type: string, format: uuid } }
+        - {
+            name: callId,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
       responses:
         "200":
           description: Call visible to the current conversation participant
@@ -3301,13 +3429,19 @@ paths:
       security: [{ cookieSession: [] }]
       parameters:
         - { $ref: "#/components/parameters/WorkspaceId" }
-        - { name: callId, in: path, required: true, schema: { type: string, format: uuid } }
+        - {
+            name: callId,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
         - { $ref: "#/components/parameters/CSRFToken" }
       responses:
         "200":
           description: Short-lived room-scoped participant grant
           headers:
-            Cache-Control: { schema: { type: string }, description: Always no-store }
+            Cache-Control:
+              { schema: { type: string }, description: Always no-store }
           content:
             application/json:
               schema: { $ref: "#/components/schemas/CallJoin" }
@@ -3317,7 +3451,12 @@ paths:
       security: [{ cookieSession: [] }]
       parameters:
         - { $ref: "#/components/parameters/WorkspaceId" }
-        - { name: callId, in: path, required: true, schema: { type: string, format: uuid } }
+        - {
+            name: callId,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
         - { $ref: "#/components/parameters/CSRFToken" }
       responses:
         "204": { description: Invitation declined }
@@ -3327,7 +3466,12 @@ paths:
       security: [{ cookieSession: [] }]
       parameters:
         - { $ref: "#/components/parameters/WorkspaceId" }
-        - { name: callId, in: path, required: true, schema: { type: string, format: uuid } }
+        - {
+            name: callId,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
         - { $ref: "#/components/parameters/CSRFToken" }
       responses:
         "204": { description: Participant left the call }
@@ -3337,7 +3481,12 @@ paths:
       security: [{ cookieSession: [] }]
       parameters:
         - { $ref: "#/components/parameters/WorkspaceId" }
-        - { name: callId, in: path, required: true, schema: { type: string, format: uuid } }
+        - {
+            name: callId,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
         - { $ref: "#/components/parameters/CSRFToken" }
       responses:
         "200":
@@ -3351,7 +3500,20 @@ paths:
       security: [{ cookieSession: [] }]
       parameters:
         - { $ref: "#/components/parameters/WorkspaceId" }
-        - { name: conversationId, in: path, required: true, schema: { type: string, format: uuid } }
+        - {
+            name: conversationId,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
+        - name: messageId
+          in: query
+          required: true
+          schema:
+            type: array
+            minItems: 1
+            maxItems: 100
+            items: { type: string, format: uuid }
       responses:
         "200":
           description: Bounded authorized attachment metadata for the conversation
@@ -3366,7 +3528,12 @@ paths:
       security: [{ cookieSession: [] }]
       parameters:
         - { $ref: "#/components/parameters/WorkspaceId" }
-        - { name: messageId, in: path, required: true, schema: { type: string, format: uuid } }
+        - {
+            name: messageId,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
         - { $ref: "#/components/parameters/CSRFToken" }
       requestBody:
         required: true
@@ -3380,18 +3547,49 @@ paths:
       security: [{ cookieSession: [] }]
       parameters:
         - { $ref: "#/components/parameters/WorkspaceId" }
-        - { name: messageId, in: path, required: true, schema: { type: string, format: uuid } }
-        - { name: emoji, in: query, required: true, schema: { type: string, minLength: 1, maxLength: 32 } }
+        - {
+            name: messageId,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
+        - {
+            name: emoji,
+            in: query,
+            required: true,
+            schema: { type: string, minLength: 1, maxLength: 32 },
+          }
         - { $ref: "#/components/parameters/CSRFToken" }
       responses:
         "204": { description: Reaction removed }
+  /workspaces/{workspaceId}/chat/messages/{messageId}:
+    delete:
+      operationId: collaborationDeleteProvisionalMediaMessage
+      security: [{ cookieSession: [] }]
+      parameters:
+        - { $ref: "#/components/parameters/WorkspaceId" }
+        - {
+            name: messageId,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
+        - { $ref: "#/components/parameters/CSRFToken" }
+      responses:
+        "204": { description: Unattached media message discarded by its sender }
+        "409": { $ref: "#/components/responses/Problem" }
   /workspaces/{workspaceId}/chat/messages/{messageId}/pin:
     put:
       operationId: collaborationPinMessage
       security: [{ cookieSession: [] }]
       parameters:
         - { $ref: "#/components/parameters/WorkspaceId" }
-        - { name: messageId, in: path, required: true, schema: { type: string, format: uuid } }
+        - {
+            name: messageId,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
         - { $ref: "#/components/parameters/CSRFToken" }
       responses:
         "204": { description: Message pinned }
@@ -3400,7 +3598,12 @@ paths:
       security: [{ cookieSession: [] }]
       parameters:
         - { $ref: "#/components/parameters/WorkspaceId" }
-        - { name: messageId, in: path, required: true, schema: { type: string, format: uuid } }
+        - {
+            name: messageId,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
         - { $ref: "#/components/parameters/CSRFToken" }
       responses:
         "204": { description: Message unpinned }
@@ -4883,7 +5086,12 @@ paths:
       operationId: mailboxUpdateAccount
       parameters:
         - { $ref: "#/components/parameters/WorkspaceId" }
-        - { name: accountId, in: path, required: true, schema: { type: string, format: uuid } }
+        - {
+            name: accountId,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
         - { $ref: "#/components/parameters/IfMatch" }
       requestBody:
         required: true
@@ -4902,7 +5110,12 @@ paths:
       operationId: mailboxDeleteAccount
       parameters:
         - { $ref: "#/components/parameters/WorkspaceId" }
-        - { name: accountId, in: path, required: true, schema: { type: string, format: uuid } }
+        - {
+            name: accountId,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
         - { $ref: "#/components/parameters/IfMatch" }
       responses:
         "204": { description: Personal mail account and cached mail deleted }
@@ -4912,7 +5125,12 @@ paths:
       operationId: mailboxSyncAccount
       parameters:
         - { $ref: "#/components/parameters/WorkspaceId" }
-        - { name: accountId, in: path, required: true, schema: { type: string, format: uuid } }
+        - {
+            name: accountId,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
       responses:
         "200":
           description: Bounded incremental synchronization completed
@@ -4928,7 +5146,12 @@ paths:
       operationId: mailboxListFolders
       parameters:
         - { $ref: "#/components/parameters/WorkspaceId" }
-        - { name: accountId, in: path, required: true, schema: { type: string, format: uuid } }
+        - {
+            name: accountId,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
       responses:
         "200":
           description: Cached folders for the current user's account
@@ -4943,9 +5166,18 @@ paths:
       operationId: mailboxListMessages
       parameters:
         - { $ref: "#/components/parameters/WorkspaceId" }
-        - { name: folderId, in: path, required: true, schema: { type: string, format: uuid } }
+        - {
+            name: folderId,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
         - { $ref: "#/components/parameters/Cursor" }
-        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 50 } }
+        - {
+            name: limit,
+            in: query,
+            schema: { type: integer, minimum: 1, maximum: 100, default: 50 },
+          }
       responses:
         "200":
           description: Cursor-paginated cached message metadata
@@ -4957,7 +5189,12 @@ paths:
       operationId: mailboxReadMessageBody
       parameters:
         - { $ref: "#/components/parameters/WorkspaceId" }
-        - { name: messageId, in: path, required: true, schema: { type: string, format: uuid } }
+        - {
+            name: messageId,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
       responses:
         "200":
           description: Sanitized plain-text message body, fetched and cached on demand
@@ -4970,7 +5207,12 @@ paths:
       operationId: mailboxSendMessage
       parameters:
         - { $ref: "#/components/parameters/WorkspaceId" }
-        - { name: accountId, in: path, required: true, schema: { type: string, format: uuid } }
+        - {
+            name: accountId,
+            in: path,
+            required: true,
+            schema: { type: string, format: uuid },
+          }
         - { $ref: "#/components/parameters/IdempotencyKey" }
       requestBody:
         required: true
@@ -5066,7 +5308,20 @@ components:
     MailboxAccountInput:
       type: object
       additionalProperties: false
-      required: [displayName, email, username, imapHost, imapPort, imapSecurity, smtpHost, smtpPort, smtpSecurity, password, syncEnabled]
+      required:
+        [
+          displayName,
+          email,
+          username,
+          imapHost,
+          imapPort,
+          imapSecurity,
+          smtpHost,
+          smtpPort,
+          smtpSecurity,
+          password,
+          syncEnabled,
+        ]
       properties:
         displayName: { type: string, minLength: 1, maxLength: 160 }
         email: { type: string, format: email, maxLength: 320 }
@@ -5086,7 +5341,22 @@ components:
     MailboxAccount:
       type: object
       additionalProperties: false
-      required: [id, displayName, email, username, imapHost, imapPort, imapSecurity, smtpHost, smtpPort, smtpSecurity, syncEnabled, syncState, version]
+      required:
+        [
+          id,
+          displayName,
+          email,
+          username,
+          imapHost,
+          imapPort,
+          imapSecurity,
+          smtpHost,
+          smtpPort,
+          smtpSecurity,
+          syncEnabled,
+          syncState,
+          version,
+        ]
       properties:
         id: { type: string, format: uuid }
         displayName: { type: string }
@@ -5106,7 +5376,16 @@ components:
     MailboxFolder:
       type: object
       additionalProperties: false
-      required: [id, accountId, remoteName, displayName, highestUid, totalCount, unreadCount]
+      required:
+        [
+          id,
+          accountId,
+          remoteName,
+          displayName,
+          highestUid,
+          totalCount,
+          unreadCount,
+        ]
       properties:
         id: { type: string, format: uuid }
         accountId: { type: string, format: uuid }
@@ -5129,7 +5408,22 @@ components:
     MailboxMessage:
       type: object
       additionalProperties: false
-      required: [id, accountId, folderId, remoteUid, subject, sender, recipients, receivedAt, flags, sizeBytes, snippet, hasAttachments, bodyState]
+      required:
+        [
+          id,
+          accountId,
+          folderId,
+          remoteUid,
+          subject,
+          sender,
+          recipients,
+          receivedAt,
+          flags,
+          sizeBytes,
+          snippet,
+          hasAttachments,
+          bodyState,
+        ]
       properties:
         id: { type: string, format: uuid }
         accountId: { type: string, format: uuid }
@@ -5170,9 +5464,25 @@ components:
       additionalProperties: false
       required: [to, subject, plainText]
       properties:
-        to: { type: array, minItems: 1, maxItems: 100, items: { $ref: "#/components/schemas/MailboxAddress" } }
-        cc: { type: array, maxItems: 100, items: { $ref: "#/components/schemas/MailboxAddress" } }
-        bcc: { type: array, maxItems: 100, items: { $ref: "#/components/schemas/MailboxAddress" } }
+        to:
+          {
+            type: array,
+            minItems: 1,
+            maxItems: 100,
+            items: { $ref: "#/components/schemas/MailboxAddress" },
+          }
+        cc:
+          {
+            type: array,
+            maxItems: 100,
+            items: { $ref: "#/components/schemas/MailboxAddress" },
+          }
+        bcc:
+          {
+            type: array,
+            maxItems: 100,
+            items: { $ref: "#/components/schemas/MailboxAddress" },
+          }
         subject: { type: string, maxLength: 2000 }
         plainText: { type: string, maxLength: 2097152 }
     MailboxSendResult:
@@ -5243,7 +5553,8 @@ components:
         preferredLocale: { type: string }
     Workspace:
       type: object
-      required: [id, name, role, roleId, roleName, permissions, defaultLocale, timezone]
+      required:
+        [id, name, role, roleId, roleName, permissions, defaultLocale, timezone]
       properties:
         id: { type: string, format: uuid }
         name: { type: string }
@@ -5412,7 +5723,18 @@ components:
     WorkspaceRoleDefinition:
       type: object
       additionalProperties: false
-      required: [id, key, name, baseRole, system, permissions, version, createdAt, updatedAt]
+      required:
+        [
+          id,
+          key,
+          name,
+          baseRole,
+          system,
+          permissions,
+          version,
+          createdAt,
+          updatedAt,
+        ]
       properties:
         id: { type: string, format: uuid }
         key: { type: string, minLength: 2, maxLength: 64 }
@@ -5912,6 +6234,7 @@ components:
       enum:
         [
           text,
+          multiline_text,
           number,
           money,
           date,
@@ -5941,7 +6264,7 @@ components:
       additionalProperties: false
       required: [entityType, fieldKey, label, valueType, validation, options]
       properties:
-        entityType: { type: string, enum: [contact, company] }
+        entityType: { type: string, enum: [contact, company, lead, deal] }
         fieldKey:
           {
             type: string,
@@ -5958,6 +6281,13 @@ components:
             maxItems: 200,
             items: { $ref: "#/components/schemas/CustomFieldOption" },
           }
+    ReferenceUser:
+      type: object
+      additionalProperties: false
+      required: [userId, displayName]
+      properties:
+        userId: { type: string, format: uuid }
+        displayName: { type: string, minLength: 1, maxLength: 160 }
     CustomFieldDefinition:
       allOf:
         - { $ref: "#/components/schemas/CustomFieldDefinitionInput" }
@@ -6268,7 +6598,17 @@ components:
     PipelineRecord:
       type: object
       additionalProperties: false
-      required: [id, name, displayName, isDefault, version, stages, createdAt, updatedAt]
+      required:
+        [
+          id,
+          name,
+          displayName,
+          isDefault,
+          version,
+          stages,
+          createdAt,
+          updatedAt,
+        ]
       properties:
         id: { type: string, format: uuid }
         name: { type: string }
@@ -6307,14 +6647,24 @@ components:
       required: [name, category, color]
       properties:
         name: { type: string, minLength: 1, maxLength: 100 }
-        category:
-          { $ref: "#/components/schemas/LeadStageCategory" }
-        color: { type: string, pattern: '^#[0-9A-Fa-f]{6}$' }
+        category: { $ref: "#/components/schemas/LeadStageCategory" }
+        color: { type: string, pattern: "^#[0-9A-Fa-f]{6}$" }
     LeadStage:
       type: object
       additionalProperties: false
       required:
-        [id, name, displayName, category, color, position, isDefault, version, createdAt, updatedAt]
+        [
+          id,
+          name,
+          displayName,
+          category,
+          color,
+          position,
+          isDefault,
+          version,
+          createdAt,
+          updatedAt,
+        ]
       properties:
         id: { type: string, format: uuid }
         name: { type: string }
@@ -6322,7 +6672,8 @@ components:
         category: { $ref: "#/components/schemas/LeadStageCategory" }
         color: { type: string }
         position: { type: integer, minimum: 0 }
-        systemKey: { type: string, enum: [new, qualified, disqualified, converted] }
+        systemKey:
+          { type: string, enum: [new, qualified, disqualified, converted] }
         isDefault: { type: boolean }
         version: { type: integer, format: int64 }
         createdAt: { type: string, format: date-time }
@@ -6365,7 +6716,8 @@ components:
           properties:
             roleKey: { type: string }
             roleName: { type: string }
-            baseRole: { type: string, enum: [owner, admin, manager, sales, viewer] }
+            baseRole:
+              { type: string, enum: [owner, admin, manager, sales, viewer] }
             createdAt: { type: string, format: date-time }
             updatedAt: { type: string, format: date-time }
     StageAccessRules:
@@ -6393,12 +6745,15 @@ components:
         stageId: { type: [string, "null"], format: uuid }
         ownerId: { type: [string, "null"], format: uuid }
         teamId: { type: [string, "null"], format: uuid }
+        plannedStartDate: { type: [string, "null"], format: date }
+        expectedCloseDate: { type: [string, "null"], format: date }
         customFields:
           { type: object, maxProperties: 100, additionalProperties: true }
     Lead:
       type: object
       additionalProperties: false
-      required: [id, name, status, stageId, customFields, version, createdAt, updatedAt]
+      required:
+        [id, name, status, stageId, customFields, version, createdAt, updatedAt]
       properties:
         id: { type: string, format: uuid }
         name: { type: string }
@@ -6411,6 +6766,8 @@ components:
         stageId: { type: string, format: uuid }
         ownerId: { type: string, format: uuid }
         teamId: { type: string, format: uuid }
+        plannedStartDate: { type: [string, "null"], format: date }
+        expectedCloseDate: { type: [string, "null"], format: date }
         convertedContactId: { type: string, format: uuid }
         convertedCompanyId: { type: string, format: uuid }
         convertedDealId: { type: string, format: uuid }
@@ -6780,7 +7137,17 @@ components:
       type: object
       additionalProperties: false
       required:
-        [id, name, description, status, visibility, capabilities, version, createdAt, updatedAt]
+        [
+          id,
+          name,
+          description,
+          status,
+          visibility,
+          capabilities,
+          version,
+          createdAt,
+          updatedAt,
+        ]
       properties:
         id: { type: string, format: uuid }
         name: { type: string }
@@ -6842,7 +7209,8 @@ components:
     RecordAssignment:
       type: object
       additionalProperties: false
-      required: [id, kind, subjectType, subjectId, displayName, isPrimary, createdAt]
+      required:
+        [id, kind, subjectType, subjectId, displayName, isPrimary, createdAt]
       properties:
         id: { type: string, format: uuid }
         kind: { type: string, enum: [responsible, watcher] }
@@ -6908,7 +7276,8 @@ components:
     ChatConversation:
       type: object
       additionalProperties: false
-      required: [id, type, title, members, unreadCount, version, createdAt, updatedAt]
+      required:
+        [id, type, title, members, unreadCount, version, createdAt, updatedAt]
       properties:
         id: { type: string, format: uuid }
         type: { type: string, enum: [direct, group] }
@@ -6950,13 +7319,25 @@ components:
     ChatMessage:
       type: object
       additionalProperties: false
-      required: [id, conversationId, senderUserId, senderDisplayName, kind, body, pinned, reactions, version, createdAt]
+      required:
+        [
+          id,
+          conversationId,
+          senderUserId,
+          senderDisplayName,
+          kind,
+          body,
+          pinned,
+          reactions,
+          version,
+          createdAt,
+        ]
       properties:
         id: { type: string, format: uuid }
         conversationId: { type: string, format: uuid }
         senderUserId: { type: string, format: uuid }
         senderDisplayName: { type: string }
-        kind: { type: string, enum: [text, system, file, voice] }
+        kind: { type: string, enum: [text, system, file, voice, video] }
         body: { type: string, maxLength: 10000 }
         replyToMessageId: { type: [string, "null"], format: uuid }
         editedAt: { type: [string, "null"], format: date-time }
@@ -6971,7 +7352,7 @@ components:
       additionalProperties: false
       required: [kind, body]
       properties:
-        kind: { type: string, enum: [text] }
+        kind: { type: string, enum: [text, file, voice, video] }
         body: { type: string, minLength: 1, maxLength: 10000 }
         replyToMessageId: { type: [string, "null"], format: uuid }
     ChatMessagePage:
@@ -6986,7 +7367,8 @@ components:
     ChatAttachment:
       type: object
       additionalProperties: false
-      required: [id, messageId, displayName, mediaType, sizeBytes, scanState, createdAt]
+      required:
+        [id, messageId, displayName, mediaType, sizeBytes, scanState, createdAt]
       properties:
         id: { type: string, format: uuid }
         messageId: { type: string, format: uuid }
@@ -7010,13 +7392,24 @@ components:
     Call:
       type: object
       additionalProperties: false
-      required: [id, conversationId, kind, state, participantState, createdBy, version, createdAt]
+      required:
+        [
+          id,
+          conversationId,
+          kind,
+          state,
+          participantState,
+          createdBy,
+          version,
+          createdAt,
+        ]
       properties:
         id: { type: string, format: uuid }
         conversationId: { type: string, format: uuid }
         kind: { type: string, enum: [audio, video] }
         state: { type: string, enum: [ringing, active, ended] }
-        participantState: { type: string, enum: [invited, joined, declined, left] }
+        participantState:
+          { type: string, enum: [invited, joined, declined, left] }
         createdBy: { type: string, format: uuid }
         startedAt: { type: [string, "null"], format: date-time }
         endedAt: { type: [string, "null"], format: date-time }
@@ -7028,7 +7421,7 @@ components:
       required: [call, url, token, expiresAt]
       properties:
         call: { $ref: "#/components/schemas/Call" }
-        url: { type: string, format: uri, pattern: '^wss?://' }
+        url: { type: string, format: uri, pattern: "^wss?://" }
         token: { type: string, minLength: 1 }
         expiresAt: { type: string, format: date-time }
     Activity:
@@ -7040,7 +7433,10 @@ components:
         title: { type: string }
         body: { type: [string, "null"] }
         relatedType:
-          { type: [string, "null"], enum: [contact, company, deal, project, null] }
+          {
+            type: [string, "null"],
+            enum: [contact, company, deal, project, null],
+          }
         relatedId: { type: [string, "null"], format: uuid }
         assigneeId: { type: [string, "null"], format: uuid }
         status: { type: string, enum: [open, completed, cancelled] }
@@ -7067,7 +7463,10 @@ components:
         title: { type: string, minLength: 1, maxLength: 240 }
         body: { type: [string, "null"], maxLength: 20000 }
         relatedType:
-          { type: [string, "null"], enum: [contact, company, deal, project, null] }
+          {
+            type: [string, "null"],
+            enum: [contact, company, deal, project, null],
+          }
         relatedId: { type: [string, "null"], format: uuid }
         assigneeId: { type: [string, "null"], format: uuid }
         status: { type: string, enum: [open, completed, cancelled] }

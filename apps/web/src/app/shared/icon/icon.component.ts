@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 export type IconName =
   | 'activity'
   | 'add'
+  | 'attachment'
   | 'audit'
   | 'back'
   | 'building'
@@ -15,6 +16,7 @@ export type IconName =
   | 'language'
   | 'lead'
   | 'mail'
+  | 'microphone'
   | 'menu'
   | 'moon'
   | 'search'
@@ -25,6 +27,7 @@ export type IconName =
   | 'notification'
   | 'phone'
   | 'pin'
+  | 'play'
   | 'project'
   | 'send'
   | 'sun'
@@ -86,8 +89,18 @@ export type IconName =
         @case ('video') {
           <path d="M3 6h12v12H3zM15 10l6-3v10l-6-3z" />
         }
+        @case ('attachment') {
+          <path d="M8 12.5 14.5 6a3 3 0 0 1 4.2 4.2l-8 8a5 5 0 0 1-7.1-7.1l8-8" />
+        }
+        @case ('microphone') {
+          <rect x="9" y="3" width="6" height="12" rx="3" />
+          <path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8" />
+        }
         @case ('pin') {
           <path d="m9 3 6 6-2 2 3 4-1 1-4-3-2 2-6-6zM9 15l-5 5" />
+        }
+        @case ('play') {
+          <path d="m8 5 11 7-11 7z" />
         }
         @case ('send') {
           <path d="m3 11 18-8-8 18-2-7zM11 14l4-5" />

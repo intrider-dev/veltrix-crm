@@ -15,3 +15,23 @@ func TestDirectConversationKeyIsOrderIndependent(t *testing.T) {
 		t.Fatalf("unstable direct key: %q %q", forward, reverse)
 	}
 }
+
+func TestConversationRecipientCountAllowsNewEntityDiscussion(t *testing.T) {
+	for _, test := range []struct {
+		name  string
+		count int
+		valid bool
+	}{
+		{name: "empty", count: 0, valid: false},
+		{name: "entity owner only", count: 1, valid: true},
+		{name: "direct chat", count: 2, valid: true},
+		{name: "bounded group", count: maxConversationMembers, valid: true},
+		{name: "oversized group", count: maxConversationMembers + 1, valid: false},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			if got := validConversationRecipientCount(test.count); got != test.valid {
+				t.Fatalf("validConversationRecipientCount(%d)=%t, want %t", test.count, got, test.valid)
+			}
+		})
+	}
+}

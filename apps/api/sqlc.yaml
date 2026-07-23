@@ -37,6 +37,7 @@ sql:
       - "migrations/000033_call_creation_returning_rls.up.sql"
       - "migrations/000034_chat_owner_predicate_scope.up.sql"
       - "migrations/000035_search_authorization_plan.up.sql"
+      - "migrations/000036_sales_entity_chat.up.sql"
     queries:
       - "queries"
     gen:

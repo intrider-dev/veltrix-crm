@@ -39,6 +39,8 @@ import { CustomFieldsStore } from './custom-fields.store';
               ><select [formField]="fieldForm.entityType">
                 <option value="contact">{{ i18n.t('web.entity.contact') }}</option>
                 <option value="company">{{ i18n.t('web.entity.company') }}</option>
+                <option value="lead">{{ i18n.t('web.entity.lead') }}</option>
+                <option value="deal">{{ i18n.t('web.entity.deal') }}</option>
               </select></label
             >
             <mat-form-field appearance="outline"
@@ -92,11 +94,7 @@ import { CustomFieldsStore } from './custom-fields.store';
                 <h2>{{ field.label }}</h2>
                 <p>
                   <code>{{ field.fieldKey }}</code> · {{ i18n.t(typeKey(field.valueType)) }} ·
-                  {{
-                    i18n.t(
-                      field.entityType === 'contact' ? 'web.entity.contact' : 'web.entity.company'
-                    )
-                  }}
+                  {{ i18n.t(entityKey(field.entityType)) }}
                 </p>
               </div>
               <span class="status-pill">v{{ field.schemaVersion }}</span>
@@ -170,6 +168,7 @@ export class CustomFieldsPage implements OnInit {
   readonly createOpen = signal(false);
   readonly valueTypes: readonly CustomFieldValueType[] = [
     'text',
+    'multiline_text',
     'number',
     'money',
     'date',
@@ -202,6 +201,11 @@ export class CustomFieldsPage implements OnInit {
   }
   typeKey(type: CustomFieldValueType): `customFields.type.${CustomFieldValueType}` {
     return `customFields.type.${type}`;
+  }
+  entityKey(
+    entityType: CustomFieldDefinitionInput['entityType'],
+  ): 'web.entity.contact' | 'web.entity.company' | 'web.entity.lead' | 'web.entity.deal' {
+    return `web.entity.${entityType}`;
   }
   async create(event: Event): Promise<void> {
     event.preventDefault();

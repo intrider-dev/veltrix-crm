@@ -72,6 +72,12 @@ export const routes: Routes = [
           import('./features/leads/leads.page').then((module) => module.LeadsPage),
       },
       {
+        path: 'leads/:id',
+        resolve: { translations: i18nNamespaces(['leads', 'assignments', 'customFields', 'chat']) },
+        loadComponent: () =>
+          import('./features/leads/lead-details.page').then((module) => module.LeadDetailsPage),
+      },
+      {
         path: 'deals',
         resolve: { translations: i18nNamespaces(['sales']) },
         loadComponent: () =>
@@ -79,7 +85,16 @@ export const routes: Routes = [
       },
       {
         path: 'deals/:id',
-        resolve: { translations: i18nNamespaces(['sales', 'activities', 'files', 'assignments']) },
+        resolve: {
+          translations: i18nNamespaces([
+            'sales',
+            'activities',
+            'files',
+            'assignments',
+            'customFields',
+            'chat',
+          ]),
+        },
         loadComponent: () =>
           import('./features/deals/deal-details.page').then((module) => module.DealDetailsPage),
       },

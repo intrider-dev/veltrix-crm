@@ -17,6 +17,7 @@ func (application *Application) registerAdvancedCustomerRoutes(workspace chi.Rou
 	workspace.Put("/contacts/{contactId}/tags", application.replaceContactTags)
 
 	workspace.Get("/custom-fields", application.listCustomFieldDefinitions)
+	workspace.Get("/reference-users", application.listReferenceUsers)
 	workspace.Post("/custom-fields", application.createCustomFieldDefinition)
 	workspace.Patch("/custom-fields/{definitionId}", application.updateCustomFieldDefinition)
 	workspace.Delete("/custom-fields/{definitionId}", application.deleteCustomFieldDefinition)

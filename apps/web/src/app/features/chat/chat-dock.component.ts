@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   signal,
   viewChild,
@@ -12,6 +13,7 @@ import { MatButtonModule } from '@angular/material/button';
 import type { CallJoin, ChatConversation, ChatMessage } from '../../core/api/api.types';
 import { AuthStore } from '../../core/auth/auth.store';
 import { I18nService } from '../../core/i18n/i18n.service';
+import { WorkspaceStore } from '../../core/workspace/workspace.store';
 import { IconComponent } from '../../shared/icon/icon.component';
 import { ErrorPanelComponent } from '../../shared/state/error-panel.component';
 import { ChatDockStore } from './chat-dock.store';
@@ -45,11 +47,7 @@ import { CallSessionService } from './call-session.service';
       >
         <header class="dock-header">
           @if (store.activeConversation(); as conversation) {
-            <button
-              class="back-to-list"
-              type="button"
-              (click)="store.activeConversationId.set(null)"
-            >
+            <button class="back-to-list" type="button" (click)="backToList()">
               <app-icon name="back" />
             </button>
             <div>
@@ -94,7 +92,7 @@ import { CallSessionService } from './call-session.service';
             mat-icon-button
             type="button"
             class="close-chat"
-            (click)="open.set(false)"
+            (click)="closeDock()"
             [attr.aria-label]="i18n.t('chat.close')"
           >
             <app-icon name="close" />
@@ -171,7 +169,7 @@ import { CallSessionService } from './call-session.service';
                 (change)="selectedMemberId.set(selectValue($event))"
               >
                 <option value="">{{ i18n.t('chat.chooseMemberPlaceholder') }}</option>
-                @for (member of availableMembers(); track member.id) {
+                @for (member of availableMembers(); track member.userId) {
                   <option [value]="member.userId">{{ member.displayName }}</option>
                 }
               </select></label
@@ -194,7 +192,7 @@ import { CallSessionService } from './call-session.service';
         @if (!store.activeConversationId()) {
           <div class="conversation-list" [attr.aria-busy]="store.loading()">
             @for (conversation of store.conversations(); track conversation.id) {
-              <button type="button" (click)="store.select(conversation.id)">
+              <button type="button" (click)="selectConversation(conversation.id)">
                 <span class="conversation-avatar">{{
                   initials(conversationName(conversation))
                 }}</span>
@@ -274,10 +272,14 @@ import { CallSessionService } from './call-session.service';
             </div>
             <form class="composer" (submit)="send($event)">
               <label class="attach-action" [title]="i18n.t('chat.attach')"
-                ><input type="file" (change)="chooseFile($event)" /><app-icon name="add"
+                ><input
+                  type="file"
+                  [disabled]="store.loading()"
+                  (change)="chooseFile($event)" /><app-icon name="add"
               /></label>
               <textarea
                 rows="1"
+                [disabled]="store.loading()"
                 [value]="draft()"
                 (input)="draft.set(messageValue($event))"
                 (keydown)="composerKeydown($event)"
@@ -286,7 +288,9 @@ import { CallSessionService } from './call-session.service';
               <button
                 mat-flat-button
                 type="submit"
-                [disabled]="store.sending() || (!draft().trim() && !selectedFile())"
+                [disabled]="
+                  store.loading() || store.sending() || (!draft().trim() && !selectedFile())
+                "
                 [attr.aria-label]="i18n.t('chat.send')"
               >
                 <app-icon name="send" />
@@ -310,6 +314,7 @@ export class ChatDockComponent implements OnInit {
   readonly store = inject(ChatDockStore);
   readonly auth = inject(AuthStore);
   readonly i18n = inject(I18nService);
+  private readonly workspace = inject(WorkspaceStore);
   readonly callSession = this.store.callSession;
   readonly callMedia = viewChild<ElementRef<HTMLElement>>('callMedia');
   readonly open = signal(false);
@@ -325,13 +330,39 @@ export class ChatDockComponent implements OnInit {
   readonly availableMembers = computed(() =>
     this.store.members().filter((member) => member.userId !== this.auth.user()?.id),
   );
+  private workspaceId = this.workspace.id();
+  private readonly workspaceReset = effect(() => {
+    const workspaceId = this.workspace.id();
+    if (workspaceId === this.workspaceId) return;
+    this.workspaceId = workspaceId;
+    this.open.set(false);
+    this.createOpen.set(false);
+    this.selectedMemberId.set('');
+    this.draft.set('');
+    this.selectedFile.set(null);
+    this.connectingGrant.set(null);
+  });
 
   ngOnInit(): void {
     void this.i18n.loadNamespaces(['chat']);
   }
   toggle(): void {
-    this.open.update((value) => !value);
-    if (this.open()) void this.store.loadConversations();
+    if (this.open()) {
+      void this.closeDock();
+      return;
+    }
+    this.open.set(true);
+    void this.store.loadConversations();
+  }
+  async closeDock(): Promise<void> {
+    this.open.set(false);
+    const grant = this.connectingGrant();
+    this.connectingGrant.set(null);
+    if (this.callSession.activeCall()) {
+      await this.store.leaveActiveCall();
+    } else if (grant) {
+      await this.store.releaseJoinedCall(this.workspace.id(), grant);
+    }
   }
   openCreate(): void {
     this.selectedMemberId.set('');
@@ -344,7 +375,16 @@ export class ChatDockComponent implements OnInit {
   }
   async startDirect(userId: string): Promise<void> {
     await this.store.startDirect(userId);
+    this.clearComposer();
     this.closeCreate();
+  }
+  async selectConversation(conversationId: string): Promise<void> {
+    this.clearComposer();
+    await this.store.select(conversationId);
+  }
+  backToList(): void {
+    this.clearComposer();
+    this.store.activeConversationId.set(null);
   }
   callActionDisabled(): boolean {
     return (
@@ -372,7 +412,7 @@ export class ChatDockComponent implements OnInit {
   }
   async send(event: SubmitEvent): Promise<void> {
     event.preventDefault();
-    await this.store.send(this.draft(), this.selectedFile());
+    if (!(await this.store.send(this.draft(), this.selectedFile()))) return;
     this.draft.set('');
     this.selectedFile.set(null);
   }
@@ -392,6 +432,10 @@ export class ChatDockComponent implements OnInit {
   }
   selectValue(event: Event): string {
     return (event.target as HTMLSelectElement).value;
+  }
+  private clearComposer(): void {
+    this.draft.set('');
+    this.selectedFile.set(null);
   }
   conversationName(conversation: ChatConversation): string {
     if (conversation.title) return conversation.title;
@@ -424,17 +468,36 @@ export class ChatDockComponent implements OnInit {
   }
 
   private async connectCall(grant: CallJoin): Promise<void> {
+    const workspaceId = this.workspace.id();
     this.connectingGrant.set(grant);
     await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    if (this.workspace.id() !== workspaceId || !this.open()) {
+      this.connectingGrant.set(null);
+      await this.store.releaseJoinedCall(workspaceId, grant);
+      return;
+    }
     const host = this.callMedia()?.nativeElement;
     if (!host) {
       this.connectingGrant.set(null);
+      await this.store.releaseJoinedCall(workspaceId, grant);
       return;
     }
     try {
       await this.callSession.connect(grant, host);
+      if (
+        this.workspace.id() !== workspaceId ||
+        !this.open() ||
+        !host.isConnected ||
+        this.callSession.status() !== 'connected'
+      ) {
+        this.callSession.disconnect();
+        await this.store.releaseJoinedCall(workspaceId, grant);
+      }
+    } catch (error) {
+      await this.store.releaseJoinedCall(workspaceId, grant);
+      throw error;
     } finally {
-      this.connectingGrant.set(null);
+      if (this.connectingGrant()?.call.id === grant.call.id) this.connectingGrant.set(null);
     }
   }
 }

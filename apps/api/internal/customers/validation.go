@@ -20,7 +20,7 @@ var (
 )
 
 var customFieldTypes = map[string]struct{}{
-	"text": {}, "number": {}, "money": {}, "date": {}, "boolean": {},
+	"text": {}, "multiline_text": {}, "number": {}, "money": {}, "date": {}, "boolean": {},
 	"single_select": {}, "multi_select": {}, "user_reference": {},
 }
 
@@ -205,7 +205,7 @@ func validateTypedValue(definition CustomFieldDefinition, raw json.RawMessage) s
 		return "validation.custom_field.invalid"
 	}
 	switch definition.ValueType {
-	case "text":
+	case "text", "multiline_text":
 		text, ok := value.(string)
 		if !ok || utf8.RuneCountInString(text) > 4096 {
 			return "validation.custom_field.text"

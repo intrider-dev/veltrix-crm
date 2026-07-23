@@ -38,6 +38,9 @@ JOIN tenancy.memberships membership
  AND membership.status = 'active'
 WHERE member.workspace_id = $2
   AND member.conversation_id = $3
+  AND security.chat_entity_conversation_user_allowed(
+    member.workspace_id, member.conversation_id, member.user_id
+  )
 ON CONFLICT DO NOTHING
 `
 
@@ -184,6 +187,7 @@ SET state = CASE WHEN state = 'joined' THEN 'left' ELSE state END,
     left_at = CASE WHEN state = 'joined' THEN now() ELSE left_at END,
     updated_at = now()
 WHERE workspace_id = $1 AND call_id = $2
+  AND security.chat_call_user_allowed(workspace_id, call_id, user_id)
 `
 
 type EndCallParticipantsParams struct {
@@ -194,6 +198,50 @@ type EndCallParticipantsParams struct {
 func (q *Queries) EndCallParticipants(ctx context.Context, arg EndCallParticipantsParams) error {
 	_, err := q.db.Exec(ctx, endCallParticipants, arg.WorkspaceID, arg.CallID)
 	return err
+}
+
+const expireStaleConversationCalls = `-- name: ExpireStaleConversationCalls :many
+UPDATE collaboration.calls
+SET state = 'ended', ended_at = now(), version = version + 1, updated_at = now()
+WHERE workspace_id = $1
+  AND conversation_id = $2
+  AND (
+    (state = 'ringing' AND created_at < $3)
+    OR (state = 'active' AND COALESCE(started_at, created_at) < $4)
+  )
+RETURNING id
+`
+
+type ExpireStaleConversationCallsParams struct {
+	WorkspaceID    pgtype.UUID        `json:"workspace_id"`
+	ConversationID pgtype.UUID        `json:"conversation_id"`
+	RingingCutoff  pgtype.Timestamptz `json:"ringing_cutoff"`
+	ActiveCutoff   pgtype.Timestamptz `json:"active_cutoff"`
+}
+
+func (q *Queries) ExpireStaleConversationCalls(ctx context.Context, arg ExpireStaleConversationCallsParams) ([]pgtype.UUID, error) {
+	rows, err := q.db.Query(ctx, expireStaleConversationCalls,
+		arg.WorkspaceID,
+		arg.ConversationID,
+		arg.RingingCutoff,
+		arg.ActiveCutoff,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []pgtype.UUID{}
+	for rows.Next() {
+		var id pgtype.UUID
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getCallForParticipant = `-- name: GetCallForParticipant :one
@@ -299,10 +347,15 @@ func (q *Queries) LeaveCallParticipant(ctx context.Context, arg LeaveCallPartici
 }
 
 const listCallParticipantUserIDs = `-- name: ListCallParticipantUserIDs :many
-SELECT user_id
-FROM collaboration.call_participants
-WHERE workspace_id = $1 AND call_id = $2
-ORDER BY user_id
+SELECT participant.user_id
+FROM collaboration.call_participants participant
+JOIN collaboration.calls call
+  ON call.workspace_id = participant.workspace_id AND call.id = participant.call_id
+WHERE participant.workspace_id = $1 AND participant.call_id = $2
+  AND security.chat_entity_conversation_user_allowed(
+    participant.workspace_id, call.conversation_id, participant.user_id
+  )
+ORDER BY participant.user_id
 `
 
 type ListCallParticipantUserIDsParams struct {

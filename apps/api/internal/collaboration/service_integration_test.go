@@ -5,6 +5,7 @@ package collaboration_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -202,6 +203,166 @@ WHERE workspace_id=$1 AND event_type='chat.message.created' AND data->>'messageI
 	}
 	if eventCount != 2 || !recipientsOnly || !bodyAbsent {
 		t.Fatalf("private SSE count=%d recipientsOnly=%t bodyAbsent=%t", eventCount, recipientsOnly, bodyAbsent)
+	}
+
+	customRoleID, leadID := mustChatID(t), mustChatID(t)
+	var bobMembershipID, leadStageID string
+	if err := admin.QueryRow(ctx, `
+SELECT id::text FROM tenancy.memberships WHERE workspace_id=$1 AND user_id=$2
+`, workspaceID.PG(), userB.PG()).Scan(&bobMembershipID); err != nil {
+		t.Fatal(err)
+	}
+	if err := admin.QueryRow(ctx, `
+SELECT id::text FROM sales.lead_stages
+WHERE workspace_id=$1 AND category='new' AND is_default
+`, workspaceID.PG()).Scan(&leadStageID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := admin.Exec(ctx, `INSERT INTO tenancy.workspace_roles(
+workspace_id,id,role_key,name,base_role,is_system
+) VALUES($1,$2,'lead-chat-only','Lead chat only','viewer',false)`,
+		workspaceID.PG(), customRoleID.PG()); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := admin.Exec(ctx, `INSERT INTO tenancy.role_permissions(
+workspace_id,role_id,permission
+) VALUES($1,$2,'leads.read')`, workspaceID.PG(), customRoleID.PG()); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := admin.Exec(ctx, `INSERT INTO sales.lead_stage_role_access(
+workspace_id,stage_id,role_id,can_view,can_enter,can_leave
+) VALUES($1,$2,$3,true,true,true)`, workspaceID.PG(), leadStageID, customRoleID.PG()); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := admin.Exec(ctx, `UPDATE tenancy.memberships membership
+SET role_id=$2, role='viewer', updated_at=now()
+WHERE membership.workspace_id=$1 AND membership.id=$3`,
+		workspaceID.PG(), customRoleID.PG(), bobMembershipID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := admin.Exec(ctx, `INSERT INTO sales.leads(
+workspace_id,id,name,status,stage_id,custom_fields
+) VALUES($1,$2,'Entity chat authorization lead','new',$3,'{}'::jsonb)`,
+		workspaceID.PG(), leadID.PG(), leadStageID); err != nil {
+		t.Fatal(err)
+	}
+
+	var entityConversation collaboration.Conversation
+	entityInput := collaboration.EntityConversationInput{
+		EntityType: "lead", EntityID: leadID, Title: "Entity chat authorization lead",
+	}
+	if err := tenantService.WithWorkspace(ctx, alice, workspaceID, "entity-chat-owner",
+		tenancy.PermissionLeadsRead, func(workspace *tenancy.WorkspaceTx) error {
+			var resolveErr error
+			entityConversation, resolveErr = chatService.ResolveEntityConversation(ctx, workspace,
+				workspaceID, userA, entityInput)
+			return resolveErr
+		}); err != nil {
+		t.Fatal(err)
+	}
+	entityConversationID := ids.MustParse(entityConversation.ID)
+	chatPermissions := []tenancy.Permission{
+		tenancy.PermissionRecordsRead, tenancy.PermissionLeadsRead, tenancy.PermissionDealsRead,
+	}
+	if err := tenantService.WithWorkspaceAny(ctx, bob, workspaceID, "entity-chat-lead-only",
+		chatPermissions, func(workspace *tenancy.WorkspaceTx) error {
+			var dynamicAllowed, membershipVisible, permissionVisible, linkVisible, leadVisible, stageVisible bool
+			var workspaceMatches, actorMatches, policyPredicate bool
+			if queryErr := workspace.Tx.QueryRow(ctx, `SELECT
+security.chat_entity_conversation_user_allowed($1,$2,$3),
+EXISTS(SELECT 1 FROM tenancy.memberships membership JOIN tenancy.workspace_roles role
+  ON role.workspace_id=membership.workspace_id AND role.id=membership.role_id
+  WHERE membership.workspace_id=$1 AND membership.user_id=$3 AND membership.status='active'),
+EXISTS(SELECT 1 FROM tenancy.role_permissions WHERE workspace_id=$1 AND role_id=$4 AND permission='leads.read'),
+EXISTS(SELECT 1 FROM collaboration.entity_conversations WHERE workspace_id=$1 AND conversation_id=$2),
+EXISTS(SELECT 1 FROM sales.leads WHERE workspace_id=$1 AND id=$5 AND deleted_at IS NULL),
+EXISTS(SELECT 1 FROM sales.lead_stage_role_access WHERE workspace_id=$1 AND stage_id=$6 AND role_id=$4 AND can_view),
+$1=security.current_workspace_id(), $3=security.current_actor_id(),
+($1=security.current_workspace_id()
+ AND EXISTS(SELECT 1 FROM tenancy.memberships WHERE workspace_id=$1 AND user_id=$3 AND status='active')
+ AND ($3=security.current_actor_id())
+ AND EXISTS(SELECT 1 FROM collaboration.entity_conversations WHERE workspace_id=$1 AND conversation_id=$2)
+ AND security.chat_entity_conversation_user_allowed($1,$2,$3))
+`, workspaceID.PG(), entityConversationID.PG(), userB.PG(), customRoleID.PG(), leadID.PG(), leadStageID).
+				Scan(&dynamicAllowed, &membershipVisible, &permissionVisible, &linkVisible, &leadVisible, &stageVisible,
+					&workspaceMatches, &actorMatches, &policyPredicate); queryErr != nil {
+				return queryErr
+			}
+			if !policyPredicate {
+				return fmt.Errorf("dynamic entity authorization denied: allowed=%t membership=%t permission=%t link=%t lead=%t stage=%t workspace=%t actor=%t",
+					dynamicAllowed, membershipVisible, permissionVisible, linkVisible, leadVisible, stageVisible,
+					workspaceMatches, actorMatches)
+			}
+			if _, resolveErr := chatService.ResolveEntityConversation(ctx, workspace, workspaceID, userB, entityInput); resolveErr != nil {
+				return resolveErr
+			}
+			_, sendErr := chatService.Send(ctx, workspace, workspaceID, entityConversationID, userB,
+				collaboration.MessageInput{Kind: "text", Body: "lead-only role can send"})
+			return sendErr
+		}); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := admin.Exec(ctx, `DELETE FROM tenancy.role_permissions
+WHERE workspace_id=$1 AND role_id=$2 AND permission='leads.read'`, workspaceID.PG(), customRoleID.PG()); err != nil {
+		t.Fatal(err)
+	}
+	var afterRevoke collaboration.Message
+	if err := tenantService.WithWorkspace(ctx, alice, workspaceID, "entity-chat-after-revoke",
+		tenancy.PermissionLeadsRead, func(workspace *tenancy.WorkspaceTx) error {
+			if _, resolveErr := chatService.ResolveEntityConversation(ctx, workspace,
+				workspaceID, userA, entityInput); resolveErr != nil {
+				return resolveErr
+			}
+			var sendErr error
+			afterRevoke, sendErr = chatService.Send(ctx, workspace, workspaceID, entityConversationID, userA,
+				collaboration.MessageInput{Kind: "text", Body: "revoked user must not receive"})
+			return sendErr
+		}); err != nil {
+		t.Fatal(err)
+	}
+	if err := tenantService.WithWorkspaceAny(ctx, bob, workspaceID, "entity-chat-revoked",
+		chatPermissions, func(*tenancy.WorkspaceTx) error { return nil }); !errors.Is(err, errx.ErrForbidden) {
+		t.Fatalf("revoked lead-only role error=%v, want forbidden", err)
+	}
+	var revokedRecipientEvents int
+	if err := admin.QueryRow(ctx, `SELECT count(*) FROM notifications.sse_events
+WHERE workspace_id=$1 AND event_type='chat.message.created'
+  AND data->>'messageId'=$2 AND recipient_user_id=$3`,
+		workspaceID.PG(), afterRevoke.ID, userB.PG()).Scan(&revokedRecipientEvents); err != nil {
+		t.Fatal(err)
+	}
+	if revokedRecipientEvents != 0 {
+		t.Fatalf("revoked entity member received %d SSE events", revokedRecipientEvents)
+	}
+	var staleMemberCount int
+	if err := admin.QueryRow(ctx, `SELECT count(*) FROM collaboration.conversation_members
+		WHERE workspace_id=$1 AND conversation_id=$2 AND user_id=$3`,
+		workspaceID.PG(), entityConversationID.PG(), userB.PG()).Scan(&staleMemberCount); err != nil {
+		t.Fatal(err)
+	}
+	if staleMemberCount != 0 {
+		t.Fatalf("revoked entity participant remained in physical member set: %d", staleMemberCount)
+	}
+	revokedTx, err := appPool.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = revokedTx.Exec(ctx,
+		`SELECT set_config('app.actor_id',$1,true), set_config('app.workspace_id',$2,true)`,
+		userB.String(), workspaceID.String()); err != nil {
+		_ = revokedTx.Rollback(ctx)
+		t.Fatal(err)
+	}
+	var visibleAfterRevoke int
+	if err = revokedTx.QueryRow(ctx, `SELECT count(*) FROM collaboration.messages
+WHERE workspace_id=$1 AND conversation_id=$2`, workspaceID.PG(), entityConversationID.PG()).Scan(&visibleAfterRevoke); err != nil {
+		_ = revokedTx.Rollback(ctx)
+		t.Fatal(err)
+	}
+	_ = revokedTx.Rollback(ctx)
+	if visibleAfterRevoke != 0 {
+		t.Fatalf("RLS exposed %d entity messages after permission revocation", visibleAfterRevoke)
 	}
 }
 

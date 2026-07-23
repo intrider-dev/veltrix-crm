@@ -8,6 +8,7 @@ export class CallSessionService {
   private room: Room | null = null;
   private mediaHost: HTMLElement | null = null;
   private readonly attached = new Set<HTMLMediaElement>();
+  private generation = 0;
 
   readonly activeCall = signal<Call | null>(null);
   readonly status = signal<'idle' | 'connecting' | 'connected' | 'failed'>('idle');
@@ -21,32 +22,52 @@ export class CallSessionService {
 
   async connect(grant: CallJoin, mediaHost: HTMLElement): Promise<void> {
     this.disconnect();
+    const generation = ++this.generation;
     this.activeCall.set(grant.call);
     this.status.set('connecting');
     this.error.set(null);
     this.mediaHost = mediaHost;
     try {
       const { Room, RoomEvent, Track } = await import('livekit-client');
+      if (generation !== this.generation) return;
       const room = new Room({ adaptiveStream: true, dynacast: true });
       this.room = room;
-      room.on(RoomEvent.TrackSubscribed, (track) => this.attach(track));
-      room.on(RoomEvent.TrackUnsubscribed, (track) => this.detach(track));
+      room.on(RoomEvent.TrackSubscribed, (track) => {
+        if (generation === this.generation && this.room === room) this.attach(track);
+      });
+      room.on(RoomEvent.TrackUnsubscribed, (track) => {
+        if (generation === this.generation && this.room === room) this.detach(track);
+      });
       room.on(RoomEvent.Disconnected, () => {
+        if (generation !== this.generation || this.room !== room) return;
         this.clearMedia();
         this.status.set('idle');
         this.activeCall.set(null);
       });
       await room.connect(grant.url, grant.token);
+      if (generation !== this.generation || this.room !== room) {
+        void room.disconnect();
+        return;
+      }
       await room.localParticipant.setMicrophoneEnabled(true);
+      if (generation !== this.generation || this.room !== room) {
+        void room.disconnect();
+        return;
+      }
       this.microphoneEnabled.set(true);
       if (grant.call.kind === 'video') {
         await room.localParticipant.setCameraEnabled(true);
+        if (generation !== this.generation || this.room !== room) {
+          void room.disconnect();
+          return;
+        }
         this.cameraEnabled.set(true);
         const localCamera = room.localParticipant.getTrackPublication(Track.Source.Camera)?.track;
         if (localCamera) this.attach(localCamera, true);
       }
-      this.status.set('connected');
+      if (generation === this.generation && this.room === room) this.status.set('connected');
     } catch (error) {
+      if (generation !== this.generation) return;
       this.error.set(error);
       const room = this.room;
       this.room = null;
@@ -58,20 +79,33 @@ export class CallSessionService {
   }
 
   async toggleMicrophone(): Promise<void> {
-    if (!this.room) return;
+    const room = this.room;
+    const generation = this.generation;
+    if (!room) return;
     const enabled = !this.microphoneEnabled();
-    await this.room.localParticipant.setMicrophoneEnabled(enabled);
+    await room.localParticipant.setMicrophoneEnabled(enabled);
+    if (generation !== this.generation || this.room !== room) {
+      void room.disconnect();
+      return;
+    }
     this.microphoneEnabled.set(enabled);
   }
 
   async toggleCamera(): Promise<void> {
-    if (!this.room || this.activeCall()?.kind !== 'video') return;
+    const room = this.room;
+    const generation = this.generation;
+    if (!room || this.activeCall()?.kind !== 'video') return;
     const enabled = !this.cameraEnabled();
-    await this.room.localParticipant.setCameraEnabled(enabled);
+    await room.localParticipant.setCameraEnabled(enabled);
+    if (generation !== this.generation || this.room !== room) {
+      void room.disconnect();
+      return;
+    }
     this.cameraEnabled.set(enabled);
   }
 
   disconnect(clearCall = true): void {
+    this.generation += 1;
     const room = this.room;
     this.room = null;
     if (room) void room.disconnect();

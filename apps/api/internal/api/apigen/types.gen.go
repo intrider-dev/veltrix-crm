@@ -674,6 +674,7 @@ const (
 	ChatMessageKindFile   ChatMessageKind = "file"
 	ChatMessageKindSystem ChatMessageKind = "system"
 	ChatMessageKindText   ChatMessageKind = "text"
+	ChatMessageKindVideo  ChatMessageKind = "video"
 	ChatMessageKindVoice  ChatMessageKind = "voice"
 )
 
@@ -685,6 +686,8 @@ func (e ChatMessageKind) Valid() bool {
 	case ChatMessageKindSystem:
 		return true
 	case ChatMessageKindText:
+		return true
+	case ChatMessageKindVideo:
 		return true
 	case ChatMessageKindVoice:
 		return true
@@ -932,13 +935,22 @@ func (e CreateCallInputKind) Valid() bool {
 
 // Defines values for CreateChatMessageKind.
 const (
-	CreateChatMessageKindText CreateChatMessageKind = "text"
+	CreateChatMessageKindFile  CreateChatMessageKind = "file"
+	CreateChatMessageKindText  CreateChatMessageKind = "text"
+	CreateChatMessageKindVideo CreateChatMessageKind = "video"
+	CreateChatMessageKindVoice CreateChatMessageKind = "voice"
 )
 
 // Valid indicates whether the value is a known member of the CreateChatMessageKind enum.
 func (e CreateChatMessageKind) Valid() bool {
 	switch e {
+	case CreateChatMessageKindFile:
+		return true
 	case CreateChatMessageKindText:
+		return true
+	case CreateChatMessageKindVideo:
+		return true
+	case CreateChatMessageKindVoice:
 		return true
 	default:
 		return false
@@ -949,6 +961,8 @@ func (e CreateChatMessageKind) Valid() bool {
 const (
 	CustomFieldDefinitionEntityTypeCompany CustomFieldDefinitionEntityType = "company"
 	CustomFieldDefinitionEntityTypeContact CustomFieldDefinitionEntityType = "contact"
+	CustomFieldDefinitionEntityTypeDeal    CustomFieldDefinitionEntityType = "deal"
+	CustomFieldDefinitionEntityTypeLead    CustomFieldDefinitionEntityType = "lead"
 )
 
 // Valid indicates whether the value is a known member of the CustomFieldDefinitionEntityType enum.
@@ -957,6 +971,10 @@ func (e CustomFieldDefinitionEntityType) Valid() bool {
 	case CustomFieldDefinitionEntityTypeCompany:
 		return true
 	case CustomFieldDefinitionEntityTypeContact:
+		return true
+	case CustomFieldDefinitionEntityTypeDeal:
+		return true
+	case CustomFieldDefinitionEntityTypeLead:
 		return true
 	default:
 		return false
@@ -967,6 +985,8 @@ func (e CustomFieldDefinitionEntityType) Valid() bool {
 const (
 	CustomFieldDefinitionInputEntityTypeCompany CustomFieldDefinitionInputEntityType = "company"
 	CustomFieldDefinitionInputEntityTypeContact CustomFieldDefinitionInputEntityType = "contact"
+	CustomFieldDefinitionInputEntityTypeDeal    CustomFieldDefinitionInputEntityType = "deal"
+	CustomFieldDefinitionInputEntityTypeLead    CustomFieldDefinitionInputEntityType = "lead"
 )
 
 // Valid indicates whether the value is a known member of the CustomFieldDefinitionInputEntityType enum.
@@ -975,6 +995,10 @@ func (e CustomFieldDefinitionInputEntityType) Valid() bool {
 	case CustomFieldDefinitionInputEntityTypeCompany:
 		return true
 	case CustomFieldDefinitionInputEntityTypeContact:
+		return true
+	case CustomFieldDefinitionInputEntityTypeDeal:
+		return true
+	case CustomFieldDefinitionInputEntityTypeLead:
 		return true
 	default:
 		return false
@@ -987,6 +1011,7 @@ const (
 	CustomFieldValueTypeDate          CustomFieldValueType = "date"
 	CustomFieldValueTypeMoney         CustomFieldValueType = "money"
 	CustomFieldValueTypeMultiSelect   CustomFieldValueType = "multi_select"
+	CustomFieldValueTypeMultilineText CustomFieldValueType = "multiline_text"
 	CustomFieldValueTypeNumber        CustomFieldValueType = "number"
 	CustomFieldValueTypeSingleSelect  CustomFieldValueType = "single_select"
 	CustomFieldValueTypeText          CustomFieldValueType = "text"
@@ -1003,6 +1028,8 @@ func (e CustomFieldValueType) Valid() bool {
 	case CustomFieldValueTypeMoney:
 		return true
 	case CustomFieldValueTypeMultiSelect:
+		return true
+	case CustomFieldValueTypeMultilineText:
 		return true
 	case CustomFieldValueTypeNumber:
 		return true
@@ -2113,6 +2140,8 @@ func (e CustomersExportContactsCSVParamsOrder) Valid() bool {
 const (
 	CustomersListCustomFieldDefinitionsParamsEntityTypeCompany CustomersListCustomFieldDefinitionsParamsEntityType = "company"
 	CustomersListCustomFieldDefinitionsParamsEntityTypeContact CustomersListCustomFieldDefinitionsParamsEntityType = "contact"
+	CustomersListCustomFieldDefinitionsParamsEntityTypeDeal    CustomersListCustomFieldDefinitionsParamsEntityType = "deal"
+	CustomersListCustomFieldDefinitionsParamsEntityTypeLead    CustomersListCustomFieldDefinitionsParamsEntityType = "lead"
 )
 
 // Valid indicates whether the value is a known member of the CustomersListCustomFieldDefinitionsParamsEntityType enum.
@@ -2121,6 +2150,10 @@ func (e CustomersListCustomFieldDefinitionsParamsEntityType) Valid() bool {
 	case CustomersListCustomFieldDefinitionsParamsEntityTypeCompany:
 		return true
 	case CustomersListCustomFieldDefinitionsParamsEntityTypeContact:
+		return true
+	case CustomersListCustomFieldDefinitionsParamsEntityTypeDeal:
+		return true
+	case CustomersListCustomFieldDefinitionsParamsEntityTypeLead:
 		return true
 	default:
 		return false
@@ -2142,6 +2175,24 @@ func (e SalesListDealsParamsStatus) Valid() bool {
 	case SalesListDealsParamsStatusOpen:
 		return true
 	case SalesListDealsParamsStatusWon:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CollaborationResolveEntityConversationParamsEntityType.
+const (
+	CollaborationResolveEntityConversationParamsEntityTypeDeal CollaborationResolveEntityConversationParamsEntityType = "deal"
+	CollaborationResolveEntityConversationParamsEntityTypeLead CollaborationResolveEntityConversationParamsEntityType = "lead"
+)
+
+// Valid indicates whether the value is a known member of the CollaborationResolveEntityConversationParamsEntityType enum.
+func (e CollaborationResolveEntityConversationParamsEntityType) Valid() bool {
+	switch e {
+	case CollaborationResolveEntityConversationParamsEntityTypeDeal:
+		return true
+	case CollaborationResolveEntityConversationParamsEntityTypeLead:
 		return true
 	default:
 		return false
@@ -3359,11 +3410,13 @@ type Lead struct {
 	CreatedAt          time.Time              `json:"createdAt"`
 	CustomFields       map[string]interface{} `json:"customFields"`
 	Email              *openapi_types.Email   `json:"email,omitempty"`
+	ExpectedCloseDate  *openapi_types.Date    `json:"expectedCloseDate,omitempty"`
 	Id                 openapi_types.UUID     `json:"id"`
 	JobTitle           *string                `json:"jobTitle,omitempty"`
 	Name               string                 `json:"name"`
 	OwnerId            *openapi_types.UUID    `json:"ownerId,omitempty"`
 	Phone              *string                `json:"phone,omitempty"`
+	PlannedStartDate   *openapi_types.Date    `json:"plannedStartDate,omitempty"`
 	Source             *string                `json:"source,omitempty"`
 	StageId            openapi_types.UUID     `json:"stageId"`
 	Status             LeadStatus             `json:"status"`
@@ -3421,17 +3474,19 @@ type LeadConversionRequest struct {
 
 // LeadInput defines model for LeadInput.
 type LeadInput struct {
-	CompanyName  *string                `json:"companyName,omitempty"`
-	CustomFields map[string]interface{} `json:"customFields"`
-	Email        *openapi_types.Email   `json:"email,omitempty"`
-	JobTitle     *string                `json:"jobTitle,omitempty"`
-	Name         string                 `json:"name"`
-	OwnerId      *openapi_types.UUID    `json:"ownerId,omitempty"`
-	Phone        *string                `json:"phone,omitempty"`
-	Source       *string                `json:"source,omitempty"`
-	StageId      *openapi_types.UUID    `json:"stageId,omitempty"`
-	Status       LeadInputStatus        `json:"status"`
-	TeamId       *openapi_types.UUID    `json:"teamId,omitempty"`
+	CompanyName       *string                `json:"companyName,omitempty"`
+	CustomFields      map[string]interface{} `json:"customFields"`
+	Email             *openapi_types.Email   `json:"email,omitempty"`
+	ExpectedCloseDate *openapi_types.Date    `json:"expectedCloseDate,omitempty"`
+	JobTitle          *string                `json:"jobTitle,omitempty"`
+	Name              string                 `json:"name"`
+	OwnerId           *openapi_types.UUID    `json:"ownerId,omitempty"`
+	Phone             *string                `json:"phone,omitempty"`
+	PlannedStartDate  *openapi_types.Date    `json:"plannedStartDate,omitempty"`
+	Source            *string                `json:"source,omitempty"`
+	StageId           *openapi_types.UUID    `json:"stageId,omitempty"`
+	Status            LeadInputStatus        `json:"status"`
+	TeamId            *openapi_types.UUID    `json:"teamId,omitempty"`
 }
 
 // LeadInputStatus defines model for LeadInput.Status.
@@ -4011,6 +4066,12 @@ type RecoveryCodes struct {
 
 // RecoveryCodesSessionsRevoked defines model for RecoveryCodes.SessionsRevoked.
 type RecoveryCodesSessionsRevoked bool
+
+// ReferenceUser defines model for ReferenceUser.
+type ReferenceUser struct {
+	DisplayName string             `json:"displayName"`
+	UserId      openapi_types.UUID `json:"userId"`
+}
 
 // RegisteredUser defines model for RegisteredUser.
 type RegisteredUser struct {
@@ -4712,6 +4773,12 @@ type CallsLeaveParams struct {
 	XCSRFToken *CSRFToken `json:"X-CSRF-Token,omitempty"`
 }
 
+// CollaborationDeleteProvisionalMediaMessageParams defines parameters for CollaborationDeleteProvisionalMediaMessage.
+type CollaborationDeleteProvisionalMediaMessageParams struct {
+	// XCSRFToken Required for unsafe cookie-authenticated requests; validated bearer API keys do not use CSRF.
+	XCSRFToken *CSRFToken `json:"X-CSRF-Token,omitempty"`
+}
+
 // CollaborationUnpinMessageParams defines parameters for CollaborationUnpinMessage.
 type CollaborationUnpinMessageParams struct {
 	// XCSRFToken Required for unsafe cookie-authenticated requests; validated bearer API keys do not use CSRF.
@@ -4855,7 +4922,13 @@ type CustomersReplaceContactTagsParams struct {
 // CollaborationCreateConversationParams defines parameters for CollaborationCreateConversation.
 type CollaborationCreateConversationParams struct {
 	// XCSRFToken Required for unsafe cookie-authenticated requests; validated bearer API keys do not use CSRF.
-	XCSRFToken *CSRFToken `json:"X-CSRF-Token,omitempty"`
+	XCSRFToken     *CSRFToken     `json:"X-CSRF-Token,omitempty"`
+	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
+}
+
+// CollaborationListAttachmentsParams defines parameters for CollaborationListAttachments.
+type CollaborationListAttachmentsParams struct {
+	MessageId []openapi_types.UUID `form:"messageId" json:"messageId"`
 }
 
 // CallsCreateParams defines parameters for CallsCreate.
@@ -5034,6 +5107,15 @@ type TenancyAddDepartmentMemberParams struct {
 	XCSRFToken *CSRFToken `json:"X-CSRF-Token,omitempty"`
 }
 
+// CollaborationResolveEntityConversationParams defines parameters for CollaborationResolveEntityConversation.
+type CollaborationResolveEntityConversationParams struct {
+	// XCSRFToken Required for unsafe cookie-authenticated requests; validated bearer API keys do not use CSRF.
+	XCSRFToken *CSRFToken `json:"X-CSRF-Token,omitempty"`
+}
+
+// CollaborationResolveEntityConversationParamsEntityType defines parameters for CollaborationResolveEntityConversation.
+type CollaborationResolveEntityConversationParamsEntityType string
+
 // TenancyInviteMemberParams defines parameters for TenancyInviteMember.
 type TenancyInviteMemberParams struct {
 	// XCSRFToken Required for unsafe cookie-authenticated requests; validated bearer API keys do not use CSRF.
@@ -5060,6 +5142,7 @@ type SalesListLeadsParams struct {
 	Query   *string                     `form:"query,omitempty" json:"query,omitempty"`
 	Status  *SalesListLeadsParamsStatus `form:"status,omitempty" json:"status,omitempty"`
 	OwnerId *openapi_types.UUID         `form:"ownerId,omitempty" json:"ownerId,omitempty"`
+	StageId *openapi_types.UUID         `form:"stageId,omitempty" json:"stageId,omitempty"`
 	Cursor  *Cursor                     `form:"cursor,omitempty" json:"cursor,omitempty"`
 	Limit   *Limit                      `form:"limit,omitempty" json:"limit,omitempty"`
 }

@@ -32,17 +32,19 @@ type pipelineStageOrderRequest struct {
 }
 
 type leadRequest struct {
-	Name         string         `json:"name"`
-	Email        *string        `json:"email"`
-	Phone        *string        `json:"phone"`
-	CompanyName  *string        `json:"companyName"`
-	JobTitle     *string        `json:"jobTitle"`
-	Source       *string        `json:"source"`
-	Status       string         `json:"status"`
-	StageID      *string        `json:"stageId"`
-	OwnerID      *string        `json:"ownerId"`
-	TeamID       *string        `json:"teamId"`
-	CustomFields map[string]any `json:"customFields"`
+	Name              string         `json:"name"`
+	Email             *string        `json:"email"`
+	Phone             *string        `json:"phone"`
+	CompanyName       *string        `json:"companyName"`
+	JobTitle          *string        `json:"jobTitle"`
+	Source            *string        `json:"source"`
+	Status            string         `json:"status"`
+	StageID           *string        `json:"stageId"`
+	OwnerID           *string        `json:"ownerId"`
+	TeamID            *string        `json:"teamId"`
+	PlannedStartDate  *string        `json:"plannedStartDate"`
+	ExpectedCloseDate *string        `json:"expectedCloseDate"`
+	CustomFields      map[string]any `json:"customFields"`
 }
 
 type leadStageRequest struct {
@@ -392,6 +394,10 @@ func (application *Application) listLeadsAdvanced(writer http.ResponseWriter, re
 	if writeError(application, writer, request, err) {
 		return
 	}
+	stageID, err := parseOptionalID(request.URL.Query().Get("stageId"), "/query/stageId")
+	if writeError(application, writer, request, err) {
+		return
+	}
 	limit, err := parseLimit(request, sales.DefaultPageSize)
 	if writeError(application, writer, request, err) {
 		return
@@ -402,7 +408,7 @@ func (application *Application) listLeadsAdvanced(writer http.ResponseWriter, re
 		func(workspace *tenancy.WorkspaceTx) error {
 			result, err = application.sales.ListLeads(request.Context(), workspace, workspaceID, sales.LeadListFilter{
 				Query: request.URL.Query().Get("query"), Status: request.URL.Query().Get("status"),
-				OwnerID: ownerID, Cursor: request.URL.Query().Get("cursor"), Limit: limit,
+				OwnerID: ownerID, StageID: stageID, Cursor: request.URL.Query().Get("cursor"), Limit: limit,
 			})
 			return err
 		})
@@ -743,8 +749,24 @@ func (application *Application) createLeadAdvanced(writer http.ResponseWriter, r
 	}
 	application.runIdempotent(writer, request, workspaceID, tenancy.PermissionLeadsCreate, "leads.create", raw, http.StatusCreated,
 		func(workspace *tenancy.WorkspaceTx, metadata events.Metadata) (any, int64, error) {
+			validatedFields, validationErr := application.customers.ValidateCustomFields(request.Context(), workspace, workspaceID, "lead", input.CustomFields)
+			if validationErr != nil {
+				return nil, 0, validationErr
+			}
+			input.CustomFields = validatedFields.Values
 			lead, createErr := application.sales.CreateLead(request.Context(), workspace, metadata, input)
-			return lead, lead.Version, createErr
+			if createErr != nil {
+				return nil, 0, createErr
+			}
+			leadID, parseErr := ids.Parse(lead.ID)
+			if parseErr != nil {
+				return nil, 0, parseErr
+			}
+			if persistErr := application.customers.PersistValidatedCustomFields(request.Context(), workspace,
+				workspaceID, "lead", leadID, validatedFields); persistErr != nil {
+				return nil, 0, persistErr
+			}
+			return lead, lead.Version, nil
 		})
 }
 
@@ -769,7 +791,16 @@ func (application *Application) updateLeadAdvanced(writer http.ResponseWriter, r
 	var result sales.LeadRecord
 	err = application.tenancy.WithWorkspace(request.Context(), principal, workspaceID, httpx.RequestID(request.Context()), tenancy.PermissionLeadsUpdate,
 		func(workspace *tenancy.WorkspaceTx) error {
+			validatedFields, validationErr := application.customers.ValidateCustomFields(request.Context(), workspace, workspaceID, "lead", input.CustomFields)
+			if validationErr != nil {
+				return validationErr
+			}
+			input.CustomFields = validatedFields.Values
 			result, err = application.sales.UpdateLead(request.Context(), workspace, metadata(request, workspaceID, principal), leadID, version, input)
+			if err == nil {
+				err = application.customers.PersistValidatedCustomFields(request.Context(), workspace,
+					workspaceID, "lead", leadID, validatedFields)
+			}
 			return err
 		})
 	if writeError(application, writer, request, err) {
@@ -972,10 +1003,19 @@ func parseLeadRequest(body leadRequest) (sales.LeadInput, error) {
 	if err != nil {
 		return sales.LeadInput{}, err
 	}
+	plannedStartDate, err := parseOptionalISODate(body.PlannedStartDate, "/plannedStartDate")
+	if err != nil {
+		return sales.LeadInput{}, err
+	}
+	expectedCloseDate, err := parseOptionalISODate(body.ExpectedCloseDate, "/expectedCloseDate")
+	if err != nil {
+		return sales.LeadInput{}, err
+	}
 	return sales.LeadInput{
 		Name: body.Name, Email: body.Email, Phone: body.Phone, CompanyName: body.CompanyName,
 		JobTitle: body.JobTitle, Source: body.Source, Status: body.Status, StageID: stageID,
-		OwnerID: ownerID, TeamID: teamID, CustomFields: body.CustomFields,
+		OwnerID: ownerID, TeamID: teamID, PlannedStartDate: plannedStartDate,
+		ExpectedCloseDate: expectedCloseDate, CustomFields: body.CustomFields,
 	}, nil
 }
 

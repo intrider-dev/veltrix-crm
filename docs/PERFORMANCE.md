@@ -1,7 +1,7 @@
 # Performance report
 
-Last updated: 2026-07-22
-Evidence status: serving-performance application code is fixed by commit `3b26934ba388b7289c400733a46001d6acae6108`; the clean three-run k6 baseline was executed from documentation-only descendant `feaffdda59244d950578c452beb2a835534e2a68`. Browser-performance artifacts report the same serving code. Bundle evidence was regenerated from the final working tree after deployment/i18n hardening that did not alter measured request/query paths. Results are not presented as a tagged release.
+Last updated: 2026-07-23
+Evidence status: the retained serving-performance scenario is historical evidence for application commit `3b26934ba388b7289c400733a46001d6acae6108`; the clean three-run k6 baseline was executed from documentation-only descendant `feaffdda59244d950578c452beb2a835534e2a68`. The load/Lighthouse/browser metrics were not rerun for the current lead/chat working tree and are not claimed as current-release measurements. Bundle evidence below was regenerated from the current working tree. Results are not presented as a tagged release.
 
 ## Reporting rules
 
@@ -26,13 +26,13 @@ Raw local artifacts are written under `benchmarks/results/` by the documented sc
 
 ## Frontend bundle
 
-Production output was compressed with Node zlib gzip level 9 and Brotli quality 11. Evidence: `benchmarks/results/bundle-report.json`, generated `2026-07-22T18:46:48.199Z`.
+Production output was compressed with Node zlib gzip level 9 and Brotli quality 11. Evidence: `benchmarks/results/bundle-report.json`, generated `2026-07-23T01:19:58.842Z`.
 
 | Metric | Measured | Target | Status |
 | --- | ---: | ---: | --- |
-| Initial JS + CSS, Brotli | 92,243 B / 90.1 KiB | ≤350 KiB | Pass |
-| Largest ordinary lazy app chunk, Brotli | 21,044 B / 20.6 KiB | ≤200 KiB | Pass |
-| Lazy AG Grid Community chunk, Brotli | 170,601 B / 166.6 KiB | lazy and documented | Pass |
+| Initial JS + CSS, Brotli | 92,780 B / 90.6 KiB | ≤350 KiB | Pass |
+| Largest ordinary lazy app chunk, Brotli | 20,399 B / 19.9 KiB | ≤200 KiB | Pass |
+| Lazy AG Grid Community chunk, Brotli | 170,632 B / 166.6 KiB | lazy and documented | Pass |
 | Optional lazy LiveKit client, Brotli | 116,990 B / 114.2 KiB | optional and lazy | Pass |
 | External font references | 0 | 0 | Pass |
 | Inline event handlers | 0 | 0 | Pass |

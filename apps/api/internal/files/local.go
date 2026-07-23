@@ -176,7 +176,8 @@ func validateMediaType(declared string, contents []byte) (string, error) {
 	if !allowedMediaType(declared) {
 		return "", ErrUnsupportedMedia
 	}
-	if declared != detected && !(detected == "text/plain" && isSafeTextSubtype(declared)) {
+	if declared != detected && !(detected == "text/plain" && isSafeTextSubtype(declared)) &&
+		!sameSafeMediaContainer(declared, detected) {
 		return "", ErrUnsupportedMedia
 	}
 	return declared, nil
@@ -185,12 +186,23 @@ func validateMediaType(declared string, contents []byte) (string, error) {
 func allowedMediaType(mediaType string) bool {
 	switch mediaType {
 	case "application/pdf", "application/json", "application/zip",
+		"application/ogg", "audio/ogg", "audio/webm", "video/ogg", "video/webm",
 		"image/gif", "image/jpeg", "image/png", "image/webp",
 		"text/calendar", "text/csv", "text/plain":
 		return true
 	default:
 		return false
 	}
+}
+
+func sameSafeMediaContainer(declared, detected string) bool {
+	if declared == "audio/webm" || declared == "video/webm" {
+		return detected == "video/webm"
+	}
+	if declared == "audio/ogg" || declared == "video/ogg" || declared == "application/ogg" {
+		return detected == "application/ogg"
+	}
+	return false
 }
 
 func isSafeTextSubtype(mediaType string) bool {

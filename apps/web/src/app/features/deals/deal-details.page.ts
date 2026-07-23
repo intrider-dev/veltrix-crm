@@ -1,5 +1,4 @@
-import type { OnInit } from '@angular/core';
-import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, input, signal } from '@angular/core';
 import { FormField, form, min, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -16,8 +15,10 @@ import { Permissions } from '../../core/auth/permissions';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { AttachmentPanelComponent } from '../../shared/attachments/attachment-panel.component';
 import { RecordAssignmentsComponent } from '../../shared/assignments/record-assignments.component';
+import { CustomFieldEditorComponent } from '../../shared/custom-fields/custom-field-editor.component';
 import { IconComponent } from '../../shared/icon/icon.component';
 import { ErrorPanelComponent } from '../../shared/state/error-panel.component';
+import { EntityChatComponent } from '../chat/entity-chat.component';
 import { DealDetailsStore } from './deal-details.store';
 
 interface DealEditorModel {
@@ -33,6 +34,8 @@ interface DealEditorModel {
   selector: 'app-deal-details-page',
   imports: [
     AttachmentPanelComponent,
+    CustomFieldEditorComponent,
+    EntityChatComponent,
     RecordAssignmentsComponent,
     ErrorPanelComponent,
     FormField,
@@ -127,6 +130,11 @@ interface DealEditorModel {
                     <option value="omitted">{{ i18n.t('sales.forecast.omitted') }}</option>
                   </select>
                 </label>
+                <app-custom-field-editor
+                  entityType="deal"
+                  [values]="customFields()"
+                  (valuesChange)="customFields.set($event)"
+                />
                 <div class="actions">
                   <button mat-flat-button type="submit" [disabled]="store.saving()">
                     {{ i18n.t(store.saving() ? 'web.form.saving' : 'common.action.save') }}
@@ -299,18 +307,20 @@ interface DealEditorModel {
           </section>
         </div>
         <app-attachment-panel entityType="deal" [entityId]="id()" />
+        <app-entity-chat entityType="deal" [entityId]="deal.id" />
       }
     </div>
   `,
   styleUrl: './deal-details.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DealDetailsPage implements OnInit {
+export class DealDetailsPage {
   readonly id = input.required<string>();
   readonly store = inject(DealDetailsStore);
   readonly i18n = inject(I18nService);
   readonly permissions = inject(Permissions);
   readonly actionError = signal<string | null>(null);
+  readonly customFields = signal<Record<string, unknown>>({});
   readonly dealModel = signal<DealEditorModel>({
     name: '',
     amount: 0,
@@ -337,13 +347,10 @@ export class DealDetailsPage implements OnInit {
   readonly taskModel = signal({ title: '', dueAt: '' });
   readonly taskForm = form(this.taskModel, (schema) => required(schema.title));
 
-  ngOnInit(): void {
-    void this.load();
-  }
+  private readonly routeLoad = effect(() => void this.load(this.id()));
 
-  async load(): Promise<void> {
-    await this.store.load(this.id());
-    const deal = this.store.deal();
+  async load(id = this.id()): Promise<void> {
+    const deal = await this.store.load(id);
     if (!deal) return;
     this.dealModel.set({
       name: deal.name,
@@ -354,6 +361,7 @@ export class DealDetailsPage implements OnInit {
       forecastCategory: normalizeForecastCategory(deal.forecastCategory),
     });
     this.outcomeModel.set({ lostReason: deal.lostReason ?? '' });
+    this.customFields.set({ ...deal.customFields });
   }
 
   async save(event: SubmitEvent): Promise<void> {
@@ -377,7 +385,7 @@ export class DealDetailsPage implements OnInit {
       plannedStartDate: value.plannedStartDate || null,
       expectedCloseDate: value.expectedCloseDate || null,
       forecastCategory: value.forecastCategory,
-      customFields: current.customFields,
+      customFields: this.customFields(),
     };
     await this.run(() => this.store.save(body));
   }

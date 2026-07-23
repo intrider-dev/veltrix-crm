@@ -80,7 +80,8 @@ WHERE lead.workspace_id = sqlc.arg(workspace_id)
 RETURNING lead.id, lead.name, lead.email, lead.phone, lead.company_name,
           lead.job_title, lead.source, lead.status, lead.stage_id,
           lead.owner_user_id, lead.team_id, lead.converted_contact_id,
-          lead.converted_company_id, lead.converted_deal_id, lead.custom_fields,
+          lead.converted_company_id, lead.converted_deal_id,
+          lead.planned_start_date, lead.expected_close_date, lead.custom_fields,
           lead.version, lead.created_at, lead.updated_at;
 
 -- name: InsertLeadStageHistory :exec

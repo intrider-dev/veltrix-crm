@@ -5,6 +5,17 @@ INSERT INTO collaboration.calls (
 RETURNING id, conversation_id, call_kind, state, created_by, started_at,
           ended_at, version, created_at, updated_at;
 
+-- name: ExpireStaleConversationCalls :many
+UPDATE collaboration.calls
+SET state = 'ended', ended_at = now(), version = version + 1, updated_at = now()
+WHERE workspace_id = sqlc.arg(workspace_id)
+  AND conversation_id = sqlc.arg(conversation_id)
+  AND (
+    (state = 'ringing' AND created_at < sqlc.arg(ringing_cutoff))
+    OR (state = 'active' AND COALESCE(started_at, created_at) < sqlc.arg(active_cutoff))
+  )
+RETURNING id;
+
 -- name: AddConversationCallParticipants :execrows
 INSERT INTO collaboration.call_participants (workspace_id, call_id, user_id)
 SELECT member.workspace_id, sqlc.arg(call_id), member.user_id
@@ -15,6 +26,9 @@ JOIN tenancy.memberships membership
  AND membership.status = 'active'
 WHERE member.workspace_id = sqlc.arg(workspace_id)
   AND member.conversation_id = sqlc.arg(conversation_id)
+  AND security.chat_entity_conversation_user_allowed(
+    member.workspace_id, member.conversation_id, member.user_id
+  )
 ON CONFLICT DO NOTHING;
 
 -- name: GetCallForParticipant :one
@@ -30,10 +44,15 @@ WHERE call.workspace_id = sqlc.arg(workspace_id)
   AND call.id = sqlc.arg(call_id);
 
 -- name: ListCallParticipantUserIDs :many
-SELECT user_id
-FROM collaboration.call_participants
-WHERE workspace_id = $1 AND call_id = $2
-ORDER BY user_id;
+SELECT participant.user_id
+FROM collaboration.call_participants participant
+JOIN collaboration.calls call
+  ON call.workspace_id = participant.workspace_id AND call.id = participant.call_id
+WHERE participant.workspace_id = $1 AND participant.call_id = $2
+  AND security.chat_entity_conversation_user_allowed(
+    participant.workspace_id, call.conversation_id, participant.user_id
+  )
+ORDER BY participant.user_id;
 
 -- name: JoinCallParticipant :one
 UPDATE collaboration.call_participants
@@ -76,4 +95,5 @@ UPDATE collaboration.call_participants
 SET state = CASE WHEN state = 'joined' THEN 'left' ELSE state END,
     left_at = CASE WHEN state = 'joined' THEN now() ELSE left_at END,
     updated_at = now()
-WHERE workspace_id = $1 AND call_id = $2;
+WHERE workspace_id = $1 AND call_id = $2
+  AND security.chat_call_user_allowed(workspace_id, call_id, user_id);

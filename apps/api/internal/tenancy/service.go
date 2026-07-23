@@ -142,6 +142,35 @@ func (service *Service) WithWorkspace(
 	permission Permission,
 	fn func(*WorkspaceTx) error,
 ) error {
+	return service.withWorkspace(ctx, principal, workspaceID, requestID, []Permission{permission}, fn)
+}
+
+// WithWorkspaceAny opens a tenant transaction when the active member has at
+// least one of the supplied capabilities. It is used by shared resources such
+// as a conversation that can be reached from records.read, leads.read, or
+// deals.read without weakening the entity-specific checks inside that resource.
+func (service *Service) WithWorkspaceAny(
+	ctx context.Context,
+	principal identity.Principal,
+	workspaceID ids.UUID,
+	requestID string,
+	permissions []Permission,
+	fn func(*WorkspaceTx) error,
+) error {
+	if len(permissions) == 0 {
+		return errx.ErrForbidden
+	}
+	return service.withWorkspace(ctx, principal, workspaceID, requestID, permissions, fn)
+}
+
+func (service *Service) withWorkspace(
+	ctx context.Context,
+	principal identity.Principal,
+	workspaceID ids.UUID,
+	requestID string,
+	permissions []Permission,
+	fn func(*WorkspaceTx) error,
+) error {
 	tx, err := service.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		return err
@@ -179,7 +208,14 @@ func (service *Service) WithWorkspace(
 	for _, grant := range authorization.Permissions {
 		effective[Permission(grant)] = struct{}{}
 	}
-	if _, allowed := effective[permission]; !allowed {
+	allowed := false
+	for _, permission := range permissions {
+		if _, exists := effective[permission]; exists {
+			allowed = true
+			break
+		}
+	}
+	if !allowed {
 		return errx.ErrForbidden
 	}
 	if err := fn(&WorkspaceTx{Tx: tx, Queries: queries, Membership: membership, Permissions: effective}); err != nil {

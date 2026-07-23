@@ -31,6 +31,11 @@ type Call struct {
 
 type Service struct{ provider Provider }
 
+const (
+	ringingCallLifetime = 2 * time.Minute
+	activeCallLifetime  = 4 * time.Hour
+)
+
 func NewService(provider Provider) *Service {
 	if provider == nil {
 		provider = DisabledProvider{}
@@ -58,6 +63,39 @@ func (service *Service) Create(
 	}
 	if !member {
 		return Call{}, errx.ErrNotFound
+	}
+	now := time.Now().UTC()
+	expired, err := workspace.Queries.ExpireStaleConversationCalls(ctx,
+		dbgen.ExpireStaleConversationCallsParams{
+			WorkspaceID: metadata.WorkspaceID.PG(), ConversationID: conversationID.PG(),
+			RingingCutoff: pgtype.Timestamptz{Time: now.Add(-ringingCallLifetime), Valid: true},
+			ActiveCutoff:  pgtype.Timestamptz{Time: now.Add(-activeCallLifetime), Valid: true},
+		})
+	if err != nil {
+		return Call{}, fmt.Errorf("expire stale conversation calls: %w", err)
+	}
+	for _, rawExpiredID := range expired {
+		expiredID, valid := ids.FromPG(rawExpiredID)
+		if !valid {
+			return Call{}, errors.New("invalid expired call identifier")
+		}
+		recipients, recipientErr := service.participants(ctx, workspace, metadata.WorkspaceID, expiredID)
+		if recipientErr != nil {
+			return Call{}, recipientErr
+		}
+		if participantErr := workspace.Queries.EndCallParticipants(ctx, dbgen.EndCallParticipantsParams{
+			WorkspaceID: metadata.WorkspaceID.PG(), CallID: expiredID.PG(),
+		}); participantErr != nil {
+			return Call{}, fmt.Errorf("end expired call participants: %w", participantErr)
+		}
+		if eventErr := events.RecordTargeted(ctx, workspace.Queries, metadata, events.Mutation{
+			Action: "call.expired", EventType: "call.ended", AggregateType: "call", AggregateID: expiredID,
+			Summary: map[string]any{"reason": "timeout"}, Payload: map[string]any{
+				"callId": expiredID.String(), "conversationId": conversationID.String(), "reason": "timeout",
+			},
+		}, recipients); eventErr != nil {
+			return Call{}, eventErr
+		}
 	}
 	callID, err := ids.NewV7()
 	if err != nil {

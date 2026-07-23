@@ -87,6 +87,32 @@ func (service *Service) Upload(
 	if !exists {
 		return UploadResult{}, validation("/entityId", "validation.reference.invalid")
 	}
+	if input.EntityType == "chat_message" {
+		owned, ownerErr := workspace.Queries.ChatMessageOwnedByActor(ctx, dbgen.ChatMessageOwnedByActorParams{
+			WorkspaceID: metadata.WorkspaceID.PG(), MessageID: input.EntityID.PG(), ActorUserID: metadata.ActorID.PG(),
+		})
+		if ownerErr != nil {
+			return UploadResult{}, fmt.Errorf("authorize chat attachment sender: %w", ownerErr)
+		}
+		if !owned {
+			return UploadResult{}, errx.ErrForbidden
+		}
+		if _, lockErr := workspace.Tx.Exec(ctx,
+			"SELECT pg_advisory_xact_lock(hashtextextended($1, 0))",
+			metadata.WorkspaceID.String()+":"+input.EntityID.String()+":chat-attachment"); lockErr != nil {
+			return UploadResult{}, fmt.Errorf("lock chat attachment: %w", lockErr)
+		}
+		existing, listErr := workspace.Queries.ListEntityAttachments(ctx, dbgen.ListEntityAttachmentsParams{
+			WorkspaceID: metadata.WorkspaceID.PG(), EntityType: "chat_message",
+			EntityID: input.EntityID.PG(), PageLimit: 1,
+		})
+		if listErr != nil {
+			return UploadResult{}, fmt.Errorf("find existing chat attachment: %w", listErr)
+		}
+		if len(existing) > 0 {
+			return UploadResult{Attachment: existing[0]}, nil
+		}
+	}
 	attachmentID, err := ids.NewV7()
 	if err != nil {
 		return UploadResult{}, err
@@ -119,7 +145,12 @@ func (service *Service) Upload(
 	if err != nil {
 		return UploadResult{}, fmt.Errorf("record attachment: %w", err)
 	}
-	if err := events.Record(ctx, workspace.Queries, metadata, events.Mutation{
+	if input.EntityType == "chat_message" {
+		if err := recordChatAttachmentEvent(ctx, workspace, metadata, "attachment.created", attachmentID, input.EntityID,
+			blob.MediaType, blob.SizeBytes); err != nil {
+			return UploadResult{}, err
+		}
+	} else if err := events.Record(ctx, workspace.Queries, metadata, events.Mutation{
 		Action: "attachment.created", EventType: "files.attachment.created", AggregateType: "attachment", AggregateID: attachmentID,
 		Summary: map[string]any{"entityType": input.EntityType, "entityId": input.EntityID.String(), "mediaType": blob.MediaType, "sizeBytes": blob.SizeBytes},
 		Payload: map[string]any{"attachmentId": attachmentID.String(), "entityType": input.EntityType, "entityId": input.EntityID.String()},
@@ -128,6 +159,45 @@ func (service *Service) Upload(
 	}
 	keepBlob = true
 	return UploadResult{Attachment: row, StorageKey: storageKey}, nil
+}
+
+func recordChatAttachmentEvent(
+	ctx context.Context, workspace *tenancy.WorkspaceTx, metadata events.Metadata,
+	action string, attachmentID, messageID ids.UUID, mediaType string, sizeBytes int64,
+) error {
+	conversationRaw, err := workspace.Queries.GetChatMessageConversation(ctx, dbgen.GetChatMessageConversationParams{
+		WorkspaceID: metadata.WorkspaceID.PG(), MessageID: messageID.PG(),
+	})
+	if err != nil {
+		return fmt.Errorf("resolve chat attachment conversation: %w", err)
+	}
+	conversationID, ok := ids.FromPG(conversationRaw)
+	if !ok {
+		return errors.New("invalid chat attachment conversation")
+	}
+	recipients, err := workspace.Queries.ListConversationRecipientIDs(ctx, dbgen.ListConversationRecipientIDsParams{
+		WorkspaceID: metadata.WorkspaceID.PG(), ConversationID: conversationID.PG(),
+	})
+	if err != nil {
+		return fmt.Errorf("list chat attachment recipients: %w", err)
+	}
+	authorizedRecipients := make([]ids.UUID, 0, len(recipients))
+	for _, rawRecipient := range recipients {
+		recipient, valid := ids.FromPG(rawRecipient)
+		if !valid {
+			return errors.New("invalid chat attachment recipient")
+		}
+		authorizedRecipients = append(authorizedRecipients, recipient)
+	}
+	return events.RecordTargeted(ctx, workspace.Queries, metadata, events.Mutation{
+		Action: action, EventType: "chat.message.created",
+		AggregateType: "attachment", AggregateID: attachmentID,
+		Summary: map[string]any{"entityType": "chat_message", "mediaType": mediaType, "sizeBytes": sizeBytes},
+		Payload: map[string]any{
+			"conversationId": conversationID.String(), "messageId": messageID.String(),
+			"attachmentId": attachmentID.String(),
+		},
+	}, authorizedRecipients)
 }
 
 func (service *Service) List(
@@ -239,9 +309,14 @@ func (service *Service) MarkDeleted(
 	if err != nil {
 		return "", fmt.Errorf("delete attachment metadata: %w", err)
 	}
-	if err := events.Record(ctx, workspace.Queries, metadata, events.Mutation{
+	if existing.EntityType == "chat_message" {
+		if err := recordChatAttachmentEvent(ctx, workspace, metadata, "attachment.deleted",
+			attachmentID, entityID, existing.MediaType, existing.SizeBytes); err != nil {
+			return "", err
+		}
+	} else if err := events.Record(ctx, workspace.Queries, metadata, events.Mutation{
 		Action: "attachment.deleted", EventType: "files.attachment.deleted", AggregateType: "attachment", AggregateID: attachmentID,
-		Summary: map[string]any{"storageBackend": row.StorageBackend}, Payload: map[string]any{"attachmentId": attachmentID.String(), "storageKey": row.StorageKey},
+		Summary: map[string]any{"storageBackend": row.StorageBackend}, Payload: map[string]any{"attachmentId": attachmentID.String(), "entityType": existing.EntityType, "entityId": entityID.String()},
 	}); err != nil {
 		return "", err
 	}

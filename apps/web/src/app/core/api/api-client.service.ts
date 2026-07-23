@@ -107,6 +107,7 @@ import type {
   ProjectPage,
   RecordAssignmentInput,
   RecordAssignmentSet,
+  ReferenceUser,
   RecoveryCodes,
   RegisteredUser,
   SavedView,
@@ -861,16 +862,37 @@ export class ApiClient {
     );
   }
 
+  resolveEntityConversation(
+    workspaceId: string,
+    entityType: 'lead' | 'deal',
+    entityId: string,
+  ): Promise<ChatConversation> {
+    return this.request(
+      this.http.put<ChatConversation>(
+        this.workspaceUrl(
+          workspaceId,
+          `entity-conversations/${entityType}/${encodeURIComponent(entityId)}`,
+        ),
+        null,
+      ),
+    );
+  }
+
   callConfig(workspaceId: string): Promise<CallConfig> {
     return this.request(this.http.get<CallConfig>(this.workspaceUrl(workspaceId, 'calls/config')));
   }
 
-  createCall(workspaceId: string, conversationId: string, kind: 'audio' | 'video'): Promise<Call> {
+  createCall(
+    workspaceId: string,
+    conversationId: string,
+    kind: 'audio' | 'video',
+    idempotencyKey: string,
+  ): Promise<Call> {
     return this.request(
       this.http.post<Call>(
         this.workspaceUrl(workspaceId, `conversations/${encodeURIComponent(conversationId)}/calls`),
         { kind },
-        { headers: { 'Idempotency-Key': crypto.randomUUID() } },
+        { headers: { 'Idempotency-Key': idempotencyKey } },
       ),
     );
   }
@@ -925,13 +947,21 @@ export class ApiClient {
     );
   }
 
-  listChatAttachments(workspaceId: string, conversationId: string): Promise<ChatAttachment[]> {
+  listChatAttachments(
+    workspaceId: string,
+    conversationId: string,
+    messageIds: readonly string[],
+  ): Promise<ChatAttachment[]> {
+    let params = new HttpParams();
+    for (const messageId of messageIds.slice(0, 100))
+      params = params.append('messageId', messageId);
     return this.request(
       this.http.get<ChatAttachment[]>(
         this.workspaceUrl(
           workspaceId,
           `conversations/${encodeURIComponent(conversationId)}/attachments`,
         ),
+        { params },
       ),
     );
   }
@@ -940,6 +970,7 @@ export class ApiClient {
     workspaceId: string,
     conversationId: string,
     body: CreateChatMessage,
+    idempotencyKey: string = crypto.randomUUID(),
   ): Promise<ChatMessage> {
     return this.request(
       this.http.post<ChatMessage>(
@@ -948,7 +979,15 @@ export class ApiClient {
           `conversations/${encodeURIComponent(conversationId)}/messages`,
         ),
         body,
-        { headers: { 'Idempotency-Key': crypto.randomUUID() } },
+        { headers: { 'Idempotency-Key': idempotencyKey } },
+      ),
+    );
+  }
+
+  deleteProvisionalChatMessage(workspaceId: string, messageId: string): Promise<void> {
+    return this.request(
+      this.http.delete<void>(
+        this.workspaceUrl(workspaceId, `chat/messages/${encodeURIComponent(messageId)}`),
       ),
     );
   }
@@ -1122,11 +1161,18 @@ export class ApiClient {
 
   listLeads(
     workspaceId: string,
-    options: { query?: string; status?: string; cursor?: string; limit?: number } = {},
+    options: {
+      query?: string;
+      status?: string;
+      stageId?: string;
+      cursor?: string;
+      limit?: number;
+    } = {},
   ): Promise<LeadPage> {
     let params = new HttpParams();
     if (options.query) params = params.set('query', options.query);
     if (options.status) params = params.set('status', options.status);
+    if (options.stageId) params = params.set('stageId', options.stageId);
     if (options.cursor) params = params.set('cursor', options.cursor);
     if (options.limit) params = params.set('limit', options.limit);
     return this.request(
@@ -1197,6 +1243,14 @@ export class ApiClient {
     );
   }
 
+  getLead(workspaceId: string, leadId: string): Promise<VersionedResponse<Lead>> {
+    return this.response(
+      this.http.get<Lead>(this.workspaceUrl(workspaceId, `leads/${leadId}`), {
+        observe: 'response',
+      }),
+    );
+  }
+
   updateLead(workspaceId: string, lead: Lead, body: LeadInput): Promise<Lead> {
     return this.request(
       this.http.put<Lead>(this.workspaceUrl(workspaceId, `leads/${lead.id}`), body, {
@@ -1215,8 +1269,12 @@ export class ApiClient {
     );
   }
 
-  convertLead(workspaceId: string, lead: Lead): Promise<LeadConversion> {
+  async convertLead(workspaceId: string, lead: Lead): Promise<LeadConversion> {
     const name = lead.name.trim().split(/\s+/);
+    const pipelines = await this.listPipelines(workspaceId);
+    const pipeline = pipelines.find((item) => item.isDefault) ?? pipelines[0];
+    const stage = pipeline?.stages[0];
+    if (!pipeline || !stage) throw new Error('No deal pipeline is configured');
     return this.request(
       this.http.post<LeadConversion>(
         this.workspaceUrl(workspaceId, `leads/${lead.id}/convert`),
@@ -1224,12 +1282,20 @@ export class ApiClient {
           createContact: true,
           contact: {
             firstName: name[0] ?? '',
-            lastName: name.slice(1).join(' '),
+            lastName: name.slice(1).join(' ') || name[0] || '-',
             email: lead.email,
             phone: lead.phone,
             jobTitle: lead.jobTitle,
           },
           createCompany: Boolean(lead.companyName),
+          deal: {
+            name: lead.name,
+            pipelineId: pipeline.id,
+            stageId: stage.id,
+            amountMinor: 0,
+            currency: 'USD',
+            expectedCloseDate: lead.expectedCloseDate ?? null,
+          },
         },
         {
           headers: {
@@ -1595,6 +1661,12 @@ export class ApiClient {
       this.http.get<CustomFieldDefinition[]>(this.workspaceUrl(workspaceId, 'custom-fields'), {
         params,
       }),
+    );
+  }
+
+  listReferenceUsers(workspaceId: string): Promise<ReferenceUser[]> {
+    return this.request(
+      this.http.get<ReferenceUser[]>(this.workspaceUrl(workspaceId, 'reference-users')),
     );
   }
 

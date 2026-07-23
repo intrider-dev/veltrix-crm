@@ -30,8 +30,8 @@ func (application *Application) callConfig(writer http.ResponseWriter, request *
 		return
 	}
 	principal, _ := httpx.Principal(request.Context())
-	err = application.tenancy.WithWorkspace(request.Context(), principal, workspaceID,
-		httpx.RequestID(request.Context()), tenancy.PermissionRecordsRead,
+	err = application.tenancy.WithWorkspaceAny(request.Context(), principal, workspaceID,
+		httpx.RequestID(request.Context()), chatAccessPermissions(),
 		func(*tenancy.WorkspaceTx) error { return nil })
 	if writeError(application, writer, request, err) {
 		return
@@ -53,8 +53,8 @@ func (application *Application) createCall(writer http.ResponseWriter, request *
 		httpx.WriteProblem(writer, request, application.logger, errx.ErrRateLimited)
 		return
 	}
-	application.runIdempotent(writer, request, workspaceID, tenancy.PermissionRecordsRead,
-		"calls.create", raw, http.StatusCreated,
+	application.runIdempotentAny(writer, request, workspaceID, chatAccessPermissions(),
+		"calls.create:"+conversationID.String(), raw, http.StatusCreated,
 		func(workspace *tenancy.WorkspaceTx, eventMetadata events.Metadata) (any, int64, error) {
 			created, createErr := application.calls.Create(
 				request.Context(), workspace, eventMetadata, conversationID, string(body.Kind),
@@ -78,8 +78,8 @@ func (application *Application) joinCall(writer http.ResponseWriter, request *ht
 	}
 	principal, _ := httpx.Principal(request.Context())
 	var response any
-	err := application.tenancy.WithWorkspace(request.Context(), principal, workspaceID,
-		httpx.RequestID(request.Context()), tenancy.PermissionRecordsRead,
+	err := application.tenancy.WithWorkspaceAny(request.Context(), principal, workspaceID,
+		httpx.RequestID(request.Context()), chatAccessPermissions(),
 		func(workspace *tenancy.WorkspaceTx) error {
 			call, grant, joinErr := application.calls.Join(request.Context(), workspace,
 				workspaceID, callID, principal.UserID, principal.DisplayName)
@@ -118,8 +118,8 @@ func (application *Application) mutateCallParticipant(
 		return
 	}
 	principal, _ := httpx.Principal(request.Context())
-	err := application.tenancy.WithWorkspace(request.Context(), principal, workspaceID,
-		httpx.RequestID(request.Context()), tenancy.PermissionRecordsRead,
+	err := application.tenancy.WithWorkspaceAny(request.Context(), principal, workspaceID,
+		httpx.RequestID(request.Context()), chatAccessPermissions(),
 		func(workspace *tenancy.WorkspaceTx) error {
 			return mutation(request.Context(), workspace, workspaceID, callID, principal.UserID)
 		})
@@ -136,8 +136,8 @@ func (application *Application) endCall(writer http.ResponseWriter, request *htt
 	}
 	principal, _ := httpx.Principal(request.Context())
 	var result any
-	err := application.tenancy.WithWorkspace(request.Context(), principal, workspaceID,
-		httpx.RequestID(request.Context()), tenancy.PermissionRecordsRead,
+	err := application.tenancy.WithWorkspaceAny(request.Context(), principal, workspaceID,
+		httpx.RequestID(request.Context()), chatAccessPermissions(),
 		func(workspace *tenancy.WorkspaceTx) error {
 			ended, endErr := application.calls.End(request.Context(), workspace, metadata(request, workspaceID, principal), callID)
 			result = ended
@@ -159,8 +159,8 @@ func (application *Application) withCall(
 	}
 	principal, _ := httpx.Principal(request.Context())
 	var result any
-	err := application.tenancy.WithWorkspace(request.Context(), principal, workspaceID,
-		httpx.RequestID(request.Context()), tenancy.PermissionRecordsRead,
+	err := application.tenancy.WithWorkspaceAny(request.Context(), principal, workspaceID,
+		httpx.RequestID(request.Context()), chatAccessPermissions(),
 		func(workspace *tenancy.WorkspaceTx) error {
 			var loadErr error
 			result, loadErr = load(workspace, workspaceID, callID, principal.UserID)

@@ -203,6 +203,58 @@ WHERE workspace_id=$2 AND call_id=$3 AND user_id=$4
 	}
 	_ = participantTx.Rollback(ctx)
 
+	if _, err := admin.Exec(ctx, `INSERT INTO collaboration.conversation_members
+		(workspace_id,conversation_id,user_id,member_role) VALUES($1,$2,$3,'member')`,
+		workspaceID.PG(), conversationID.PG(), outsider.PG()); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := admin.Exec(ctx, `INSERT INTO collaboration.call_participants
+		(workspace_id,call_id,user_id) VALUES($1,$2,$3)`,
+		workspaceID.PG(), created.ID.PG(), outsider.PG()); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := admin.Exec(ctx, `UPDATE tenancy.memberships SET status='disabled',updated_at=now()
+		WHERE workspace_id=$1 AND user_id=$2`, workspaceID.PG(), outsider.PG()); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := admin.Exec(ctx, `UPDATE collaboration.calls
+		SET state='active',started_at=now()-interval '5 hours',updated_at=now()-interval '5 hours'
+		WHERE workspace_id=$1 AND id=$2`, workspaceID.PG(), created.ID.PG()); err != nil {
+		t.Fatal(err)
+	}
+	var replacement calls.Call
+	err = tenantService.WithWorkspace(ctx, callerPrincipal, workspaceID, "call-stale-recovery",
+		tenancy.PermissionRecordsRead, func(workspace *tenancy.WorkspaceTx) error {
+			var createErr error
+			replacement, createErr = callService.Create(ctx, workspace, events.Metadata{
+				WorkspaceID: workspaceID, ActorID: caller, RequestID: "call-stale-recovery",
+			}, conversationID, "audio")
+			return createErr
+		})
+	if err != nil {
+		t.Fatalf("create replacement after stale call: %v", err)
+	}
+	if replacement.ID == created.ID {
+		t.Fatal("stale call recovery replayed the expired call")
+	}
+	var expiredState string
+	if err := admin.QueryRow(ctx, `SELECT state FROM collaboration.calls
+		WHERE workspace_id=$1 AND id=$2`, workspaceID.PG(), created.ID.PG()).Scan(&expiredState); err != nil {
+		t.Fatal(err)
+	}
+	if expiredState != "ended" {
+		t.Fatalf("stale call state=%q, want ended", expiredState)
+	}
+	var revokedState string
+	if err := admin.QueryRow(ctx, `SELECT state FROM collaboration.call_participants
+		WHERE workspace_id=$1 AND call_id=$2 AND user_id=$3`,
+		workspaceID.PG(), created.ID.PG(), outsider.PG()).Scan(&revokedState); err != nil {
+		t.Fatal(err)
+	}
+	if revokedState != "invited" {
+		t.Fatalf("revoked participant was unexpectedly mutated through RLS: %q", revokedState)
+	}
+
 	var count int
 	var recipientsOnly, tokenAbsent bool
 	if err := admin.QueryRow(ctx, `

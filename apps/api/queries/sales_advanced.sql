@@ -89,7 +89,8 @@ RETURNING stage.id, stage.pipeline_id;
 -- name: ListLeadsAdvanced :many
 SELECT id, name, email, phone, company_name, job_title, source, status, stage_id,
        owner_user_id, team_id, converted_contact_id, converted_company_id,
-       converted_deal_id, custom_fields, version, created_at, updated_at
+       converted_deal_id, planned_start_date, expected_close_date,
+       custom_fields, version, created_at, updated_at
 FROM sales.leads lead
 WHERE lead.workspace_id = sqlc.arg(workspace_id)
   AND lead.deleted_at IS NULL
@@ -99,6 +100,7 @@ WHERE lead.workspace_id = sqlc.arg(workspace_id)
        OR COALESCE(lead.company_name, '') ILIKE '%' || sqlc.arg(search_query) || '%')
   AND (sqlc.arg(status_filter)::text = '' OR lead.status = sqlc.arg(status_filter))
   AND (sqlc.arg(owner_id)::uuid IS NULL OR lead.owner_user_id = sqlc.arg(owner_id))
+  AND (sqlc.arg(stage_filter)::uuid IS NULL OR lead.stage_id = sqlc.arg(stage_filter))
   AND (lead.updated_at, lead.id) < (sqlc.arg(cursor_updated_at)::timestamptz, sqlc.arg(cursor_id)::uuid)
 ORDER BY lead.updated_at DESC, lead.id DESC
 LIMIT sqlc.arg(page_limit);
@@ -106,7 +108,8 @@ LIMIT sqlc.arg(page_limit);
 -- name: GetLeadAdvanced :one
 SELECT id, name, email, phone, company_name, job_title, source, status, stage_id,
        owner_user_id, team_id, converted_contact_id, converted_company_id,
-       converted_deal_id, custom_fields, version, deleted_at, deleted_by,
+       converted_deal_id, planned_start_date, expected_close_date,
+       custom_fields, version, deleted_at, deleted_by,
        created_at, updated_at
 FROM sales.leads lead
 WHERE lead.workspace_id = $1 AND lead.id = $2 AND lead.deleted_at IS NULL
@@ -115,23 +118,27 @@ WHERE lead.workspace_id = $1 AND lead.id = $2 AND lead.deleted_at IS NULL
 -- name: CreateLeadAdvanced :one
 INSERT INTO sales.leads (
   workspace_id, id, name, email, email_normalized, phone, phone_normalized,
-  company_name, job_title, source, status, stage_id, owner_user_id, team_id, custom_fields
-) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+  company_name, job_title, source, status, stage_id, owner_user_id, team_id,
+  planned_start_date, expected_close_date, custom_fields
+) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
 RETURNING id, name, email, phone, company_name, job_title, source, status, stage_id,
           owner_user_id, team_id, converted_contact_id, converted_company_id,
-          converted_deal_id, custom_fields, version, created_at, updated_at;
+          converted_deal_id, planned_start_date, expected_close_date,
+          custom_fields, version, created_at, updated_at;
 
 -- name: UpdateLeadAdvanced :one
 UPDATE sales.leads
 SET name = $3, email = $4, email_normalized = $5, phone = $6,
     phone_normalized = $7, company_name = $8, job_title = $9, source = $10,
-    status = $11, stage_id = $12, owner_user_id = $13, team_id = $14, custom_fields = $15,
+    status = $11, stage_id = $12, owner_user_id = $13, team_id = $14,
+    planned_start_date = $15, expected_close_date = $16, custom_fields = $17,
     version = version + 1, updated_at = now()
-WHERE workspace_id = $1 AND id = $2 AND version = $16 AND deleted_at IS NULL
+WHERE workspace_id = $1 AND id = $2 AND version = $18 AND deleted_at IS NULL
   AND status <> 'converted'
 RETURNING id, name, email, phone, company_name, job_title, source, status, stage_id,
           owner_user_id, team_id, converted_contact_id, converted_company_id,
-          converted_deal_id, custom_fields, version, created_at, updated_at;
+          converted_deal_id, planned_start_date, expected_close_date,
+          custom_fields, version, created_at, updated_at;
 
 -- name: SoftDeleteLead :one
 UPDATE sales.leads
@@ -145,7 +152,8 @@ SET deleted_at = NULL, deleted_by = NULL, version = version + 1, updated_at = no
 WHERE workspace_id = $1 AND id = $2 AND version = $3 AND deleted_at IS NOT NULL
 RETURNING id, name, email, phone, company_name, job_title, source, status, stage_id,
           owner_user_id, team_id, converted_contact_id, converted_company_id,
-          converted_deal_id, custom_fields, version, created_at, updated_at;
+          converted_deal_id, planned_start_date, expected_close_date,
+          custom_fields, version, created_at, updated_at;
 
 -- name: ListLeadTrash :many
 SELECT id, name, email, company_name, status, owner_user_id, version, deleted_at,
@@ -170,7 +178,8 @@ WHERE sales.leads.workspace_id = $1 AND sales.leads.id = $2
   AND sales.leads.status <> 'converted'
 RETURNING id, name, email, phone, company_name, job_title, source, status, stage_id,
           owner_user_id, team_id, converted_contact_id, converted_company_id,
-          converted_deal_id, custom_fields, version, created_at, updated_at;
+          converted_deal_id, planned_start_date, expected_close_date,
+          custom_fields, version, created_at, updated_at;
 
 -- name: ListDealsAdvanced :many
 SELECT id, pipeline_id, stage_id, name, contact_id, company_id, owner_user_id,

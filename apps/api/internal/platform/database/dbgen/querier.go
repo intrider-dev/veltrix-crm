@@ -31,6 +31,7 @@ type Querier interface {
 	BumpProjectAssignmentsVersion(ctx context.Context, arg BumpProjectAssignmentsVersionParams) (int64, error)
 	CancelActivityReminder(ctx context.Context, arg CancelActivityReminderParams) (int64, error)
 	CancelRateLimitedAutomationExecution(ctx context.Context, arg CancelRateLimitedAutomationExecutionParams) (int64, error)
+	ChatMessageOwnedByActor(ctx context.Context, arg ChatMessageOwnedByActorParams) (bool, error)
 	ChatMessageVisible(ctx context.Context, arg ChatMessageVisibleParams) (bool, error)
 	ClaimJob(ctx context.Context, arg ClaimJobParams) (ClaimJobRow, error)
 	ClaimMailboxOutgoingDelivery(ctx context.Context, arg ClaimMailboxOutgoingDeliveryParams) (MailboxOutgoingMessage, error)
@@ -51,6 +52,7 @@ type Querier interface {
 	CountActiveContacts(ctx context.Context, workspaceID pgtype.UUID) (int64, error)
 	CountActiveMentionedUsers(ctx context.Context, arg CountActiveMentionedUsersParams) (int32, error)
 	CountActiveOwners(ctx context.Context, workspaceID pgtype.UUID) (int64, error)
+	CountConversationMembers(ctx context.Context, arg CountConversationMembersParams) (int32, error)
 	CountPipelineStages(ctx context.Context, arg CountPipelineStagesParams) (int64, error)
 	CountPipelines(ctx context.Context, workspaceID pgtype.UUID) (int64, error)
 	CreateAPIKey(ctx context.Context, arg CreateAPIKeyParams) (CreateAPIKeyRow, error)
@@ -111,6 +113,7 @@ type Querier interface {
 	DeleteLeadStage(ctx context.Context, arg DeleteLeadStageParams) (int64, error)
 	DeleteLeadStageRoleAccess(ctx context.Context, arg DeleteLeadStageRoleAccessParams) error
 	DeleteMailboxAccount(ctx context.Context, arg DeleteMailboxAccountParams) (int64, error)
+	DeleteOwnUnattachedMediaMessage(ctx context.Context, arg DeleteOwnUnattachedMediaMessageParams) (pgtype.UUID, error)
 	DeletePasswordResetToken(ctx context.Context, id pgtype.UUID) error
 	DeletePipelineAdvanced(ctx context.Context, arg DeletePipelineAdvancedParams) (pgtype.UUID, error)
 	DeletePipelineStageAdvanced(ctx context.Context, arg DeletePipelineStageAdvancedParams) (DeletePipelineStageAdvancedRow, error)
@@ -129,11 +132,13 @@ type Querier interface {
 	EnqueueMailboxOutgoingDelivery(ctx context.Context, arg EnqueueMailboxOutgoingDeliveryParams) error
 	EnqueueNotificationEmailJob(ctx context.Context, arg EnqueueNotificationEmailJobParams) error
 	EnqueueWebhookDelivery(ctx context.Context, arg EnqueueWebhookDeliveryParams) error
+	ExpireStaleConversationCalls(ctx context.Context, arg ExpireStaleConversationCallsParams) ([]pgtype.UUID, error)
 	FailAutomationAction(ctx context.Context, arg FailAutomationActionParams) (int64, error)
 	FailAutomationExecution(ctx context.Context, arg FailAutomationExecutionParams) (int64, error)
 	FailJob(ctx context.Context, arg FailJobParams) (FailJobRow, error)
 	FailWebhookDelivery(ctx context.Context, arg FailWebhookDeliveryParams) (int64, error)
 	FindDirectConversation(ctx context.Context, arg FindDirectConversationParams) (pgtype.UUID, error)
+	FindEntityConversation(ctx context.Context, arg FindEntityConversationParams) (pgtype.UUID, error)
 	GetAPIKeyForAuthentication(ctx context.Context, arg GetAPIKeyForAuthenticationParams) (GetAPIKeyForAuthenticationRow, error)
 	GetActiveMembership(ctx context.Context, arg GetActiveMembershipParams) (TenancyMembership, error)
 	GetActivity(ctx context.Context, arg GetActivityParams) (GetActivityRow, error)
@@ -145,6 +150,7 @@ type Querier interface {
 	GetAutomationOutboxEvent(ctx context.Context, arg GetAutomationOutboxEventParams) (GetAutomationOutboxEventRow, error)
 	GetAutomationRule(ctx context.Context, arg GetAutomationRuleParams) (GetAutomationRuleRow, error)
 	GetCallForParticipant(ctx context.Context, arg GetCallForParticipantParams) (GetCallForParticipantRow, error)
+	GetChatMessageConversation(ctx context.Context, arg GetChatMessageConversationParams) (pgtype.UUID, error)
 	GetCompany(ctx context.Context, arg GetCompanyParams) (GetCompanyRow, error)
 	GetCompanyAutomationSnapshot(ctx context.Context, arg GetCompanyAutomationSnapshotParams) ([]byte, error)
 	GetCompanySearchSource(ctx context.Context, arg GetCompanySearchSourceParams) (GetCompanySearchSourceRow, error)
@@ -208,10 +214,12 @@ type Querier interface {
 	InsertUserSSEEvent(ctx context.Context, arg InsertUserSSEEventParams) error
 	InsertWorkspaceRolePermissions(ctx context.Context, arg InsertWorkspaceRolePermissionsParams) error
 	IsMFAEnabled(ctx context.Context, userID pgtype.UUID) (bool, error)
+	IsOwnDeletedMediaMessage(ctx context.Context, arg IsOwnDeletedMediaMessageParams) (bool, error)
 	JoinCallParticipant(ctx context.Context, arg JoinCallParticipantParams) (JoinCallParticipantRow, error)
 	LeadStageAccessAllowed(ctx context.Context, arg LeadStageAccessAllowedParams) (bool, error)
 	LeadStageTransitionAllowed(ctx context.Context, arg LeadStageTransitionAllowedParams) (bool, error)
 	LeaveCallParticipant(ctx context.Context, arg LeaveCallParticipantParams) (int64, error)
+	LinkEntityConversation(ctx context.Context, arg LinkEntityConversationParams) error
 	ListAPIKeys(ctx context.Context, arg ListAPIKeysParams) ([]ListAPIKeysRow, error)
 	ListActivities(ctx context.Context, arg ListActivitiesParams) ([]ListActivitiesRow, error)
 	ListActivityAssignmentUserIDs(ctx context.Context, arg ListActivityAssignmentUserIDsParams) ([]pgtype.UUID, error)

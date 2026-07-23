@@ -57,17 +57,19 @@ type StageOrderItem struct {
 }
 
 type LeadInput struct {
-	Name         string         `json:"name"`
-	Email        *string        `json:"email"`
-	Phone        *string        `json:"phone"`
-	CompanyName  *string        `json:"companyName"`
-	JobTitle     *string        `json:"jobTitle"`
-	Source       *string        `json:"source"`
-	Status       string         `json:"status"`
-	StageID      *ids.UUID      `json:"-"`
-	OwnerID      *ids.UUID      `json:"-"`
-	TeamID       *ids.UUID      `json:"-"`
-	CustomFields map[string]any `json:"customFields"`
+	Name              string         `json:"name"`
+	Email             *string        `json:"email"`
+	Phone             *string        `json:"phone"`
+	CompanyName       *string        `json:"companyName"`
+	JobTitle          *string        `json:"jobTitle"`
+	Source            *string        `json:"source"`
+	Status            string         `json:"status"`
+	StageID           *ids.UUID      `json:"-"`
+	OwnerID           *ids.UUID      `json:"-"`
+	TeamID            *ids.UUID      `json:"-"`
+	PlannedStartDate  *time.Time     `json:"plannedStartDate"`
+	ExpectedCloseDate *time.Time     `json:"expectedCloseDate"`
+	CustomFields      map[string]any `json:"customFields"`
 }
 
 type LeadRecord struct {
@@ -85,6 +87,8 @@ type LeadRecord struct {
 	ConvertedContactID *string        `json:"convertedContactId,omitempty"`
 	ConvertedCompanyID *string        `json:"convertedCompanyId,omitempty"`
 	ConvertedDealID    *string        `json:"convertedDealId,omitempty"`
+	PlannedStartDate   *string        `json:"plannedStartDate,omitempty"`
+	ExpectedCloseDate  *string        `json:"expectedCloseDate,omitempty"`
 	CustomFields       map[string]any `json:"customFields"`
 	Version            int64          `json:"version"`
 	CreatedAt          time.Time      `json:"createdAt"`
@@ -120,6 +124,7 @@ type LeadListFilter struct {
 	Query   string
 	Status  string
 	OwnerID *ids.UUID
+	StageID *ids.UUID
 	Cursor  string
 	Limit   int
 }

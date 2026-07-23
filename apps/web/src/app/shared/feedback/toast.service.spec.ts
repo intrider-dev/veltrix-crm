@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
+import { ApiError } from '../../core/api/api-error';
 import { ToastService } from './toast.service';
 
 describe('ToastService', () => {
@@ -47,5 +48,26 @@ describe('ToastService', () => {
 
     expect(action).toHaveBeenCalledOnce();
     expect(service.items()).toEqual([]);
+  });
+
+  it('keeps an API problem code for locale-aware error rendering', () => {
+    const service = TestBed.inject(ToastService);
+
+    service.showError(
+      new ApiError(422, {
+        type: 'https://veltrix.local/problems/validation',
+        title: 'Validation failed',
+        status: 422,
+        code: 'validation.failed',
+        requestId: 'request-1',
+      }),
+      0,
+    );
+
+    expect(service.items()[0]).toMatchObject({
+      problemCode: 'validation.failed',
+      requestId: 'request-1',
+      tone: 'error',
+    });
   });
 });

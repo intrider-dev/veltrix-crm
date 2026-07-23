@@ -6,6 +6,26 @@ WHERE workspace_id = sqlc.arg(workspace_id)
   AND direct_key = sqlc.arg(direct_key)
   AND archived_at IS NULL;
 
+-- name: FindEntityConversation :one
+SELECT conversation_id
+FROM collaboration.entity_conversations
+WHERE workspace_id = sqlc.arg(workspace_id)
+  AND entity_type = sqlc.arg(entity_type)
+  AND entity_id = sqlc.arg(entity_id);
+
+-- name: LinkEntityConversation :exec
+INSERT INTO collaboration.entity_conversations (
+  workspace_id, entity_type, entity_id, conversation_id
+) VALUES (
+  sqlc.arg(workspace_id), sqlc.arg(entity_type), sqlc.arg(entity_id), sqlc.arg(conversation_id)
+);
+
+-- name: CountConversationMembers :one
+SELECT count(*)::integer AS member_count
+FROM collaboration.conversation_members
+WHERE workspace_id = sqlc.arg(workspace_id)
+  AND conversation_id = sqlc.arg(conversation_id);
+
 -- name: CreateConversation :one
 INSERT INTO collaboration.conversations (
   workspace_id, id, conversation_type, title, direct_key, created_by
@@ -20,8 +40,7 @@ INSERT INTO collaboration.conversation_members (
   workspace_id, conversation_id, user_id, member_role
 ) VALUES (
   sqlc.arg(workspace_id), sqlc.arg(conversation_id), sqlc.arg(user_id), sqlc.arg(member_role)
-)
-ON CONFLICT (workspace_id, conversation_id, user_id) DO NOTHING;
+);
 
 -- name: ActiveWorkspaceUserExists :one
 SELECT EXISTS (
@@ -52,6 +71,9 @@ SELECT conversation.id, conversation.conversation_type, conversation.title,
          JOIN identity.users users ON users.id = member.user_id
          WHERE member.workspace_id = conversation.workspace_id
            AND member.conversation_id = conversation.id
+           AND security.chat_entity_conversation_user_allowed(
+             member.workspace_id, member.conversation_id, member.user_id
+           )
        ), '[]'::jsonb)::text AS members,
        (SELECT count(*)
         FROM collaboration.messages message
@@ -84,6 +106,9 @@ SELECT conversation.id, conversation.conversation_type, conversation.title,
          JOIN identity.users users ON users.id = member.user_id
          WHERE member.workspace_id = conversation.workspace_id
            AND member.conversation_id = conversation.id
+           AND security.chat_entity_conversation_user_allowed(
+             member.workspace_id, member.conversation_id, member.user_id
+           )
        ), '[]'::jsonb)::text AS members,
        (SELECT count(*)
         FROM collaboration.messages message
@@ -165,11 +190,58 @@ SELECT created.id, created.conversation_id, created.sender_user_id,
        created.version, created.created_at
 FROM created JOIN identity.users users ON users.id = created.sender_user_id;
 
+-- name: DeleteOwnUnattachedMediaMessage :one
+UPDATE collaboration.messages message
+SET deleted_at = now(), body = '', edited_at = now(), version = version + 1
+WHERE message.workspace_id = sqlc.arg(workspace_id)
+  AND message.id = sqlc.arg(message_id)
+  AND message.sender_user_id = sqlc.arg(sender_user_id)
+  AND message.message_kind IN ('file', 'voice', 'video')
+  AND message.deleted_at IS NULL
+  AND NOT EXISTS (
+    SELECT 1 FROM files.attachments attachment
+    WHERE attachment.workspace_id = message.workspace_id
+      AND attachment.entity_type = 'chat_message'
+      AND attachment.entity_id = message.id
+      AND attachment.deleted_at IS NULL
+  )
+RETURNING message.conversation_id;
+
+-- name: IsOwnDeletedMediaMessage :one
+SELECT EXISTS (
+  SELECT 1
+  FROM collaboration.messages message
+  WHERE message.workspace_id = sqlc.arg(workspace_id)
+    AND message.id = sqlc.arg(message_id)
+    AND message.sender_user_id = sqlc.arg(sender_user_id)
+    AND message.message_kind IN ('file', 'voice', 'video')
+    AND message.deleted_at IS NOT NULL
+);
+
+-- name: GetChatMessageConversation :one
+SELECT conversation_id
+FROM collaboration.messages
+WHERE workspace_id = sqlc.arg(workspace_id)
+  AND id = sqlc.arg(message_id)
+  AND deleted_at IS NULL;
+
+-- name: ChatMessageOwnedByActor :one
+SELECT EXISTS (
+  SELECT 1 FROM collaboration.messages
+  WHERE workspace_id = sqlc.arg(workspace_id)
+    AND id = sqlc.arg(message_id)
+    AND sender_user_id = sqlc.arg(actor_user_id)
+    AND deleted_at IS NULL
+);
+
 -- name: ListConversationRecipientIDs :many
 SELECT user_id
 FROM collaboration.conversation_members
 WHERE workspace_id = sqlc.arg(workspace_id)
   AND conversation_id = sqlc.arg(conversation_id)
+  AND security.chat_entity_conversation_user_allowed(
+    workspace_id, conversation_id, user_id
+  )
 ORDER BY user_id;
 
 -- name: MarkConversationRead :execrows
@@ -201,6 +273,7 @@ JOIN collaboration.messages message
   ON message.workspace_id = attachment.workspace_id
  AND message.id = attachment.entity_id
  AND message.conversation_id = sqlc.arg(conversation_id)
+ AND message.id = ANY(sqlc.arg(message_ids)::uuid[])
  AND message.deleted_at IS NULL
 JOIN collaboration.conversation_members member
   ON member.workspace_id = message.workspace_id
@@ -210,7 +283,7 @@ WHERE attachment.workspace_id = sqlc.arg(workspace_id)
   AND attachment.entity_type = 'chat_message'
   AND attachment.deleted_at IS NULL
 ORDER BY attachment.created_at, attachment.id
-LIMIT 500;
+LIMIT 100;
 
 -- name: AddMessageReaction :exec
 INSERT INTO collaboration.message_reactions (workspace_id, message_id, user_id, emoji)

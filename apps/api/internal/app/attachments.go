@@ -2,12 +2,14 @@ package app
 
 import (
 	"context"
+	"errors"
 	"io"
 	"mime"
 	"net/http"
 	"strconv"
 	"strings"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/veltrixcrm/veltrix-crm/apps/api/internal/files"
 	"github.com/veltrixcrm/veltrix-crm/apps/api/internal/platform/database/dbgen"
 	"github.com/veltrixcrm/veltrix-crm/apps/api/internal/platform/errx"
@@ -34,6 +36,7 @@ func (application *Application) uploadAttachment(writer http.ResponseWriter, req
 	if !ok {
 		return
 	}
+	entityType := strings.TrimSpace(request.URL.Query().Get("entityType"))
 	request.Body = http.MaxBytesReader(writer, request.Body, application.cfg.MaxUploadBytes+multipartEnvelopeAllowance)
 	multipartReader, err := request.MultipartReader()
 	if err != nil {
@@ -49,12 +52,19 @@ func (application *Application) uploadAttachment(writer http.ResponseWriter, req
 
 	principal, _ := httpx.Principal(request.Context())
 	var result files.UploadResult
-	err = application.tenancy.WithWorkspace(
-		request.Context(), principal, workspaceID, httpx.RequestID(request.Context()), tenancy.PermissionRecordsCreate,
+	withWorkspace := func(callback func(*tenancy.WorkspaceTx) error) error {
+		if entityType == "chat_message" {
+			return application.tenancy.WithWorkspaceAny(request.Context(), principal, workspaceID,
+				httpx.RequestID(request.Context()), chatAccessPermissions(), callback)
+		}
+		return application.tenancy.WithWorkspace(request.Context(), principal, workspaceID,
+			httpx.RequestID(request.Context()), attachmentPermission(entityType, attachmentWrite), callback)
+	}
+	err = withWorkspace(
 		func(workspace *tenancy.WorkspaceTx) error {
 			var uploadErr error
 			result, uploadErr = application.attachments.Upload(request.Context(), workspace, metadata(request, workspaceID, principal), files.UploadInput{
-				EntityType: request.URL.Query().Get("entityType"), EntityID: entityID,
+				EntityType: entityType, EntityID: entityID,
 				DisplayName: part.FileName(), DeclaredMediaType: part.Header.Get("Content-Type"), Contents: part,
 			})
 			if uploadErr != nil {
@@ -88,17 +98,25 @@ func (application *Application) listAttachments(writer http.ResponseWriter, requ
 	if !ok {
 		return
 	}
+	entityType := strings.TrimSpace(request.URL.Query().Get("entityType"))
 	limit, err := parseLimit(request, 50)
 	if writeError(application, writer, request, err) {
 		return
 	}
 	principal, _ := httpx.Principal(request.Context())
 	var rows []dbgen.FilesAttachment
-	err = application.tenancy.WithWorkspace(
-		request.Context(), principal, workspaceID, httpx.RequestID(request.Context()), tenancy.PermissionRecordsRead,
+	withWorkspace := func(callback func(*tenancy.WorkspaceTx) error) error {
+		if entityType == "chat_message" {
+			return application.tenancy.WithWorkspaceAny(request.Context(), principal, workspaceID,
+				httpx.RequestID(request.Context()), chatAccessPermissions(), callback)
+		}
+		return application.tenancy.WithWorkspace(request.Context(), principal, workspaceID,
+			httpx.RequestID(request.Context()), attachmentPermission(entityType, attachmentRead), callback)
+	}
+	err = withWorkspace(
 		func(workspace *tenancy.WorkspaceTx) error {
 			var loadErr error
-			rows, loadErr = application.attachments.List(request.Context(), workspace, workspaceID, request.URL.Query().Get("entityType"), entityID, limit)
+			rows, loadErr = application.attachments.List(request.Context(), workspace, workspaceID, entityType, entityID, limit)
 			return loadErr
 		},
 	)
@@ -119,9 +137,24 @@ func (application *Application) downloadAttachment(writer http.ResponseWriter, r
 	}
 	principal, _ := httpx.Principal(request.Context())
 	var attachment dbgen.FilesAttachment
-	err := application.tenancy.WithWorkspace(
-		request.Context(), principal, workspaceID, httpx.RequestID(request.Context()), tenancy.PermissionRecordsRead,
+	err := application.tenancy.WithWorkspaceAny(
+		request.Context(), principal, workspaceID, httpx.RequestID(request.Context()), chatAccessPermissions(),
 		func(workspace *tenancy.WorkspaceTx) error {
+			candidate, candidateErr := workspace.Queries.GetAttachment(request.Context(), dbgen.GetAttachmentParams{
+				WorkspaceID: workspaceID.PG(), ID: attachmentID.PG(),
+			})
+			if candidateErr != nil {
+				if errors.Is(candidateErr, pgx.ErrNoRows) {
+					return errx.ErrNotFound
+				}
+				return candidateErr
+			}
+			if candidate.EntityType != "chat_message" {
+				required := attachmentPermission(candidate.EntityType, attachmentRead)
+				if !workspace.Allows(required) {
+					return errx.ErrForbidden
+				}
+			}
 			var loadErr error
 			attachment, loadErr = application.attachments.Get(request.Context(), workspace, workspaceID, attachmentID)
 			return loadErr
@@ -153,9 +186,33 @@ func (application *Application) deleteAttachment(writer http.ResponseWriter, req
 	}
 	principal, _ := httpx.Principal(request.Context())
 	var storageKey string
-	err := application.tenancy.WithWorkspace(
-		request.Context(), principal, workspaceID, httpx.RequestID(request.Context()), tenancy.PermissionRecordsDelete,
+	err := application.tenancy.WithWorkspaceAny(
+		request.Context(), principal, workspaceID, httpx.RequestID(request.Context()),
+		[]tenancy.Permission{
+			tenancy.PermissionRecordsDelete,
+			tenancy.PermissionDealsDelete,
+			tenancy.PermissionRecordsRead,
+			tenancy.PermissionLeadsRead,
+			tenancy.PermissionDealsRead,
+		},
 		func(workspace *tenancy.WorkspaceTx) error {
+			candidate, candidateErr := workspace.Queries.GetAttachment(request.Context(), dbgen.GetAttachmentParams{
+				WorkspaceID: workspaceID.PG(), ID: attachmentID.PG(),
+			})
+			if candidateErr != nil {
+				if errors.Is(candidateErr, pgx.ErrNoRows) {
+					return errx.ErrNotFound
+				}
+				return candidateErr
+			}
+			if candidate.EntityType == "chat_message" {
+				uploaderID, valid := ids.FromPG(candidate.UploadedBy)
+				if !valid || uploaderID != principal.UserID {
+					return errx.ErrForbidden
+				}
+			} else if !workspace.Allows(attachmentPermission(candidate.EntityType, attachmentDelete)) {
+				return errx.ErrForbidden
+			}
 			var deleteErr error
 			storageKey, deleteErr = application.attachments.MarkDeleted(request.Context(), workspace, metadata(request, workspaceID, principal), attachmentID)
 			return deleteErr
@@ -168,6 +225,36 @@ func (application *Application) deleteAttachment(writer http.ResponseWriter, req
 		application.logger.Error("attachment blob cleanup deferred", "request_id", httpx.RequestID(request.Context()), "error", err)
 	}
 	writer.WriteHeader(http.StatusNoContent)
+}
+
+type attachmentOperation uint8
+
+const (
+	attachmentRead attachmentOperation = iota
+	attachmentWrite
+	attachmentDelete
+)
+
+func attachmentPermission(entityType string, operation attachmentOperation) tenancy.Permission {
+	entityType = strings.TrimSpace(entityType)
+	if entityType == "deal" {
+		switch operation {
+		case attachmentWrite:
+			return tenancy.PermissionDealsUpdate
+		case attachmentDelete:
+			return tenancy.PermissionDealsDelete
+		default:
+			return tenancy.PermissionDealsRead
+		}
+	}
+	switch operation {
+	case attachmentWrite:
+		return tenancy.PermissionRecordsCreate
+	case attachmentDelete:
+		return tenancy.PermissionRecordsDelete
+	default:
+		return tenancy.PermissionRecordsRead
+	}
 }
 
 func (application *Application) attachmentTarget(writer http.ResponseWriter, request *http.Request) (ids.UUID, ids.UUID, bool) {

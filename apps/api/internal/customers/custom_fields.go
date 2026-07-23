@@ -22,15 +22,31 @@ func (service *Service) ListCustomFieldDefinitions(
 	workspaceID ids.UUID,
 	entityType string,
 ) ([]CustomFieldDefinition, error) {
+	return service.listCustomFieldDefinitions(ctx, workspace, workspaceID, entityType, false)
+}
+
+func (service *Service) listCustomFieldDefinitions(
+	ctx context.Context,
+	workspace *tenancy.WorkspaceTx,
+	workspaceID ids.UUID,
+	entityType string,
+	lockForValueMutation bool,
+) ([]CustomFieldDefinition, error) {
 	if entityType != "" && !allowedEntityType(entityType) {
 		return nil, &errx.ValidationError{Fields: []errx.FieldError{{Pointer: "/entityType", Code: "validation.enum"}}}
 	}
-	rows, err := workspace.Tx.Query(ctx, `
+	query := `
 		SELECT id, entity_type, field_key, label, value_type, validation, options,
 		       schema_version, version, created_at, updated_at
 		FROM customers.custom_field_definitions
 		WHERE workspace_id = $1 AND ($2 = '' OR entity_type = $2)
-		ORDER BY entity_type, field_key, id`, workspaceID.PG(), entityType)
+		ORDER BY entity_type, field_key, id`
+	if lockForValueMutation {
+		// The row lock is held by the surrounding workspace transaction through
+		// aggregate persistence, so a schema update cannot race validation.
+		query += " FOR SHARE"
+	}
+	rows, err := workspace.Tx.Query(ctx, query, workspaceID.PG(), entityType)
 	if err != nil {
 		return nil, fmt.Errorf("list custom field definitions: %w", err)
 	}
@@ -188,11 +204,13 @@ func (service *Service) DeleteCustomFieldDefinition(
 	}
 	// Remove the denormalized copy in the same transaction. jsonb - text is
 	// parameterized; the table name is selected only from a closed enum.
-	table := "customers.contacts"
-	if entityType == "company" {
-		table = "customers.companies"
+	tables := map[string]string{
+		"contact": "customers.contacts",
+		"company": "customers.companies",
+		"lead":    "sales.leads",
+		"deal":    "sales.deals",
 	}
-	if entityType == "contact" || entityType == "company" {
+	if table, ok := tables[entityType]; ok {
 		if _, err := workspace.Tx.Exec(ctx, `UPDATE `+table+`
 			SET custom_fields = custom_fields - $2, version = version + 1, updated_at = now()
 			WHERE workspace_id = $1 AND custom_fields ? $2`, metadata.WorkspaceID.PG(), fieldKey); err != nil {
@@ -258,6 +276,43 @@ func (service *Service) SetEntityCustomFields(
 	return newVersion, nil
 }
 
+// ValidateCustomFields applies the workspace definitions to custom fields stored by another domain.
+type ValidatedCustomFields struct {
+	Values     map[string]any
+	normalized map[string]json.RawMessage
+}
+
+func (service *Service) ValidateCustomFields(
+	ctx context.Context,
+	workspace *tenancy.WorkspaceTx,
+	workspaceID ids.UUID,
+	entityType string,
+	values map[string]any,
+) (ValidatedCustomFields, error) {
+	aggregate, normalizedValues, err := service.prepareCustomFields(ctx, workspace, workspaceID, entityType, values)
+	if err != nil {
+		return ValidatedCustomFields{}, err
+	}
+	var normalized map[string]any
+	if err := json.Unmarshal(aggregate, &normalized); err != nil {
+		return ValidatedCustomFields{}, fmt.Errorf("decode validated custom fields: %w", err)
+	}
+	return ValidatedCustomFields{Values: normalized, normalized: normalizedValues}, nil
+}
+
+// PersistValidatedCustomFields keeps the normalized query/index representation
+// transactionally aligned with another domain's JSON aggregate.
+func (service *Service) PersistValidatedCustomFields(
+	ctx context.Context,
+	workspace *tenancy.WorkspaceTx,
+	workspaceID ids.UUID,
+	entityType string,
+	entityID ids.UUID,
+	validated ValidatedCustomFields,
+) error {
+	return service.replaceCustomFieldValues(ctx, workspace, workspaceID, entityType, entityID, validated.normalized)
+}
+
 func (service *Service) prepareCustomFields(
 	ctx context.Context,
 	workspace *tenancy.WorkspaceTx,
@@ -265,7 +320,7 @@ func (service *Service) prepareCustomFields(
 	entityType string,
 	supplied map[string]any,
 ) ([]byte, map[string]json.RawMessage, error) {
-	definitions, err := service.ListCustomFieldDefinitions(ctx, workspace, workspaceID, entityType)
+	definitions, err := service.listCustomFieldDefinitions(ctx, workspace, workspaceID, entityType, true)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -294,7 +349,7 @@ func (service *Service) replaceCustomFieldValues(
 	entityID ids.UUID,
 	values map[string]json.RawMessage,
 ) error {
-	definitions, err := service.ListCustomFieldDefinitions(ctx, workspace, workspaceID, entityType)
+	definitions, err := service.listCustomFieldDefinitions(ctx, workspace, workspaceID, entityType, true)
 	if err != nil {
 		return err
 	}

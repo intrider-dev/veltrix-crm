@@ -131,7 +131,16 @@ func (application *Application) updateDealAdvanced(writer http.ResponseWriter, r
 	var result sales.DealRecord
 	err = application.tenancy.WithWorkspace(request.Context(), principal, workspaceID, httpx.RequestID(request.Context()), tenancy.PermissionDealsUpdate,
 		func(workspace *tenancy.WorkspaceTx) error {
+			validatedFields, validationErr := application.customers.ValidateCustomFields(request.Context(), workspace, workspaceID, "deal", input.CustomFields)
+			if validationErr != nil {
+				return validationErr
+			}
+			input.CustomFields = validatedFields.Values
 			result, err = application.sales.UpdateDeal(request.Context(), workspace, metadata(request, workspaceID, principal), dealID, version, input)
+			if err == nil {
+				err = application.customers.PersistValidatedCustomFields(request.Context(), workspace,
+					workspaceID, "deal", dealID, validatedFields)
+			}
 			return err
 		})
 	if writeError(application, writer, request, err) {

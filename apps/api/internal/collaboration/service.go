@@ -50,6 +50,12 @@ type ConversationInput struct {
 	MemberUserIDs []ids.UUID
 }
 
+type EntityConversationInput struct {
+	EntityType string
+	EntityID   ids.UUID
+	Title      string
+}
+
 type Reaction struct {
 	Emoji  string `json:"emoji"`
 	UserID string `json:"userId"`
@@ -214,6 +220,91 @@ func (service *Service) Create(
 	return service.Get(ctx, workspace, workspaceID, conversationID, actorID)
 }
 
+// ResolveEntityConversation returns the single discussion attached to a lead or deal.
+// Authorized viewers are added when they first open the discussion.
+func (service *Service) ResolveEntityConversation(
+	ctx context.Context, workspace *tenancy.WorkspaceTx,
+	workspaceID, actorID ids.UUID, input EntityConversationInput,
+) (Conversation, error) {
+	if input.EntityType != "lead" && input.EntityType != "deal" {
+		return Conversation{}, validation("/entityType", "validation.enum")
+	}
+	input.Title = strings.TrimSpace(input.Title)
+	if utf8.RuneCountInString(input.Title) < 1 || utf8.RuneCountInString(input.Title) > 160 {
+		return Conversation{}, validation("/title", "validation.length")
+	}
+	lockKey := workspaceID.String() + ":" + input.EntityType + ":" + input.EntityID.String()
+	if _, err := workspace.Tx.Exec(ctx, "SELECT pg_advisory_xact_lock(hashtextextended($1, 0))", lockKey); err != nil {
+		return Conversation{}, fmt.Errorf("lock entity conversation: %w", err)
+	}
+	existingID, err := workspace.Queries.FindEntityConversation(ctx, dbgen.FindEntityConversationParams{
+		WorkspaceID: workspaceID.PG(), EntityType: input.EntityType, EntityID: input.EntityID.PG(),
+	})
+	if err == nil {
+		conversationID, ok := ids.FromPG(existingID)
+		if !ok {
+			return Conversation{}, errors.New("invalid entity conversation identifier")
+		}
+		if _, pruneErr := workspace.Tx.Exec(ctx,
+			"SELECT security.prune_unauthorized_entity_conversation_members($1, $2)",
+			workspaceID.PG(), conversationID.PG()); pruneErr != nil {
+			return Conversation{}, fmt.Errorf("prune unauthorized entity conversation members: %w", pruneErr)
+		}
+		alreadyMember, memberErr := workspace.Queries.ConversationMemberExists(ctx,
+			dbgen.ConversationMemberExistsParams{
+				WorkspaceID: workspaceID.PG(), ConversationID: conversationID.PG(), UserID: actorID.PG(),
+			})
+		if memberErr != nil {
+			return Conversation{}, fmt.Errorf("check entity conversation membership: %w", memberErr)
+		}
+		if !alreadyMember {
+			memberCount, countErr := workspace.Queries.CountConversationMembers(ctx,
+				dbgen.CountConversationMembersParams{
+					WorkspaceID: workspaceID.PG(), ConversationID: conversationID.PG(),
+				})
+			if countErr != nil {
+				return Conversation{}, fmt.Errorf("count entity conversation members: %w", countErr)
+			}
+			if memberCount >= maxConversationMembers {
+				return Conversation{}, errx.ErrConflict
+			}
+			if err := workspace.Queries.AddConversationMember(ctx, dbgen.AddConversationMemberParams{
+				WorkspaceID: workspaceID.PG(), ConversationID: conversationID.PG(),
+				UserID: actorID.PG(), MemberRole: "member",
+			}); err != nil {
+				return Conversation{}, fmt.Errorf("join entity conversation: %w", err)
+			}
+		}
+		return service.Get(ctx, workspace, workspaceID, conversationID, actorID)
+	}
+	if !errors.Is(err, pgx.ErrNoRows) {
+		return Conversation{}, fmt.Errorf("find entity conversation: %w", err)
+	}
+	conversationID, err := ids.NewV7()
+	if err != nil {
+		return Conversation{}, err
+	}
+	if _, err := workspace.Queries.CreateConversation(ctx, dbgen.CreateConversationParams{
+		WorkspaceID: workspaceID.PG(), ConversationID: conversationID.PG(),
+		ConversationType: "group", Title: input.Title, CreatedBy: actorID.PG(),
+	}); err != nil {
+		return Conversation{}, fmt.Errorf("create entity conversation: %w", err)
+	}
+	if err := workspace.Queries.AddConversationMember(ctx, dbgen.AddConversationMemberParams{
+		WorkspaceID: workspaceID.PG(), ConversationID: conversationID.PG(),
+		UserID: actorID.PG(), MemberRole: "owner",
+	}); err != nil {
+		return Conversation{}, fmt.Errorf("add entity conversation owner: %w", err)
+	}
+	if err := workspace.Queries.LinkEntityConversation(ctx, dbgen.LinkEntityConversationParams{
+		WorkspaceID: workspaceID.PG(), EntityType: input.EntityType,
+		EntityID: input.EntityID.PG(), ConversationID: conversationID.PG(),
+	}); err != nil {
+		return Conversation{}, fmt.Errorf("link entity conversation: %w", err)
+	}
+	return service.Get(ctx, workspace, workspaceID, conversationID, actorID)
+}
+
 func (service *Service) ListMessages(
 	ctx context.Context, workspace *tenancy.WorkspaceTx,
 	workspaceID, conversationID, userID ids.UUID, cursor string, limit int,
@@ -279,7 +370,10 @@ func (service *Service) Send(
 	if input.Kind == "" {
 		input.Kind = "text"
 	}
-	if input.Kind != "text" || utf8.RuneCountInString(input.Body) < 1 || utf8.RuneCountInString(input.Body) > 10000 {
+	if input.Kind != "text" && input.Kind != "voice" && input.Kind != "video" && input.Kind != "file" {
+		return Message{}, validation("/kind", "validation.enum")
+	}
+	if utf8.RuneCountInString(input.Body) < 1 || utf8.RuneCountInString(input.Body) > 10000 {
 		return Message{}, validation("/body", "validation.length")
 	}
 	messageID, err := ids.NewV7()
@@ -300,7 +394,11 @@ func (service *Service) Send(
 	recipients, err := workspace.Queries.ListConversationRecipientIDs(ctx, dbgen.ListConversationRecipientIDsParams{
 		WorkspaceID: workspaceID.PG(), ConversationID: conversationID.PG(),
 	})
-	if err != nil || len(recipients) < 2 || len(recipients) > maxConversationMembers {
+	// Entity-bound discussions start with the first authorized viewer as their
+	// sole member. Direct chats are still created with exactly two members, but
+	// Send must also support that legitimate one-member group until colleagues
+	// with record access open and join the discussion.
+	if err != nil || !validConversationRecipientCount(len(recipients)) {
 		if err == nil {
 			err = errors.New("invalid conversation recipient count")
 		}
@@ -334,6 +432,73 @@ func (service *Service) Send(
 		row.Version, row.CreatedAt)
 }
 
+func validConversationRecipientCount(count int) bool {
+	return count >= 1 && count <= maxConversationMembers
+}
+
+// DeleteOwnUnattachedMediaMessage removes a provisional media message only
+// when its attachment was never persisted. It cannot delete text or another
+// user's message and is used to make the two-step streaming upload retryable.
+func (service *Service) DeleteOwnUnattachedMediaMessage(
+	ctx context.Context, workspace *tenancy.WorkspaceTx,
+	workspaceID, messageID, senderID ids.UUID,
+) error {
+	conversationRaw, err := workspace.Queries.DeleteOwnUnattachedMediaMessage(ctx,
+		dbgen.DeleteOwnUnattachedMediaMessageParams{
+			WorkspaceID: workspaceID.PG(), MessageID: messageID.PG(), SenderUserID: senderID.PG(),
+		})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			alreadyDeleted, lookupErr := workspace.Queries.IsOwnDeletedMediaMessage(ctx,
+				dbgen.IsOwnDeletedMediaMessageParams{
+					WorkspaceID: workspaceID.PG(), MessageID: messageID.PG(), SenderUserID: senderID.PG(),
+				})
+			if lookupErr != nil {
+				return fmt.Errorf("check provisional chat message deletion: %w", lookupErr)
+			}
+			if alreadyDeleted {
+				return nil
+			}
+			return errx.ErrConflict
+		}
+		return fmt.Errorf("delete provisional chat message: %w", err)
+	}
+	conversationID, ok := ids.FromPG(conversationRaw)
+	if !ok {
+		return errors.New("invalid provisional chat conversation")
+	}
+	recipients, err := workspace.Queries.ListConversationRecipientIDs(ctx, dbgen.ListConversationRecipientIDsParams{
+		WorkspaceID: workspaceID.PG(), ConversationID: conversationID.PG(),
+	})
+	if err != nil {
+		return fmt.Errorf("list provisional deletion recipients: %w", err)
+	}
+	data, err := json.Marshal(map[string]any{
+		"conversationId": conversationID.String(), "messageId": messageID.String(),
+		"deleted": true,
+	})
+	if err != nil {
+		return err
+	}
+	for _, rawRecipient := range recipients {
+		recipient, valid := ids.FromPG(rawRecipient)
+		if !valid {
+			return errors.New("invalid provisional deletion recipient")
+		}
+		eventID, idErr := ids.NewV7()
+		if idErr != nil {
+			return idErr
+		}
+		if insertErr := workspace.Queries.InsertUserSSEEvent(ctx, dbgen.InsertUserSSEEventParams{
+			WorkspaceID: workspaceID.PG(), EventID: eventID.PG(), EventType: "chat.message.created",
+			Data: data, RecipientUserID: recipient.PG(),
+		}); insertErr != nil {
+			return fmt.Errorf("emit provisional deletion event: %w", insertErr)
+		}
+	}
+	return nil
+}
+
 func (service *Service) MarkRead(
 	ctx context.Context, workspace *tenancy.WorkspaceTx, workspaceID, conversationID, userID ids.UUID,
 ) error {
@@ -351,10 +516,18 @@ func (service *Service) MarkRead(
 
 func (service *Service) ListAttachments(
 	ctx context.Context, workspace *tenancy.WorkspaceTx,
-	workspaceID, conversationID, userID ids.UUID,
+	workspaceID, conversationID, userID ids.UUID, messageIDs []ids.UUID,
 ) ([]Attachment, error) {
+	if len(messageIDs) < 1 || len(messageIDs) > 100 {
+		return nil, validation("/query/messageId", "validation.items.range")
+	}
+	rawMessageIDs := make([]pgtype.UUID, len(messageIDs))
+	for index, messageID := range messageIDs {
+		rawMessageIDs[index] = messageID.PG()
+	}
 	rows, err := workspace.Queries.ListConversationAttachments(ctx, dbgen.ListConversationAttachmentsParams{
 		ConversationID: conversationID.PG(), UserID: userID.PG(), WorkspaceID: workspaceID.PG(),
+		MessageIds: rawMessageIDs,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("list conversation attachments: %w", err)

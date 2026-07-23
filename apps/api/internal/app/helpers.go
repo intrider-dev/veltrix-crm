@@ -97,40 +97,73 @@ func (application *Application) runIdempotent(
 	mutation func(*tenancy.WorkspaceTx, events.Metadata) (any, int64, error),
 ) {
 	principal, _ := httpx.Principal(request.Context())
+	application.runIdempotentWith(writer, request, workspaceID, operation, rawBody, status,
+		func(callback func(*tenancy.WorkspaceTx) error) error {
+			return application.tenancy.WithWorkspace(request.Context(), principal, workspaceID,
+				httpx.RequestID(request.Context()), permission, callback)
+		}, mutation)
+}
+
+func (application *Application) runIdempotentAny(
+	writer http.ResponseWriter,
+	request *http.Request,
+	workspaceID ids.UUID,
+	permissions []tenancy.Permission,
+	operation string,
+	rawBody []byte,
+	status int,
+	mutation func(*tenancy.WorkspaceTx, events.Metadata) (any, int64, error),
+) {
+	principal, _ := httpx.Principal(request.Context())
+	application.runIdempotentWith(writer, request, workspaceID, operation, rawBody, status,
+		func(callback func(*tenancy.WorkspaceTx) error) error {
+			return application.tenancy.WithWorkspaceAny(request.Context(), principal, workspaceID,
+				httpx.RequestID(request.Context()), permissions, callback)
+		}, mutation)
+}
+
+func (application *Application) runIdempotentWith(
+	writer http.ResponseWriter,
+	request *http.Request,
+	workspaceID ids.UUID,
+	operation string,
+	rawBody []byte,
+	status int,
+	withWorkspace func(func(*tenancy.WorkspaceTx) error) error,
+	mutation func(*tenancy.WorkspaceTx, events.Metadata) (any, int64, error),
+) {
+	principal, _ := httpx.Principal(request.Context())
 	key := request.Header.Get("Idempotency-Key")
 	result := idempotentResult{}
-	err := application.tenancy.WithWorkspace(
-		request.Context(), principal, workspaceID, httpx.RequestID(request.Context()), permission,
-		func(workspace *tenancy.WorkspaceTx) error {
-			replay, err := idempotency.Reserve(request.Context(), workspace.Queries, workspaceID, principal.UserID, key, operation, rawBody)
-			if err != nil {
-				return err
+	err := withWorkspace(func(workspace *tenancy.WorkspaceTx) error {
+		replay, err := idempotency.Reserve(request.Context(), workspace.Queries, workspaceID, principal.UserID, key, operation, rawBody)
+		if err != nil {
+			return err
+		}
+		if replay != nil {
+			result.status = replay.Status
+			result.body = append([]byte(nil), replay.Body...)
+			var versioned struct {
+				Version int64 `json:"version"`
 			}
-			if replay != nil {
-				result.status = replay.Status
-				result.body = append([]byte(nil), replay.Body...)
-				var versioned struct {
-					Version int64 `json:"version"`
-				}
-				_ = json.Unmarshal(result.body, &versioned)
-				result.version = versioned.Version
-				return nil
-			}
-			value, version, err := mutation(workspace, metadata(request, workspaceID, principal))
-			if err != nil {
-				return err
-			}
-			encoded, err := json.Marshal(value)
-			if err != nil {
-				return fmt.Errorf("encode idempotent response: %w", err)
-			}
-			if err := idempotency.Complete(request.Context(), workspace.Queries, workspaceID, key, status, encoded); err != nil {
-				return err
-			}
-			result = idempotentResult{status: status, body: encoded, version: version}
+			_ = json.Unmarshal(result.body, &versioned)
+			result.version = versioned.Version
 			return nil
-		},
-	)
+		}
+		value, version, err := mutation(workspace, metadata(request, workspaceID, principal))
+		if err != nil {
+			return err
+		}
+		encoded, err := json.Marshal(value)
+		if err != nil {
+			return fmt.Errorf("encode idempotent response: %w", err)
+		}
+		if err := idempotency.Complete(request.Context(), workspace.Queries, workspaceID, key, status, encoded); err != nil {
+			return err
+		}
+		result = idempotentResult{status: status, body: encoded, version: version}
+		return nil
+	})
 	if err != nil {
 		httpx.WriteProblem(writer, request, application.logger, err)
 		return

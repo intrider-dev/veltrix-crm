@@ -31,6 +31,7 @@ func (service *Service) ListLeads(
 		"q=" + validated.Query,
 		"status=" + validated.Status,
 		"owner=" + uuidString(validated.OwnerID),
+		"stage=" + uuidString(validated.StageID),
 	}, "&")
 	cursorTime, cursorID, err := pagination.Decode(validated.Cursor, fingerprint)
 	if err != nil {
@@ -38,8 +39,9 @@ func (service *Service) ListLeads(
 	}
 	rows, err := workspace.Queries.ListLeadsAdvanced(ctx, dbgen.ListLeadsAdvancedParams{
 		WorkspaceID: workspaceID.PG(), SearchQuery: validated.Query, StatusFilter: validated.Status,
-		OwnerID: optionalUUID(validated.OwnerID), CursorUpdatedAt: pgtype.Timestamptz{Time: cursorTime, Valid: true},
-		CursorID: cursorID.PG(), PageLimit: int32(validated.Limit + 1),
+		OwnerID: optionalUUID(validated.OwnerID), StageFilter: optionalUUID(validated.StageID),
+		CursorUpdatedAt: pgtype.Timestamptz{Time: cursorTime, Valid: true},
+		CursorID:        cursorID.PG(), PageLimit: int32(validated.Limit + 1),
 	})
 	if err != nil {
 		return LeadPage{}, fmt.Errorf("list leads: %w", err)
@@ -52,7 +54,8 @@ func (service *Service) ListLeads(
 		page.Items = append(page.Items, makeLeadRecord(
 			row.ID, row.Name, row.Email, row.Phone, row.CompanyName, row.JobTitle, row.Source,
 			row.Status, row.StageID, row.OwnerUserID, row.TeamID, row.ConvertedContactID, row.ConvertedCompanyID,
-			row.ConvertedDealID, row.CustomFields, row.Version, row.CreatedAt.Time, row.UpdatedAt.Time,
+			row.ConvertedDealID, row.PlannedStartDate, row.ExpectedCloseDate,
+			row.CustomFields, row.Version, row.CreatedAt.Time, row.UpdatedAt.Time,
 		))
 	}
 	if len(rows) > validated.Limit {
@@ -83,7 +86,8 @@ func (service *Service) GetLead(
 	return makeLeadRecord(
 		row.ID, row.Name, row.Email, row.Phone, row.CompanyName, row.JobTitle, row.Source,
 		row.Status, row.StageID, row.OwnerUserID, row.TeamID, row.ConvertedContactID, row.ConvertedCompanyID,
-		row.ConvertedDealID, row.CustomFields, row.Version, row.CreatedAt.Time, row.UpdatedAt.Time,
+		row.ConvertedDealID, row.PlannedStartDate, row.ExpectedCloseDate,
+		row.CustomFields, row.Version, row.CreatedAt.Time, row.UpdatedAt.Time,
 	), nil
 }
 
@@ -118,6 +122,7 @@ func (service *Service) CreateLead(
 		Phone: validated.Phone, PhoneNormalized: nullableNormalized(phoneNormalized),
 		CompanyName: validated.CompanyName, JobTitle: validated.JobTitle, Source: validated.Source,
 		Status: status, StageID: stageID, OwnerUserID: optionalUUID(validated.OwnerID), TeamID: optionalUUID(validated.TeamID),
+		PlannedStartDate: optionalDate(validated.PlannedStartDate), ExpectedCloseDate: optionalDate(validated.ExpectedCloseDate),
 		CustomFields: customFields,
 	})
 	if err != nil {
@@ -139,7 +144,8 @@ func (service *Service) CreateLead(
 	return makeLeadRecord(
 		row.ID, row.Name, row.Email, row.Phone, row.CompanyName, row.JobTitle, row.Source,
 		row.Status, row.StageID, row.OwnerUserID, row.TeamID, row.ConvertedContactID, row.ConvertedCompanyID,
-		row.ConvertedDealID, row.CustomFields, row.Version, row.CreatedAt.Time, row.UpdatedAt.Time,
+		row.ConvertedDealID, row.PlannedStartDate, row.ExpectedCloseDate,
+		row.CustomFields, row.Version, row.CreatedAt.Time, row.UpdatedAt.Time,
 	), nil
 }
 
@@ -172,6 +178,7 @@ func (service *Service) UpdateLead(
 		Phone: validated.Phone, PhoneNormalized: nullableNormalized(phoneNormalized),
 		CompanyName: validated.CompanyName, JobTitle: validated.JobTitle, Source: validated.Source,
 		Status: existing.Status, StageID: stageID, OwnerUserID: optionalUUID(validated.OwnerID), TeamID: optionalUUID(validated.TeamID),
+		PlannedStartDate: optionalDate(validated.PlannedStartDate), ExpectedCloseDate: optionalDate(validated.ExpectedCloseDate),
 		CustomFields: customFields, Version: version,
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -193,7 +200,8 @@ func (service *Service) UpdateLead(
 	return makeLeadRecord(
 		row.ID, row.Name, row.Email, row.Phone, row.CompanyName, row.JobTitle, row.Source,
 		row.Status, row.StageID, row.OwnerUserID, row.TeamID, row.ConvertedContactID, row.ConvertedCompanyID,
-		row.ConvertedDealID, row.CustomFields, row.Version, row.CreatedAt.Time, row.UpdatedAt.Time,
+		row.ConvertedDealID, row.PlannedStartDate, row.ExpectedCloseDate,
+		row.CustomFields, row.Version, row.CreatedAt.Time, row.UpdatedAt.Time,
 	), nil
 }
 
@@ -258,7 +266,8 @@ func (service *Service) RestoreLead(
 	return makeLeadRecord(
 		row.ID, row.Name, row.Email, row.Phone, row.CompanyName, row.JobTitle, row.Source,
 		row.Status, row.StageID, row.OwnerUserID, row.TeamID, row.ConvertedContactID, row.ConvertedCompanyID,
-		row.ConvertedDealID, row.CustomFields, row.Version, row.CreatedAt.Time, row.UpdatedAt.Time,
+		row.ConvertedDealID, row.PlannedStartDate, row.ExpectedCloseDate,
+		row.CustomFields, row.Version, row.CreatedAt.Time, row.UpdatedAt.Time,
 	), nil
 }
 
@@ -368,7 +377,8 @@ func (service *Service) ConvertLead(
 	return makeLeadRecord(
 		row.ID, row.Name, row.Email, row.Phone, row.CompanyName, row.JobTitle, row.Source,
 		row.Status, row.StageID, row.OwnerUserID, row.TeamID, row.ConvertedContactID, row.ConvertedCompanyID,
-		row.ConvertedDealID, row.CustomFields, row.Version, row.CreatedAt.Time, row.UpdatedAt.Time,
+		row.ConvertedDealID, row.PlannedStartDate, row.ExpectedCloseDate,
+		row.CustomFields, row.Version, row.CreatedAt.Time, row.UpdatedAt.Time,
 	), nil
 }
 
@@ -422,7 +432,8 @@ func (service *Service) MoveLeadStage(
 	return makeLeadRecord(
 		row.ID, row.Name, row.Email, row.Phone, row.CompanyName, row.JobTitle, row.Source,
 		row.Status, row.StageID, row.OwnerUserID, row.TeamID, row.ConvertedContactID, row.ConvertedCompanyID,
-		row.ConvertedDealID, row.CustomFields, row.Version, row.CreatedAt.Time, row.UpdatedAt.Time,
+		row.ConvertedDealID, row.PlannedStartDate, row.ExpectedCloseDate,
+		row.CustomFields, row.Version, row.CreatedAt.Time, row.UpdatedAt.Time,
 	), nil
 }
 
@@ -561,6 +572,7 @@ func makeLeadRecord(
 	email, phone, companyName, jobTitle, source *string,
 	status string,
 	stageID, ownerID, teamID, contactID, companyID, dealID pgtype.UUID,
+	plannedStartDate, expectedCloseDate pgtype.Date,
 	customFields []byte,
 	version int64,
 	createdAt, updatedAt time.Time,
@@ -571,6 +583,7 @@ func makeLeadRecord(
 		JobTitle: jobTitle, Source: source, Status: status, StageID: stageIDString(stageID), OwnerID: optionalIDString(ownerID),
 		TeamID: optionalIDString(teamID), ConvertedContactID: optionalIDString(contactID),
 		ConvertedCompanyID: optionalIDString(companyID), ConvertedDealID: optionalIDString(dealID),
+		PlannedStartDate: optionalDateString(plannedStartDate), ExpectedCloseDate: optionalDateString(expectedCloseDate),
 		CustomFields: decodeCustomFields(customFields), Version: version,
 		CreatedAt: createdAt.UTC(), UpdatedAt: updatedAt.UTC(),
 	}

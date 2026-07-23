@@ -322,7 +322,8 @@ WHERE lead.workspace_id = $1
 RETURNING lead.id, lead.name, lead.email, lead.phone, lead.company_name,
           lead.job_title, lead.source, lead.status, lead.stage_id,
           lead.owner_user_id, lead.team_id, lead.converted_contact_id,
-          lead.converted_company_id, lead.converted_deal_id, lead.custom_fields,
+          lead.converted_company_id, lead.converted_deal_id,
+          lead.planned_start_date, lead.expected_close_date, lead.custom_fields,
           lead.version, lead.created_at, lead.updated_at
 `
 
@@ -348,6 +349,8 @@ type MoveLeadToStageRow struct {
 	ConvertedContactID pgtype.UUID        `json:"converted_contact_id"`
 	ConvertedCompanyID pgtype.UUID        `json:"converted_company_id"`
 	ConvertedDealID    pgtype.UUID        `json:"converted_deal_id"`
+	PlannedStartDate   pgtype.Date        `json:"planned_start_date"`
+	ExpectedCloseDate  pgtype.Date        `json:"expected_close_date"`
 	CustomFields       []byte             `json:"custom_fields"`
 	Version            int64              `json:"version"`
 	CreatedAt          pgtype.Timestamptz `json:"created_at"`
@@ -377,6 +380,8 @@ func (q *Queries) MoveLeadToStage(ctx context.Context, arg MoveLeadToStageParams
 		&i.ConvertedContactID,
 		&i.ConvertedCompanyID,
 		&i.ConvertedDealID,
+		&i.PlannedStartDate,
+		&i.ExpectedCloseDate,
 		&i.CustomFields,
 		&i.Version,
 		&i.CreatedAt,

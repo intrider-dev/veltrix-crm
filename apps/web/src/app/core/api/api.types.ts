@@ -153,6 +153,7 @@ export type CreateCallInput = components['schemas']['CreateCallInput'];
 export type CustomFieldValueType = components['schemas']['CustomFieldValueType'];
 export type CustomFieldDefinitionInput = components['schemas']['CustomFieldDefinitionInput'];
 export type CustomFieldDefinition = components['schemas']['CustomFieldDefinition'];
+export type ReferenceUser = components['schemas']['ReferenceUser'];
 export type ApiKeyScope = components['schemas']['APIKeyScope'];
 export type ApiKeyItem = components['schemas']['APIKey'];
 export type GeneratedApiKey = components['schemas']['GeneratedAPIKey'];

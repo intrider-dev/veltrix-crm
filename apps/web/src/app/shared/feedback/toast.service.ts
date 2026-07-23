@@ -1,11 +1,15 @@
 import { Injectable, signal } from '@angular/core';
 
+import { ApiError } from '../../core/api/api-error';
 import type { AppMessageKey } from '../../core/i18n/app-message-key';
 
 export interface AppToast {
   readonly id: string;
-  readonly messageKey: string;
+  readonly messageKey?: string;
   readonly messageParams: Readonly<Record<string, unknown>>;
+  readonly problemCode?: string;
+  readonly requestId?: string;
+  readonly tone?: 'info' | 'success' | 'error';
   readonly href?: string;
   readonly actionLabelKey?: AppMessageKey;
   readonly action?: () => void;
@@ -26,6 +30,19 @@ export class ToastService {
       this.timers.set(id, timer);
     }
     return id;
+  }
+
+  showError(error: unknown, durationMs = 8000): string {
+    const apiError = error instanceof ApiError ? error : null;
+    return this.show(
+      {
+        messageParams: {},
+        problemCode: apiError?.problem?.code ?? 'network',
+        requestId: apiError?.problem?.requestId,
+        tone: 'error',
+      },
+      durationMs,
+    );
   }
 
   dismiss(id: string): void {

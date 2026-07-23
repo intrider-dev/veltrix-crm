@@ -30,6 +30,7 @@
   "entity.contact": "Contact",
   "entity.deal": "Deal",
   "entity.lead": "Lead",
+  "entity.lead": "Lead",
   "entity.note": "Note",
   "form.invalid": "Check the highlighted fields.",
   "form.saving": "Saving",

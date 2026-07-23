@@ -340,16 +340,77 @@ func (application *Application) listCustomFieldDefinitions(writer http.ResponseW
 		return
 	}
 	principal, _ := httpx.Principal(request.Context())
+	entityType := strings.TrimSpace(request.URL.Query().Get("entityType"))
+	permissions, err := customFieldReadPermissions(entityType)
+	if writeError(application, writer, request, err) {
+		return
+	}
 	var definitions []customers.CustomFieldDefinition
-	err = application.tenancy.WithWorkspace(request.Context(), principal, workspaceID, httpx.RequestID(request.Context()), tenancy.PermissionRecordsRead,
+	err = application.tenancy.WithWorkspaceAny(request.Context(), principal, workspaceID, httpx.RequestID(request.Context()), permissions,
 		func(workspace *tenancy.WorkspaceTx) error {
-			definitions, err = application.customers.ListCustomFieldDefinitions(request.Context(), workspace, workspaceID, request.URL.Query().Get("entityType"))
+			definitions, err = application.customers.ListCustomFieldDefinitions(request.Context(), workspace, workspaceID, entityType)
 			return err
 		})
 	if writeError(application, writer, request, err) {
 		return
 	}
 	httpx.WriteJSON(writer, http.StatusOK, definitions)
+}
+
+func customFieldReadPermissions(entityType string) ([]tenancy.Permission, error) {
+	switch entityType {
+	case "contact", "company":
+		return []tenancy.Permission{tenancy.PermissionRecordsRead}, nil
+	case "lead":
+		return []tenancy.Permission{tenancy.PermissionLeadsRead}, nil
+	case "deal":
+		return []tenancy.Permission{tenancy.PermissionDealsRead}, nil
+	case "":
+		return []tenancy.Permission{tenancy.PermissionSettingsWrite}, nil
+	default:
+		return nil, &errx.ValidationError{Fields: []errx.FieldError{{
+			Pointer: "/query/entityType", Code: "validation.enum",
+		}}}
+	}
+}
+
+func (application *Application) listReferenceUsers(writer http.ResponseWriter, request *http.Request) {
+	workspaceID, err := application.workspaceID(request)
+	if writeError(application, writer, request, err) {
+		return
+	}
+	principal, _ := httpx.Principal(request.Context())
+	items := make([]map[string]string, 0)
+	err = application.tenancy.WithWorkspaceAny(request.Context(), principal, workspaceID,
+		httpx.RequestID(request.Context()), []tenancy.Permission{
+			tenancy.PermissionRecordsRead,
+			tenancy.PermissionLeadsRead,
+			tenancy.PermissionDealsRead,
+		}, func(workspace *tenancy.WorkspaceTx) error {
+			rows, queryErr := workspace.Tx.Query(request.Context(), `
+				SELECT membership.user_id::text, member.display_name
+				FROM tenancy.memberships membership
+				JOIN identity.users member ON member.id = membership.user_id
+				WHERE membership.workspace_id = $1 AND membership.status = 'active'
+				ORDER BY member.display_name, membership.user_id
+				LIMIT 500`, workspaceID.PG())
+			if queryErr != nil {
+				return queryErr
+			}
+			defer rows.Close()
+			for rows.Next() {
+				var userID, displayName string
+				if scanErr := rows.Scan(&userID, &displayName); scanErr != nil {
+					return scanErr
+				}
+				items = append(items, map[string]string{"userId": userID, "displayName": displayName})
+			}
+			return rows.Err()
+		})
+	if writeError(application, writer, request, err) {
+		return
+	}
+	httpx.WriteJSON(writer, http.StatusOK, items)
 }
 
 func (application *Application) createCustomFieldDefinition(writer http.ResponseWriter, request *http.Request) {

@@ -15,6 +15,7 @@ func TestValidateTypedValuesAcceptsEverySupportedType(t *testing.T) {
 	maximum := 10.0
 	definitions := []CustomFieldDefinition{
 		definition("note", "text", CustomFieldValidation{Required: true, MinLength: intPointer(2), MaxLength: intPointer(10)}, nil),
+		definition("description", "multiline_text", CustomFieldValidation{MaxLength: intPointer(100)}, nil),
 		definition("score", "number", CustomFieldValidation{Minimum: &minimum, Maximum: &maximum}, nil),
 		definition("budget", "money", CustomFieldValidation{}, nil),
 		definition("renewal", "date", CustomFieldValidation{}, nil),
@@ -24,7 +25,7 @@ func TestValidateTypedValuesAcceptsEverySupportedType(t *testing.T) {
 		definition("sponsor", "user_reference", CustomFieldValidation{}, nil),
 	}
 	values := map[string]any{
-		"note": "ready", "score": 7.5, "budget": map[string]any{"minor": 1250, "currency": "USD"},
+		"note": "ready", "description": "First line\nSecond line", "score": 7.5, "budget": map[string]any{"minor": 1250, "currency": "USD"},
 		"renewal": "2027-01-31", "vip": true, "segment": "smb", "regions": []string{"emea", "apac"},
 		"sponsor": "01982d57-3400-7000-8000-000000000001",
 	}
