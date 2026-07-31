@@ -56,6 +56,7 @@ import { ErrorPanelComponent } from '../../shared/state/error-panel.component';
   styles: `
     .audit-table {
       overflow: auto;
+      scrollbar-gutter: stable;
     }
     .audit-table:focus-visible {
       outline: 3px solid var(--brand);
@@ -83,6 +84,9 @@ import { ErrorPanelComponent } from '../../shared/state/error-panel.component';
     }
     .audit-table article:last-child {
       border: 0;
+    }
+    .audit-table article:hover {
+      background: var(--surface-subtle);
     }
     article time,
     article span {

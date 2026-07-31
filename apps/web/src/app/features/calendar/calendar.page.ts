@@ -174,7 +174,7 @@ import { CalendarStore, type CalendarView } from './calendar.store';
               </mat-form-field>
             }
             <div class="form-actions">
-              <button mat-button type="button" (click)="createOpen.set(false)">
+              <button mat-button type="button" (click)="closeCreate()">
                 {{ i18n.t('common.action.cancel') }}
               </button>
               <button mat-flat-button type="submit" [disabled]="store.saving()">
@@ -327,7 +327,11 @@ import { CalendarStore, type CalendarView } from './calendar.store';
       color: var(--text-muted);
     }
     .calendar-event.completed {
-      opacity: 0.65;
+      border-left-color: var(--border-strong);
+      background: var(--surface-subtle);
+    }
+    .calendar-event.completed strong {
+      text-decoration: line-through;
     }
     .no-events {
       color: var(--text-faint);
@@ -348,6 +352,164 @@ import { CalendarStore, type CalendarView } from './calendar.store';
       }
       .day-card.outside {
         display: none;
+      }
+    }
+
+    :host {
+      --workspace-surface: var(--color-surface, var(--surface-raised));
+      --workspace-subtle: var(--color-surface-subtle, var(--surface-subtle));
+      --workspace-hover: var(--color-surface-hover, var(--surface-selected));
+      --workspace-border: var(--color-border, var(--border));
+      --workspace-anchor: var(--color-anchor, var(--brand));
+    }
+    .page-header {
+      align-items: flex-end;
+      margin-bottom: 0.25rem;
+    }
+    .header-actions {
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .calendar-toolbar {
+      min-height: 4rem;
+      padding: 0.75rem;
+      border-radius: var(--radius-panel, 0.875rem);
+      background: var(--workspace-surface);
+    }
+    .segmented {
+      border-radius: var(--radius-control, 0.625rem);
+      background: var(--workspace-subtle);
+    }
+    .segmented .active {
+      color: var(--workspace-anchor);
+      background: var(--workspace-surface);
+      box-shadow: 0 1px 2px rgb(18 36 29 / 10%);
+    }
+    .date-navigation {
+      justify-content: flex-end;
+    }
+    .date-navigation > button:first-child,
+    .date-navigation > button:last-child {
+      min-width: 2.5rem;
+      padding-inline: 0.5rem;
+    }
+    .editor {
+      overflow: hidden;
+      padding: 0;
+      border-radius: var(--radius-panel, 0.875rem);
+      background: var(--workspace-surface);
+    }
+    .editor > header {
+      min-height: 3.5rem;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--workspace-border);
+      background: var(--workspace-subtle);
+    }
+    .editor h2 {
+      margin: 0;
+    }
+    .feature-form {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.25rem 1rem;
+      padding: 1.25rem;
+    }
+    .form-actions {
+      grid-column: 1 / -1;
+    }
+    .calendar-grid {
+      gap: 0;
+      overflow: auto;
+      border: 1px solid var(--workspace-border);
+      border-radius: var(--radius-panel, 0.875rem);
+      background: var(--workspace-surface);
+    }
+    .calendar-grid:focus-visible {
+      outline: 2px solid var(--workspace-anchor);
+      outline-offset: 2px;
+    }
+    .day-card {
+      min-height: 9.5rem;
+      border: 0;
+      border-right: 1px solid color-mix(in srgb, var(--workspace-border) 72%, transparent);
+      border-bottom: 1px solid color-mix(in srgb, var(--workspace-border) 72%, transparent);
+      border-radius: 0;
+      background: var(--workspace-surface);
+    }
+    .day-card > header {
+      min-height: 2.5rem;
+      align-items: center;
+      padding: 0.625rem 0.75rem;
+      border-color: color-mix(in srgb, var(--workspace-border) 72%, transparent);
+      background: var(--workspace-subtle);
+    }
+    .day-card > header span {
+      display: grid;
+      min-width: 1.5rem;
+      min-height: 1.5rem;
+      place-items: center;
+      border-radius: var(--radius-pill, 999px);
+      background: var(--workspace-surface);
+    }
+    .day-card.outside {
+      border-style: solid;
+      color: var(--text-muted);
+      background: color-mix(in srgb, var(--workspace-subtle) 54%, var(--workspace-surface));
+    }
+    .day-events {
+      gap: 0.375rem;
+      padding: 0.5rem;
+    }
+    .calendar-event {
+      gap: 0.25rem 0.5rem;
+      padding: 0.5rem;
+      border-left: 3px solid var(--workspace-anchor);
+      border-radius: var(--radius-control, 0.625rem);
+      background: var(--color-signal-soft, var(--brand-soft));
+    }
+    .calendar-event time {
+      color: var(--workspace-anchor);
+    }
+    @media (max-width: 760px) {
+      .page-header {
+        align-items: stretch;
+      }
+      .header-actions,
+      .calendar-toolbar {
+        align-items: stretch;
+      }
+      .header-actions > *,
+      .segmented,
+      .date-navigation {
+        width: 100%;
+      }
+      .segmented button,
+      .date-navigation button {
+        flex: 1;
+      }
+      .feature-form {
+        grid-template-columns: 1fr;
+        padding: 1rem;
+      }
+      .form-actions {
+        grid-column: 1;
+      }
+      .calendar-grid {
+        gap: 0.625rem;
+        overflow: visible;
+        border: 0;
+        background: transparent;
+      }
+      .day-card {
+        min-height: 7rem;
+        border: 1px solid var(--workspace-border);
+        border-radius: var(--radius-panel, 0.875rem);
+      }
+    }
+    @media (forced-colors: active) {
+      .segmented .active,
+      .calendar-event,
+      .day-card > header span {
+        border: 1px solid CanvasText;
       }
     }
   `,
@@ -394,6 +556,7 @@ export class CalendarPage implements OnInit {
   }
 
   openCreate(): void {
+    this.validationError.set(false);
     const start = new Date();
     start.setMinutes(Math.ceil(start.getMinutes() / 30) * 30, 0, 0);
     const end = new Date(start.getTime() + 3_600_000);
@@ -407,6 +570,11 @@ export class CalendarPage implements OnInit {
     }));
     this.createOpen.set(true);
     focusAfterNextRender(this.injector, () => this.titleInput()?.nativeElement);
+  }
+
+  closeCreate(): void {
+    this.createOpen.set(false);
+    this.validationError.set(false);
   }
 
   rangeLabel(): string {
@@ -435,7 +603,10 @@ export class CalendarPage implements OnInit {
 
   async create(event: Event): Promise<void> {
     event.preventDefault();
-    if (this.activityForm().invalid()) return;
+    if (this.activityForm().invalid()) {
+      this.activityForm().markAsTouched();
+      return;
+    }
     const value = this.model();
     const start = new Date(value.start);
     const end = new Date(value.end);
@@ -472,7 +643,7 @@ export class CalendarPage implements OnInit {
       scopeUserId: '',
       scopeDepartmentId: '',
     });
-    this.createOpen.set(false);
+    this.closeCreate();
   }
 }
 

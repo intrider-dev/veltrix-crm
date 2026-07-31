@@ -1,10 +1,19 @@
+:host {
+  --webhook-surface: var(--color-surface, var(--surface-raised));
+  --webhook-subtle: var(--color-surface-container, var(--surface-subtle));
+  --webhook-hover: var(--color-surface-container-high, var(--surface-selected));
+  --webhook-border: var(--color-outline-variant, var(--border));
+  display: block;
+}
+
 .settings-feature {
-  max-width: 76rem;
+  width: min(100%, 80rem);
+  margin-inline: auto;
 }
 
 .editor,
 .section-heading {
-  padding: 1rem;
+  padding: clamp(1rem, 2.2vw, 1.25rem);
 }
 
 .editor h2,
@@ -24,13 +33,21 @@
   gap: 1rem;
 }
 
+.editor mat-form-field,
+.editor .native-field,
+.editor input,
+.editor select {
+  min-width: 0;
+  width: 100%;
+}
+
 .secret-panel {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.75rem 1rem;
   padding: 1rem;
   border: 1px solid color-mix(in srgb, var(--brand) 38%, var(--border));
-  border-radius: 0.75rem;
+  border-radius: 0.9rem;
   background: var(--brand-soft);
 }
 
@@ -46,7 +63,7 @@
   padding: 0.75rem;
   overflow-wrap: anywhere;
   border: 1px solid var(--border);
-  border-radius: 0.5rem;
+  border-radius: 0.65rem;
   background: var(--surface-raised);
   user-select: all;
 }
@@ -70,10 +87,12 @@
 
 .section-heading {
   display: flex;
-  align-items: end;
+  align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  border-bottom: 1px solid var(--border);
+  min-height: 4rem;
+  border-bottom: 1px solid var(--webhook-border);
+  background: color-mix(in srgb, var(--webhook-subtle) 56%, var(--webhook-surface));
 }
 
 .webhook-list article {
@@ -81,8 +100,10 @@
   grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.9rem 1rem;
-  border-bottom: 1px solid var(--border);
+  min-height: 4.5rem;
+  padding: 0.9rem 1.25rem;
+  border-bottom: 1px solid var(--webhook-border);
+  transition: background-color 120ms ease;
 }
 
 .webhook-list article:last-child {
@@ -138,15 +159,15 @@ table {
 
 th,
 td {
-  padding: 0.75rem 0.8rem;
-  border-bottom: 1px solid var(--border);
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--webhook-border);
   text-align: start;
   vertical-align: top;
 }
 
 th {
   color: var(--text-muted);
-  background: var(--surface-subtle);
+  background: var(--webhook-subtle);
   font-size: 0.7rem;
   font-weight: 650;
 }
@@ -200,7 +221,14 @@ td > span:not(.status-pill),
   display: flex;
   justify-content: center;
   padding: 0.8rem;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--webhook-border);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .webhook-list article:hover,
+  tbody tr:hover td {
+    background: var(--webhook-hover);
+  }
 }
 
 @media (max-width: 750px) {
@@ -232,5 +260,26 @@ td > span:not(.status-pill),
 
   .secret-actions button {
     flex: 1;
+  }
+}
+
+@media (max-width: 520px) {
+  .webhook-list article {
+    grid-template-columns: 1fr;
+  }
+
+  .subscription-details {
+    grid-column: 1;
+  }
+
+  .rotation-confirmation {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .webhook-list article {
+    transition-duration: 0ms;
   }
 }

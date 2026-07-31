@@ -358,3 +358,213 @@
     grid-template-columns: 9rem 34rem;
   }
 }
+
+/* Veltrix Signal workspace layer */
+:host {
+  --workspace-surface: var(--color-surface, var(--surface-raised));
+  --workspace-subtle: var(--color-surface-subtle, var(--surface-subtle));
+  --workspace-hover: var(--color-surface-hover, var(--surface-selected));
+  --workspace-border: var(--color-border, var(--border));
+  --workspace-anchor: var(--color-anchor, var(--brand));
+}
+
+.page-header {
+  align-items: flex-end;
+  margin-bottom: 0.25rem;
+}
+
+.workspace-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 4rem;
+  padding: 0.75rem;
+  border: 1px solid var(--workspace-border);
+  border-radius: var(--radius-panel, 0.875rem);
+  background: var(--workspace-surface);
+}
+
+.pipeline-select {
+  width: min(19rem, 100%);
+  min-height: var(--control-height, 2.5rem);
+  padding: 0 0.75rem;
+  border: 1px solid var(--workspace-border);
+  border-radius: var(--radius-control, 0.625rem);
+  background: var(--workspace-surface);
+}
+
+.view-switcher {
+  width: max-content;
+  margin: 0 0 0 auto;
+}
+
+.view-switcher button.active {
+  color: var(--workspace-anchor);
+  background: var(--workspace-surface);
+  box-shadow: 0 1px 2px rgb(18 36 29 / 10%);
+}
+
+.kanban {
+  gap: 0.75rem;
+  padding: 0.25rem 0.125rem 0.75rem;
+  scrollbar-color: var(--workspace-border) transparent;
+}
+
+.stage {
+  min-width: 18rem;
+  overflow: hidden;
+  border-color: var(--workspace-border);
+  border-radius: var(--radius-panel, 0.875rem);
+  background: var(--workspace-subtle);
+}
+
+.stage > header {
+  min-height: 3.75rem;
+  padding: 0.75rem 0.875rem;
+  border-color: color-mix(in srgb, var(--workspace-border) 75%, transparent);
+}
+
+.stage h2 {
+  font-size: 0.875rem;
+  font-weight: 650;
+}
+
+.stage header > span {
+  min-width: 1.75rem;
+  min-height: 1.75rem;
+  border: 1px solid var(--workspace-border);
+  border-radius: var(--radius-pill, 999px);
+  background: var(--workspace-surface);
+}
+
+.drop-zone {
+  min-height: 24rem;
+  padding: 0.625rem;
+}
+
+.deal-card {
+  gap: 0.5rem;
+  margin-bottom: 0.625rem;
+  padding: 0.875rem;
+  border-color: color-mix(in srgb, var(--workspace-border) 88%, transparent);
+  border-radius: var(--radius-control, 0.625rem);
+  background: var(--workspace-surface);
+  box-shadow: 0 1px 2px rgb(18 36 29 / 7%);
+}
+
+.deal-card h3 a:hover,
+.deal-card h3 a:focus-visible {
+  color: var(--workspace-anchor);
+  text-underline-offset: 0.18em;
+}
+
+.deal-card select,
+.deal-list select {
+  min-height: 2.5rem;
+  padding-inline: 0.75rem 2.5rem;
+  border-radius: var(--radius-control, 0.625rem);
+}
+
+.drag-handle {
+  top: 0.625rem;
+  right: 0.75rem;
+  min-width: 1.75rem;
+  min-height: 1.75rem;
+}
+
+.deal-list,
+.gantt {
+  border-radius: var(--radius-panel, 0.875rem);
+  background: var(--workspace-surface);
+}
+
+.deal-list th,
+.deal-list td {
+  min-height: 2.75rem;
+  padding: 0.75rem 1rem;
+  border-color: color-mix(in srgb, var(--workspace-border) 72%, transparent);
+}
+
+.deal-list th {
+  background: var(--workspace-subtle);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.deal-list tbody tr:hover {
+  background: var(--workspace-hover);
+}
+
+.gantt-range {
+  min-height: 3rem;
+  padding: 0.75rem 1rem;
+  background: var(--workspace-subtle);
+}
+
+.gantt-label,
+.gantt-track {
+  border-color: color-mix(in srgb, var(--workspace-border) 72%, transparent);
+}
+
+.gantt-bar {
+  border-radius: 0.5rem;
+  color: var(--color-canvas, var(--on-brand));
+  background: var(--workspace-anchor);
+  box-shadow: none;
+}
+
+.conflict {
+  border-radius: var(--radius-control, 0.625rem);
+}
+
+.create-drawer,
+.drawer-actions {
+  background: var(--workspace-surface);
+}
+
+.create-drawer {
+  padding: 1.25rem;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .deal-card:hover {
+    border-color: color-mix(in srgb, var(--workspace-anchor) 38%, var(--workspace-border));
+  }
+}
+
+@media (max-width: 760px) {
+  .page-header {
+    align-items: stretch;
+  }
+
+  .page-header > button {
+    width: 100%;
+  }
+
+  .workspace-controls {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0.625rem;
+  }
+
+  .pipeline-select,
+  .view-switcher {
+    width: 100%;
+    margin: 0;
+  }
+
+  .view-switcher button {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+@media (forced-colors: active) {
+  .view-switcher button.active,
+  .stage header > span,
+  .deal-card {
+    border: 1px solid CanvasText;
+  }
+}

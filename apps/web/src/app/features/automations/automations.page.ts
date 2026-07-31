@@ -164,13 +164,18 @@ interface AutomationFormModel {
   `,
   styles: `
     .editor {
-      padding: 1rem;
+      padding: 1rem 1rem 0.85rem;
     }
     .feature-form {
-      grid-template-columns: repeat(3, minmax(11rem, 1fr));
+      grid-template-columns: repeat(2, minmax(14rem, 1fr));
     }
     .wide {
       grid-column: span 2;
+    }
+    .feature-form .form-actions {
+      grid-column: 1 / -1;
+      padding-top: 0.25rem;
+      border-top: 1px solid var(--border);
     }
     .record-list article {
       display: flex;
@@ -197,6 +202,9 @@ interface AutomationFormModel {
         grid-template-columns: 1fr;
       }
       .wide {
+        grid-column: auto;
+      }
+      .feature-form .form-actions {
         grid-column: auto;
       }
     }

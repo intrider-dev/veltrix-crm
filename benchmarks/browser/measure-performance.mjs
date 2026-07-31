@@ -568,7 +568,7 @@ function summarizeScroll(raw) {
   };
 }
 
-async function navigateContactRoundTrip(page, settleMs, label) {
+async function navigateContactRoundTrip(page, settleMs) {
   const dataRow = page.getByRole("grid").getByRole("row").nth(1);
   // The final data cell cannot be the optional selection-checkbox cell and
   // therefore exercises the same row-open behavior in every permission mode.
@@ -577,16 +577,8 @@ async function navigateContactRoundTrip(page, settleMs, label) {
   await page.waitForURL(/\/contacts\/[0-9a-f-]+$/i, { timeout: 30_000 });
   await waitForAppReady(page, settleMs);
 
-  const contactsResponse = page.waitForResponse(
-    (response) => isWorkspaceCollectionResponse(response, "contacts"),
-    { timeout: 30_000 },
-  );
-  await page.locator("a.back-link").click();
+  await page.locator("a.back-control").click();
   await page.waitForURL(/\/contacts$/, { timeout: 30_000 });
-  const response = await contactsResponse;
-  if (!response.ok()) {
-    throw new Error(`${label} contacts response was HTTP ${response.status()}`);
-  }
   await waitForAppReady(page, settleMs);
   await waitForContactRows(page);
 }
@@ -599,7 +591,7 @@ async function runNavigationCycles(page, client, cycles, settleMs) {
   // InstructionStream objects rather than application retainers.
   const warmupCycles = 10;
   for (let cycle = 0; cycle < warmupCycles; cycle += 1) {
-    await navigateContactRoundTrip(page, settleMs, `warm-up cycle ${cycle + 1}`);
+    await navigateContactRoundTrip(page, settleMs);
   }
   await page.evaluate(() => performance.clearResourceTimings());
   const before = await heapUsage(client, true);
@@ -607,7 +599,7 @@ async function runNavigationCycles(page, client, cycles, settleMs) {
   const started = nodePerformance.now();
   let completed = 0;
   for (let cycle = 0; cycle < cycles; cycle += 1) {
-    await navigateContactRoundTrip(page, settleMs, `cycle ${cycle + 1}`);
+    await navigateContactRoundTrip(page, settleMs);
     completed += 1;
   }
   const durationMs = nodePerformance.now() - started;

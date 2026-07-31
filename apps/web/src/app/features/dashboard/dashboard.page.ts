@@ -70,30 +70,24 @@ import { DashboardStore } from './dashboard.store';
             <header>
               <h2>{{ i18n.t('dashboard.dashboard.dealsByStage') }}</h2>
             </header>
-            @defer (on viewport) {
-              @if ((dashboard.dealsByStage?.length ?? 0) > 0) {
-                <div class="bars">
-                  @for (stage of dashboard.dealsByStage; track stage.stageId) {
-                    <div class="bar-row">
-                      <div>
-                        <span>{{ stage.stageName }}</span
-                        ><strong>{{ i18n.money(stage.amountMinor, dashboard.currency) }}</strong>
-                      </div>
-                      <div class="track">
-                        <span
-                          [style.width.%]="
-                            stageWidth(stage.amountMinor, dashboard.openPipelineMinor)
-                          "
-                        ></span>
-                      </div>
+            @if ((dashboard.dealsByStage?.length ?? 0) > 0) {
+              <div class="bars">
+                @for (stage of dashboard.dealsByStage; track stage.stageId) {
+                  <div class="bar-row">
+                    <div>
+                      <span>{{ stage.stageName }}</span
+                      ><strong>{{ i18n.money(stage.amountMinor, dashboard.currency) }}</strong>
                     </div>
-                  }
-                </div>
-              } @else {
-                <div class="empty-state">{{ i18n.t('sales.pipeline.empty') }}</div>
-              }
-            } @placeholder {
-              <div class="skeleton chart-placeholder"></div>
+                    <div class="track">
+                      <span
+                        [style.width.%]="stageWidth(stage.amountMinor, dashboard.openPipelineMinor)"
+                      ></span>
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="empty-state">{{ i18n.t('sales.pipeline.empty') }}</div>
             }
           </article>
 
@@ -125,34 +119,49 @@ import { DashboardStore } from './dashboard.store';
   `,
   styles: `
     .period {
-      padding: 0.2rem;
-      border-radius: 0.55rem;
-      background: var(--surface-subtle);
+      align-self: center;
     }
     .period .active {
-      color: var(--brand);
+      color: var(--text);
       background: var(--surface-raised);
     }
     .kpi-grid {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 1rem;
+      gap: 0.875rem;
     }
     .kpi-grid mat-card {
-      min-height: 7.5rem;
-      padding: 1.1rem;
-      border-color: var(--border);
+      min-height: 8.5rem;
+      padding: 1.25rem;
+      border: 0;
+      border-radius: var(--radius-panel);
       background: var(--surface-raised);
+      box-shadow: var(--shadow-sm);
+    }
+    .kpi-grid mat-card:first-child {
+      color: white;
+      background: var(--brand);
+    }
+    .kpi-grid mat-card:nth-child(2) {
+      color: var(--on-signal);
+      background: var(--signal);
+    }
+    .kpi-grid mat-card:first-child span,
+    .kpi-grid mat-card:nth-child(2) span {
+      color: inherit;
+      opacity: 0.78;
     }
     .kpi-grid span {
       color: var(--text-muted);
-      font-size: 0.82rem;
+      font-size: 0.78rem;
+      font-weight: 620;
+      letter-spacing: 0.015em;
     }
     .kpi-grid strong {
       display: block;
-      margin-top: 0.75rem;
-      font-size: clamp(1.4rem, 3vw, 2rem);
-      letter-spacing: -0.04em;
+      margin-top: 1rem;
+      font-size: clamp(1.6rem, 3vw, 2.25rem);
+      letter-spacing: -0.055em;
     }
     .kpi-grid strong.danger {
       color: var(--danger);
@@ -162,21 +171,22 @@ import { DashboardStore } from './dashboard.store';
     }
     .dashboard-grid {
       display: grid;
-      grid-template-columns: minmax(0, 1.55fr) minmax(18rem, 0.75fr);
-      gap: 1rem;
+      grid-template-columns: minmax(0, 1.6fr) minmax(19rem, 0.75fr);
+      gap: 0.875rem;
     }
     article > header {
-      padding: 1rem 1.1rem;
+      padding: 1rem 1.25rem;
       border-bottom: 1px solid var(--border);
     }
     h2 {
       margin: 0;
-      font-size: 1rem;
+      font-size: 1.05rem;
+      letter-spacing: -0.02em;
     }
     .bars {
       display: grid;
       gap: 1.1rem;
-      padding: 1.25rem;
+      padding: 1.5rem 1.25rem;
     }
     .bar-row > div:first-child {
       display: flex;
@@ -186,7 +196,7 @@ import { DashboardStore } from './dashboard.store';
       font-size: 0.82rem;
     }
     .track {
-      height: 0.55rem;
+      height: 0.5rem;
       overflow: hidden;
       border-radius: 2rem;
       background: var(--surface-subtle);
@@ -196,11 +206,7 @@ import { DashboardStore } from './dashboard.store';
       min-width: 0.25rem;
       height: 100%;
       border-radius: inherit;
-      background: var(--brand);
-    }
-    .chart-placeholder {
-      min-height: 16rem;
-      margin: 1rem;
+      background: linear-gradient(90deg, var(--brand), var(--signal));
     }
     ol {
       display: grid;

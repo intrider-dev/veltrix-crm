@@ -32,7 +32,7 @@ import { LeadDetailsStore } from './lead-details.store';
   providers: [LeadDetailsStore],
   template: `
     <div class="page lead-details">
-      <a class="back-link" routerLink="/leads"
+      <a mat-button class="back-control" routerLink="/leads"
         ><app-icon name="back" />{{ i18n.t('leads.back') }}</a
       >
       @if (store.loading()) {
@@ -69,53 +69,55 @@ import { LeadDetailsStore } from './lead-details.store';
           <section class="panel editor">
             <h2>{{ i18n.t('leads.overview') }}</h2>
             <form (submit)="save($event)">
-              <div class="fields">
-                <mat-form-field appearance="outline"
-                  ><mat-label>{{ i18n.t('common.field.name') }}</mat-label
-                  ><input matInput [formField]="leadForm.name"
-                /></mat-form-field>
-                <mat-form-field appearance="outline"
-                  ><mat-label>{{ i18n.t('common.field.email') }}</mat-label
-                  ><input matInput type="email" [formField]="leadForm.email"
-                /></mat-form-field>
-                <mat-form-field appearance="outline"
-                  ><mat-label>{{ i18n.t('common.field.phone') }}</mat-label
-                  ><input matInput [formField]="leadForm.phone"
-                /></mat-form-field>
-                <mat-form-field appearance="outline"
-                  ><mat-label>{{ i18n.t('leads.company') }}</mat-label
-                  ><input matInput [formField]="leadForm.companyName"
-                /></mat-form-field>
-                <mat-form-field appearance="outline"
-                  ><mat-label>{{ i18n.t('leads.jobTitle') }}</mat-label
-                  ><input matInput [formField]="leadForm.jobTitle"
-                /></mat-form-field>
-                <mat-form-field appearance="outline"
-                  ><mat-label>{{ i18n.t('leads.source') }}</mat-label
-                  ><input matInput [formField]="leadForm.source"
-                /></mat-form-field>
-                <mat-form-field appearance="outline"
-                  ><mat-label>{{ i18n.t('leads.plannedStart') }}</mat-label
-                  ><input matInput type="date" [formField]="leadForm.plannedStartDate"
-                /></mat-form-field>
-                <mat-form-field appearance="outline"
-                  ><mat-label>{{ i18n.t('leads.expectedClose') }}</mat-label
-                  ><input matInput type="date" [formField]="leadForm.expectedCloseDate"
-                /></mat-form-field>
-                <label class="native-field"
-                  ><span>{{ i18n.t('leads.stage') }}</span
-                  ><select [formField]="leadForm.stageId">
-                    @for (stage of openStages(); track stage.id) {
-                      <option [value]="stage.id">{{ stage.displayName }}</option>
-                    }
-                  </select></label
-                >
+              <div class="record-fields">
+                <div class="fields">
+                  <mat-form-field appearance="outline"
+                    ><mat-label>{{ i18n.t('common.field.name') }}</mat-label
+                    ><input matInput [formField]="leadForm.name"
+                  /></mat-form-field>
+                  <mat-form-field appearance="outline"
+                    ><mat-label>{{ i18n.t('common.field.email') }}</mat-label
+                    ><input matInput type="email" [formField]="leadForm.email"
+                  /></mat-form-field>
+                  <mat-form-field appearance="outline"
+                    ><mat-label>{{ i18n.t('common.field.phone') }}</mat-label
+                    ><input matInput [formField]="leadForm.phone"
+                  /></mat-form-field>
+                  <mat-form-field appearance="outline"
+                    ><mat-label>{{ i18n.t('leads.company') }}</mat-label
+                    ><input matInput [formField]="leadForm.companyName"
+                  /></mat-form-field>
+                  <mat-form-field appearance="outline"
+                    ><mat-label>{{ i18n.t('leads.jobTitle') }}</mat-label
+                    ><input matInput [formField]="leadForm.jobTitle"
+                  /></mat-form-field>
+                  <mat-form-field appearance="outline"
+                    ><mat-label>{{ i18n.t('leads.source') }}</mat-label
+                    ><input matInput [formField]="leadForm.source"
+                  /></mat-form-field>
+                  <mat-form-field appearance="outline"
+                    ><mat-label>{{ i18n.t('leads.plannedStart') }}</mat-label
+                    ><input matInput type="date" [formField]="leadForm.plannedStartDate"
+                  /></mat-form-field>
+                  <mat-form-field appearance="outline"
+                    ><mat-label>{{ i18n.t('leads.expectedClose') }}</mat-label
+                    ><input matInput type="date" [formField]="leadForm.expectedCloseDate"
+                  /></mat-form-field>
+                  <label class="native-field"
+                    ><span>{{ i18n.t('leads.stage') }}</span
+                    ><select [formField]="leadForm.stageId">
+                      @for (stage of openStages(); track stage.id) {
+                        <option [value]="stage.id">{{ stage.displayName }}</option>
+                      }
+                    </select></label
+                  >
+                </div>
+                <app-custom-field-editor
+                  entityType="lead"
+                  [values]="customFields()"
+                  (valuesChange)="customFields.set($event)"
+                />
               </div>
-              <app-custom-field-editor
-                entityType="lead"
-                [values]="customFields()"
-                (valuesChange)="customFields.set($event)"
-              />
               @if (permissions.allows('leads.update') && lead.status !== 'converted') {
                 <div class="actions">
                   <button mat-flat-button type="submit" [disabled]="store.saving()">
@@ -144,6 +146,15 @@ import { LeadDetailsStore } from './lead-details.store';
     }
     .loading {
       min-height: 18rem;
+    }
+    .back-control {
+      width: fit-content;
+      min-height: 2.5rem;
+      color: var(--text-muted);
+      text-decoration: none;
+    }
+    .back-control app-icon {
+      margin-inline-end: 0.4rem;
     }
     .hero {
       display: grid;
@@ -190,6 +201,10 @@ import { LeadDetailsStore } from './lead-details.store';
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 0.75rem;
+    }
+    .record-fields {
+      display: grid;
+      gap: 1rem;
     }
     .actions {
       display: flex;

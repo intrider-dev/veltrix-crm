@@ -393,3 +393,115 @@ progress {
     transition-duration: 0ms;
   }
 }
+
+/* Veltrix Signal workspace: calm surfaces, dense data, explicit editing focus. */
+:host {
+  --translation-surface: var(--color-surface, var(--surface-raised));
+  --translation-subtle: var(--color-surface-container, var(--surface-subtle));
+  --translation-hover: var(--color-surface-container-high, var(--surface-selected));
+  --translation-border: var(--color-outline-variant, var(--border));
+  display: block;
+}
+
+.translation-page {
+  width: min(100%, 96rem);
+  margin-inline: auto;
+}
+
+.create-resource,
+.coverage-panel,
+.translation-list,
+.translation-editor,
+.readonly-panel {
+  min-width: 0;
+  border: 1px solid var(--translation-border);
+  border-radius: 0.9rem;
+  background: var(--translation-surface);
+}
+
+.create-resource,
+.coverage-panel,
+.readonly-panel {
+  padding: clamp(1rem, 2.2vw, 1.25rem);
+}
+
+.filters {
+  align-items: end;
+  padding: 1rem;
+  border: 1px solid var(--translation-border);
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--translation-subtle) 52%, var(--translation-surface));
+}
+
+.filters mat-form-field,
+.create-resource mat-form-field,
+.translation-editor mat-form-field,
+.filters .native-field,
+.create-resource .native-field,
+.translation-editor .native-field,
+.filters input,
+.filters select,
+.create-resource input,
+.create-resource select,
+.translation-editor input,
+.translation-editor textarea,
+.translation-editor select {
+  min-width: 0;
+  width: 100%;
+}
+
+.translation-layout {
+  align-items: start;
+  gap: 1rem;
+}
+
+.list-header {
+  min-height: 2.75rem;
+  padding-inline: 1rem;
+  border-bottom: 1px solid var(--translation-border);
+  background: var(--translation-subtle);
+}
+
+.translation-row {
+  min-height: 4.75rem;
+  padding: 0.8rem 1rem;
+  border-bottom-color: var(--translation-border);
+  transition: background-color 120ms ease;
+}
+
+.translation-row[aria-current='true'],
+.translation-row.active {
+  background: color-mix(in srgb, var(--brand-soft) 56%, var(--translation-surface));
+  box-shadow: inset 3px 0 var(--brand);
+}
+
+.translation-editor > header {
+  padding: 1rem;
+  border-bottom: 1px solid var(--translation-border);
+  background: color-mix(in srgb, var(--translation-subtle) 52%, var(--translation-surface));
+}
+
+.editor-actions {
+  padding: 0 1rem 1rem;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .translation-row:hover {
+    background: var(--translation-hover);
+  }
+}
+
+@media (max-width: 680px) {
+  .translation-row {
+    min-height: 5.25rem;
+  }
+
+  .editor-actions {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .editor-actions button {
+    width: 100%;
+  }
+}

@@ -46,16 +46,16 @@ Modular monolith выбран потому, что CRM-сценариям пол
 
 ## Фактические измерения
 
-Результаты получены 22 июля 2026 года. Browser/server performance измерен на коде приложения commit `3b26934`, чистый k6 baseline — на documentation-only descendant `feaffdd`, а bundle size повторно получен из финального working tree после deployment/i18n hardening. Это не tagged-release и не сравнение с конкурентами. Среда, методика, отдельные прогоны, отклонения и оговорки приведены в [performance report](docs/PERFORMANCE.md).
+Browser-метрики и bundle evidence обновлены 31 июля 2026 года на финальном working tree редизайна. Сохранённые server-performance результаты относятся к коду приложения commit `3b26934`, а чистый k6 baseline — к documentation-only descendant `feaffdd`. Это не tagged-release и не сравнение с конкурентами. Среда, методика, отдельные прогоны, отклонения и оговорки приведены в [performance report](docs/PERFORMANCE.md).
 
 | Метрика | Измеренный результат | Budget / статус |
 | --- | ---: | --- |
-| Initial JS + CSS | 91 746 bytes (89,6 KiB) Brotli | ≤350 KiB — пройден |
-| Lazy AG Grid Community / optional LiveKit | 166,7 / 114,2 KiB Brotli | оба lazy — пройдено |
+| Initial JS + CSS | 90 978 bytes (88,8 KiB) Brotli | ≤350 KiB — пройден |
+| Lazy AG Grid Community / optional LiveKit | 167,2 / 114,2 KiB Brotli | оба lazy — пройдено |
 | Lighthouse desktop / mobile / accessibility | 100 / 94 / 100 | ≥95 / ≥90 / ≥95 — пройдено |
-| Simulated mobile LCP / CLS | 2,76 s / 0 | ≤2,0 s / ≤0,05 — **LCP не пройден** |
-| Browser interaction / DOM / grid scrolling | 49,1 ms / 710 / 60 FPS | все цели пройдены |
-| Forced-GC heap / retained growth за 20 циклов | 13,30 MiB / 8,3% | обе цели пройдены |
+| Simulated mobile LCP / CLS | 2,77 s / 0 | ≤2,0 s / ≤0,05 — **LCP не пройден** |
+| Browser interaction / DOM / grid scrolling | 48,4 ms / 714 / 60 FPS | все цели пройдены |
+| Forced-GC heap / retained growth за 20 циклов | 13,48 MiB / 8,31% | обе цели пройдены |
 | 50-VU throughput / error rate | 222,61 operations/s / 0% | median трёх чистых прогонов |
 | Read / write / search p95 | 189,09 / 283,19 / 176,65 ms | read/write **не пройдены**; search пройден |
 | Median peak app / PostgreSQL memory | 72,14 / 306,10 MiB | вместе 378,24 MiB — цель пройдена |

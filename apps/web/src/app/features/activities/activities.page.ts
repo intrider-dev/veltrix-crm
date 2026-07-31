@@ -252,6 +252,113 @@ import { ActivitiesStore } from './activities.store';
         grid-column: 1;
       }
     }
+
+    :host {
+      --workspace-surface: var(--color-surface, var(--surface-raised));
+      --workspace-subtle: var(--color-surface-subtle, var(--surface-subtle));
+      --workspace-hover: var(--color-surface-hover, var(--surface-selected));
+      --workspace-border: var(--color-border, var(--border));
+      --workspace-anchor: var(--color-anchor, var(--brand));
+    }
+    .page-header {
+      align-items: flex-end;
+      margin-bottom: 0.25rem;
+    }
+    .create-panel {
+      padding: 1.25rem;
+      border-radius: var(--radius-panel, 0.875rem);
+      background: var(--workspace-surface);
+    }
+    .create-panel form {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.25rem 1rem;
+    }
+    .create-panel label {
+      min-width: 0;
+      margin: 0 0 1.25rem;
+    }
+    .create-panel select {
+      min-height: 3.5rem;
+      padding-inline: 0.75rem 2.5rem;
+      border-color: var(--workspace-border);
+      border-radius: var(--radius-control, 0.625rem);
+      background-color: var(--workspace-surface);
+    }
+    .activity-list {
+      padding: 0;
+      border-radius: var(--radius-panel, 0.875rem);
+      background: var(--workspace-surface);
+    }
+    .activity-list > article {
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 1rem;
+      min-height: 5rem;
+      padding: 0.875rem 1rem;
+      border-color: color-mix(in srgb, var(--workspace-border) 72%, transparent);
+    }
+    .activity-list > article:hover {
+      background: var(--workspace-hover);
+    }
+    .type-mark {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: var(--radius-control, 0.625rem);
+      color: var(--workspace-anchor);
+      background: var(--color-signal-soft, var(--brand-soft));
+    }
+    .activity-list article header {
+      flex-wrap: wrap;
+      justify-content: flex-start;
+      gap: 0.5rem 0.75rem;
+    }
+    .activity-list article header span {
+      padding: 0.2rem 0.5rem;
+      border: 1px solid var(--workspace-border);
+      border-radius: var(--radius-pill, 999px);
+      color: var(--text-muted);
+      background: var(--workspace-subtle);
+      text-transform: none;
+    }
+    .activity-list footer {
+      flex-wrap: wrap;
+      gap: 0.375rem 0.75rem;
+    }
+    .task-assignments {
+      padding: 1rem;
+      border-color: var(--workspace-border);
+      border-radius: var(--radius-control, 0.625rem);
+      background: var(--workspace-subtle);
+    }
+    @media (max-width: 700px) {
+      .page-header {
+        align-items: stretch;
+      }
+      .page-header > button {
+        width: 100%;
+      }
+      .create-panel {
+        padding: 1rem;
+      }
+      .create-panel form {
+        grid-template-columns: 1fr;
+      }
+      .form-actions {
+        grid-column: 1;
+      }
+      .activity-list > article {
+        gap: 0.75rem;
+        padding-inline: 0.75rem;
+      }
+      .activity-list footer button {
+        flex: 1 1 auto;
+      }
+    }
+    @media (forced-colors: active) {
+      .activity-list article header span,
+      .type-mark {
+        border: 1px solid CanvasText;
+      }
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

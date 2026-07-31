@@ -52,28 +52,46 @@ import { ToastService, type AppToast } from './toast.service';
       position: fixed;
       z-index: 120;
       top: 4.25rem;
-      right: 1rem;
+      left: 50%;
       display: grid;
       width: min(24rem, calc(100vw - 2rem));
       gap: 0.6rem;
+      transform: translateX(-50%);
       pointer-events: none;
     }
     .toast {
+      position: relative;
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
       align-items: center;
       gap: 0.75rem;
-      padding: 0.75rem 0.65rem 0.75rem 0.9rem;
-      border: 1px solid var(--border);
-      border-radius: 0.75rem;
+      overflow: hidden;
+      padding: 0.8rem 0.65rem 0.8rem 1rem;
+      border: 1px solid color-mix(in srgb, var(--border) 76%, transparent);
+      border-radius: var(--radius-panel);
       background: color-mix(in srgb, var(--surface-raised) 96%, transparent);
       box-shadow: var(--shadow-lg);
       backdrop-filter: blur(14px);
       pointer-events: auto;
-      animation: toast-in 180ms var(--ease-out);
+      color: var(--text);
+      transition: transform 180ms var(--ease-out);
+
+      @starting-style {
+        transform: translateY(-0.5rem) scale(0.98);
+      }
+    }
+    .toast::before {
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 0.25rem;
+      background: var(--signal);
+      content: '';
     }
     .toast.error {
       border-color: color-mix(in srgb, var(--danger) 52%, var(--border));
+    }
+    .toast.error::before {
+      background: var(--danger);
     }
     p {
       margin: 0;
@@ -83,23 +101,17 @@ import { ToastService, type AppToast } from './toast.service';
       display: inline-flex;
       align-items: center;
     }
-    @keyframes toast-in {
-      from {
-        transform: translateY(-0.5rem) scale(0.98);
-        opacity: 0;
-      }
-    }
     @media (max-width: 600px) {
       .toast-viewport {
-        top: auto;
-        right: 0.75rem;
-        bottom: 0.75rem;
+        top: 4.25rem;
+        left: 50%;
+        bottom: auto;
         width: calc(100vw - 1.5rem);
       }
     }
     @media (prefers-reduced-motion: reduce) {
       .toast {
-        animation: none;
+        transition: none;
       }
     }
   `,

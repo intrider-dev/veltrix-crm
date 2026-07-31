@@ -173,3 +173,201 @@ button:active {
     transform: none;
   }
 }
+
+/* Veltrix Signal workspace layer */
+:host {
+  --workspace-surface: var(--color-surface, var(--surface-raised));
+  --workspace-subtle: var(--color-surface-subtle, var(--surface-subtle));
+  --workspace-hover: var(--color-surface-hover, var(--surface-selected));
+  --workspace-border: var(--color-border, var(--border));
+  --workspace-anchor: var(--color-anchor, var(--brand));
+}
+
+.page-header {
+  align-items: flex-end;
+  margin-bottom: 0.25rem;
+}
+
+.company-toolbar {
+  display: grid;
+  grid-template-columns:
+    auto minmax(15rem, 1fr) minmax(9.5rem, 12rem) minmax(11rem, 14rem)
+    auto auto;
+  gap: 0.75rem;
+  align-items: end;
+  padding: 0.75rem;
+  border-radius: var(--radius-panel, 0.875rem);
+  background: var(--workspace-surface);
+}
+
+.company-toolbar .mode-switch {
+  align-self: center;
+  width: max-content;
+}
+
+.company-toolbar .mode-switch button {
+  white-space: nowrap;
+}
+
+.company-toolbar .mode-switch button.selected {
+  color: var(--workspace-anchor);
+  background: var(--workspace-surface);
+  box-shadow: 0 1px 2px rgb(18 36 29 / 10%);
+}
+
+.company-toolbar .filter-field,
+.company-toolbar .filter-search,
+.company-toolbar .filter-search-control,
+.company-toolbar input,
+.company-toolbar select {
+  width: 100%;
+  min-width: 0;
+}
+
+.company-toolbar input,
+.company-toolbar select {
+  min-height: var(--control-height, 2.5rem);
+}
+
+.company-list {
+  padding: 0;
+  border-radius: var(--radius-panel, 0.875rem);
+  background: var(--workspace-surface);
+}
+
+.company-list > a,
+.trash-row {
+  grid-template-columns: auto minmax(0, 1fr) minmax(7rem, auto) auto;
+  gap: 1rem;
+  min-height: 4.75rem;
+  padding: 0.75rem 1rem;
+  border-color: color-mix(in srgb, var(--workspace-border) 72%, transparent);
+}
+
+.company-list > a:hover,
+.company-list > a:focus-visible {
+  background: var(--workspace-hover);
+}
+
+.company-list > a:focus-visible {
+  outline: 2px solid var(--workspace-anchor);
+  outline-offset: -2px;
+}
+
+.company-mark {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-control, 0.625rem);
+  color: var(--workspace-anchor);
+  background: var(--color-signal-soft, var(--brand-soft));
+}
+
+.company-summary small {
+  margin-top: 0.125rem;
+}
+
+.company-status {
+  display: inline-flex;
+  align-items: center;
+  justify-self: end;
+  min-height: 1.75rem;
+  padding-inline: 0.625rem;
+  border: 1px solid var(--workspace-border);
+  border-radius: var(--radius-pill, 999px);
+  background: var(--workspace-subtle);
+  white-space: nowrap;
+}
+
+.load-more {
+  min-height: 4rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--workspace-border);
+}
+
+.create-drawer,
+.small-dialog {
+  background: var(--workspace-surface);
+}
+
+.create-drawer {
+  padding: 1.25rem;
+}
+
+.small-dialog {
+  padding: 1.25rem;
+  border-radius: var(--radius-overlay, 1rem);
+}
+
+@media (max-width: 1120px) {
+  .company-toolbar {
+    grid-template-columns: auto minmax(15rem, 1fr) repeat(2, minmax(10rem, 1fr));
+  }
+
+  .company-toolbar > button {
+    justify-self: start;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 900px) {
+  .company-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+  }
+
+  .company-toolbar .mode-switch,
+  .company-toolbar .filter-search {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .company-toolbar .mode-switch button {
+    flex: 1;
+  }
+}
+
+@media (max-width: 640px) {
+  .page-header {
+    align-items: stretch;
+  }
+
+  .page-header > button {
+    width: 100%;
+  }
+
+  .company-toolbar {
+    grid-template-columns: 1fr;
+    gap: 0.625rem;
+    padding: 0.625rem;
+  }
+
+  .company-toolbar .mode-switch,
+  .company-toolbar .filter-search,
+  .company-toolbar > * {
+    grid-column: 1;
+    width: 100%;
+  }
+
+  .company-list > a,
+  .trash-row {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 0.75rem;
+  }
+
+  .company-status,
+  .trash-row time {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .trash-row button {
+    grid-column: 2 / -1;
+    justify-self: start;
+  }
+}
+
+@media (forced-colors: active) {
+  .company-toolbar .mode-switch button.selected,
+  .company-status {
+    border: 1px solid CanvasText;
+  }
+}

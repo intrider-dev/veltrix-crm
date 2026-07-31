@@ -48,8 +48,8 @@ interface DealEditorModel {
   providers: [DealDetailsStore],
   template: `
     <div class="page deal-details">
-      <a class="back-link" routerLink="/deals">
-        <app-icon name="chevron" />{{ i18n.t('sales.deal.back') }}
+      <a mat-button class="back-control" routerLink="/deals">
+        <app-icon name="back" />{{ i18n.t('sales.deal.back') }}
       </a>
 
       @if (store.loading()) {
@@ -99,42 +99,44 @@ interface DealEditorModel {
             </header>
             @if (permissions.allows('deals.update')) {
               <form (submit)="save($event)">
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ i18n.t('common.field.name') }}</mat-label>
-                  <input matInput [formField]="dealForm.name" />
-                </mat-form-field>
-                <div class="field-grid">
+                <div class="record-fields">
                   <mat-form-field appearance="outline">
-                    <mat-label>{{ i18n.t('sales.deal.amount') }}</mat-label>
-                    <input matInput type="number" [formField]="dealForm.amount" />
+                    <mat-label>{{ i18n.t('common.field.name') }}</mat-label>
+                    <input matInput [formField]="dealForm.name" />
+                  </mat-form-field>
+                  <div class="field-grid">
+                    <mat-form-field appearance="outline">
+                      <mat-label>{{ i18n.t('sales.deal.amount') }}</mat-label>
+                      <input matInput type="number" [formField]="dealForm.amount" />
+                    </mat-form-field>
+                    <mat-form-field appearance="outline">
+                      <mat-label>{{ i18n.t('sales.deal.currency') }}</mat-label>
+                      <input matInput [formField]="dealForm.currency" />
+                    </mat-form-field>
+                  </div>
+                  <mat-form-field appearance="outline">
+                    <mat-label>{{ i18n.t('sales.deal.plannedStart') }}</mat-label>
+                    <input matInput type="date" [formField]="dealForm.plannedStartDate" />
                   </mat-form-field>
                   <mat-form-field appearance="outline">
-                    <mat-label>{{ i18n.t('sales.deal.currency') }}</mat-label>
-                    <input matInput [formField]="dealForm.currency" />
+                    <mat-label>{{ i18n.t('sales.deal.expectedClose') }}</mat-label>
+                    <input matInput type="date" [formField]="dealForm.expectedCloseDate" />
                   </mat-form-field>
+                  <label class="native-field">
+                    {{ i18n.t('sales.deal.forecastCategory') }}
+                    <select [formField]="dealForm.forecastCategory">
+                      <option value="pipeline">{{ i18n.t('sales.forecast.pipeline') }}</option>
+                      <option value="best_case">{{ i18n.t('sales.forecast.bestCase') }}</option>
+                      <option value="commit">{{ i18n.t('sales.forecast.commit') }}</option>
+                      <option value="omitted">{{ i18n.t('sales.forecast.omitted') }}</option>
+                    </select>
+                  </label>
+                  <app-custom-field-editor
+                    entityType="deal"
+                    [values]="customFields()"
+                    (valuesChange)="customFields.set($event)"
+                  />
                 </div>
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ i18n.t('sales.deal.plannedStart') }}</mat-label>
-                  <input matInput type="date" [formField]="dealForm.plannedStartDate" />
-                </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ i18n.t('sales.deal.expectedClose') }}</mat-label>
-                  <input matInput type="date" [formField]="dealForm.expectedCloseDate" />
-                </mat-form-field>
-                <label class="native-field">
-                  {{ i18n.t('sales.deal.forecastCategory') }}
-                  <select [formField]="dealForm.forecastCategory">
-                    <option value="pipeline">{{ i18n.t('sales.forecast.pipeline') }}</option>
-                    <option value="best_case">{{ i18n.t('sales.forecast.bestCase') }}</option>
-                    <option value="commit">{{ i18n.t('sales.forecast.commit') }}</option>
-                    <option value="omitted">{{ i18n.t('sales.forecast.omitted') }}</option>
-                  </select>
-                </label>
-                <app-custom-field-editor
-                  entityType="deal"
-                  [values]="customFields()"
-                  (valuesChange)="customFields.set($event)"
-                />
                 <div class="actions">
                   <button mat-flat-button type="submit" [disabled]="store.saving()">
                     {{ i18n.t(store.saving() ? 'web.form.saving' : 'common.action.save') }}

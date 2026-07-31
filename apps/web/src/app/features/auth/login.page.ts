@@ -146,20 +146,37 @@ import { BrandLogoComponent } from '../../shared/brand/brand-logo.component';
     :host {
       min-height: 100dvh;
       display: block;
-      background: var(--surface-canvas);
+      background: var(--surface-raised);
     }
     .login-layout {
       min-height: 100dvh;
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(22rem, 31rem);
+      grid-template-columns: minmax(22rem, 0.85fr) minmax(28rem, 1.15fr);
       align-items: center;
-      gap: clamp(3rem, 8vw, 8rem);
-      max-width: 76rem;
-      margin: auto;
-      padding: clamp(1.25rem, 5vw, 4rem);
+      gap: 0;
+      padding: 0;
     }
     .story {
-      max-width: 34rem;
+      position: relative;
+      display: flex;
+      min-height: 100dvh;
+      flex-direction: column;
+      justify-content: center;
+      overflow: hidden;
+      padding: clamp(2rem, 7vw, 7rem);
+      color: white;
+      background: var(--brand);
+    }
+    .story::after {
+      position: absolute;
+      right: -8rem;
+      bottom: -10rem;
+      width: 24rem;
+      height: 24rem;
+      border-radius: 50%;
+      background: var(--signal);
+      content: '';
+      opacity: 0.92;
     }
     .brand-mark {
       display: grid;
@@ -173,13 +190,15 @@ import { BrandLogoComponent } from '../../shared/brand/brand-logo.component';
       box-shadow: 0 0.5rem 1.5rem color-mix(in srgb, var(--brand) 24%, transparent);
     }
     .eyebrow {
-      margin: 2rem 0 0.5rem;
-      color: var(--brand);
+      margin: 2.5rem 0 0.65rem;
+      color: var(--signal);
       font-weight: 700;
       letter-spacing: 0.03em;
     }
     h1 {
-      max-width: 12ch;
+      position: relative;
+      z-index: 1;
+      max-width: 11ch;
       margin: 0;
       font-size: clamp(2.5rem, 6vw, 4.75rem);
       line-height: 0.98;
@@ -188,16 +207,21 @@ import { BrandLogoComponent } from '../../shared/brand/brand-logo.component';
       word-break: normal;
     }
     .story > p:last-child {
+      position: relative;
+      z-index: 1;
       max-width: 48ch;
-      color: var(--text-muted);
+      color: rgb(255 255 255 / 78%);
       font-size: 1.05rem;
       line-height: 1.65;
     }
     .login-card {
+      justify-self: center;
+      width: min(calc(100% - 2rem), 31rem);
       padding: 0.5rem;
-      border-color: var(--border);
+      border: 0;
+      border-radius: var(--radius-overlay);
       background: var(--surface-raised);
-      box-shadow: var(--shadow-lg);
+      box-shadow: 0 1.5rem 5rem rgb(18 44 36 / 13%);
     }
     mat-card-header {
       padding: 1rem 1rem 1.5rem;
@@ -237,7 +261,7 @@ import { BrandLogoComponent } from '../../shared/brand/brand-logo.component';
     .locale-switch {
       display: flex;
       justify-content: flex-end;
-      padding: 0.35rem;
+      padding: 0.5rem;
       gap: 0.15rem;
     }
     .locale-switch button {
@@ -245,7 +269,7 @@ import { BrandLogoComponent } from '../../shared/brand/brand-logo.component';
       padding-inline: 0.75rem;
     }
     .locale-switch .active {
-      background: var(--surface-selected);
+      background: var(--brand-soft);
       color: var(--brand);
     }
     .form-error {
@@ -259,7 +283,18 @@ import { BrandLogoComponent } from '../../shared/brand/brand-logo.component';
     @media (max-width: 760px) {
       .login-layout {
         grid-template-columns: 1fr;
-        gap: 2.5rem;
+        gap: 0;
+        padding: 1rem;
+        background: var(--surface-canvas);
+      }
+      .story {
+        min-height: auto;
+        padding: 1.5rem 0.75rem 2rem;
+        color: var(--text);
+        background: transparent;
+      }
+      .story::after {
+        display: none;
       }
       .story > p:last-child {
         display: none;
@@ -269,6 +304,10 @@ import { BrandLogoComponent } from '../../shared/brand/brand-logo.component';
       }
       .eyebrow {
         margin-top: 1.25rem;
+        color: var(--brand);
+      }
+      .login-card {
+        width: 100%;
       }
     }
   `,

@@ -1,14 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title description">
-  <title id="title">VeltrixCRM</title>
+  <title id="title">Product mark</title>
   <desc id="description">A folded V with an ascending X spark</desc>
   <defs>
     <linearGradient id="surface" x1="8" y1="56" x2="56" y2="8" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#3346b8"/>
-      <stop offset="1" stop-color="#6574f4"/>
+      <stop stop-color="#123d33"/>
+      <stop offset="1" stop-color="#267764"/>
     </linearGradient>
     <linearGradient id="spark" x1="40" y1="13" x2="54" y2="27" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#9ff8df"/>
-      <stop offset="1" stop-color="#52dfc1"/>
+      <stop stop-color="#d7ffad"/>
+      <stop offset="1" stop-color="#8eea5a"/>
     </linearGradient>
   </defs>
   <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#surface)"/>

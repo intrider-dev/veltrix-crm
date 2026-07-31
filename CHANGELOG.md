@@ -17,6 +17,8 @@ All notable changes will be documented in this file. The format follows [Keep a 
 
 ### Changed
 
+- Replaced the previous visual layer with the `Veltrix Signal` design system: warm neutral canvas, evergreen/lime hierarchy, consistent Material controls, compact list workspaces, redesigned dashboard/reports, responsive record details, accessible modal drawers, and a polished light/dark messenger.
+- Added list/Kanban/Gantt view switching to lead and deal workspaces, clarified accepted-message status, made recorded media explicitly loadable/playable, and hardened mobile navigation/chat/drawer focus behavior after independent review.
 - Rebranded the centrally configured product and repository paths to VeltrixCRM, added the vector product mark, and kept feature code free of scattered brand literals.
 - Added deal list/Kanban/Gantt views, projects/tasks, resource and stage ACLs, departments, assignments/watchers, calendar audiences, chat, optional LiveKit calls, and personal corporate mail as complete database-backed vertical slices.
 - Unified Material controls, corrected chat/contact/company layout regressions, and made the scrollable Kanban keyboard-focusable.

@@ -6,7 +6,9 @@ import {
   input,
   output,
   signal,
+  viewChild,
 } from '@angular/core';
+import type { ElementRef } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 
 import { ApiClient } from '../../core/api/api-client.service';
@@ -17,38 +19,60 @@ import type {
   RecordAssignmentSet,
 } from '../../core/api/api.types';
 import { Permissions } from '../../core/auth/permissions';
+import type { AppMessageKey } from '../../core/i18n/app-message-key';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { WorkspaceStore } from '../../core/workspace/workspace.store';
 import { ToastService } from '../feedback/toast.service';
+import { IconComponent } from '../icon/icon.component';
 import { ErrorPanelComponent } from '../state/error-panel.component';
 
 export type AssignmentResourceType = 'lead' | 'deal' | 'task';
 
 @Component({
   selector: 'app-record-assignments',
-  imports: [ErrorPanelComponent, MatButtonModule],
+  imports: [ErrorPanelComponent, IconComponent, MatButtonModule],
   template: `
     <section class="assignments" [attr.aria-busy]="loading()">
-      <header>
+      <header class="assignment-heading">
         <div>
           <h3>{{ i18n.t('assignments.title') }}</h3>
           <p>{{ i18n.t('assignments.subtitle') }}</p>
         </div>
+        @if (canEdit()) {
+          <button
+            #addTrigger
+            mat-stroked-button
+            type="button"
+            class="add-participant"
+            aria-controls="assignment-editor"
+            [attr.aria-expanded]="editorOpen()"
+            (click)="toggleEditor()"
+          >
+            <app-icon name="add" />{{ i18n.t(addParticipantKey) }}
+          </button>
+        }
       </header>
 
       @if (error()) {
         <app-error-panel [error]="error()" (retry)="load()" />
       }
 
-      <div class="assignment-list">
+      <div class="assignment-list" [attr.role]="assignmentSet().items.length > 0 ? 'list' : null">
         @for (item of assignmentSet().items; track item.id) {
-          <div class="assignment-chip">
+          <div class="assignment-row" role="listitem">
             <span class="subject-icon" aria-hidden="true">{{
               item.subjectType === 'user' ? 'U' : 'D'
             }}</span>
-            <span>
+            <span class="assignment-identity">
               <strong>{{ item.displayName }}</strong>
-              <small>{{ i18n.t(kindKey(item.kind)) }}</small>
+              <small>
+                {{
+                  i18n.t(
+                    item.subjectType === 'user' ? 'assignments.user' : 'assignments.department'
+                  )
+                }}
+                · {{ i18n.t(kindKey(item.kind)) }}
+              </small>
             </span>
             @if (item.isPrimary) {
               <span class="status-pill">{{ i18n.t('assignments.primary') }}</span>
@@ -70,46 +94,63 @@ export type AssignmentResourceType = 'lead' | 'deal' | 'task';
         }
       </div>
 
-      @if (canEdit()) {
-        <div class="assignment-editor">
-          <label class="native-field">
-            <span>{{ i18n.t('assignments.kind') }}</span>
-            <select [value]="kind()" (change)="setKind($event)">
-              <option value="responsible">{{ i18n.t('assignments.kind.responsible') }}</option>
-              <option value="watcher">{{ i18n.t('assignments.kind.watcher') }}</option>
-            </select>
-          </label>
-          <label class="native-field subject-select">
-            <span>{{ i18n.t('assignments.subject') }}</span>
-            <select [value]="subjectValue()" (change)="setSubject($event)">
-              <option value="">{{ i18n.t('assignments.chooseSubject') }}</option>
-              @for (option of options(); track option.type + ':' + option.id) {
-                <option [value]="option.type + ':' + option.id">
-                  {{
-                    option.type === 'user'
-                      ? i18n.t('assignments.user')
-                      : i18n.t('assignments.department')
-                  }}
-                  · {{ option.name }}
-                </option>
-              }
-            </select>
-          </label>
+      @if (canEdit() && editorOpen()) {
+        <section
+          id="assignment-editor"
+          class="assignment-editor"
+          role="dialog"
+          aria-modal="false"
+          aria-labelledby="assignment-editor-title"
+          (keydown.escape)="closeEditor()"
+        >
+          <header>
+            <h4 id="assignment-editor-title">{{ i18n.t(addParticipantKey) }}</h4>
+          </header>
+          <div class="editor-fields">
+            <label class="native-field subject-select">
+              <span>{{ i18n.t('assignments.subject') }}</span>
+              <select #subjectSelect [value]="subjectValue()" (change)="setSubject($event)">
+                <option value="">{{ i18n.t('assignments.chooseSubject') }}</option>
+                @for (option of options(); track option.type + ':' + option.id) {
+                  <option [value]="option.type + ':' + option.id">
+                    {{
+                      option.type === 'user'
+                        ? i18n.t('assignments.user')
+                        : i18n.t('assignments.department')
+                    }}
+                    · {{ option.name }}
+                  </option>
+                }
+              </select>
+            </label>
+            <label class="native-field">
+              <span>{{ i18n.t('assignments.kind') }}</span>
+              <select [value]="kind()" (change)="setKind($event)">
+                <option value="responsible">{{ i18n.t('assignments.kind.responsible') }}</option>
+                <option value="watcher">{{ i18n.t('assignments.kind.watcher') }}</option>
+              </select>
+            </label>
+          </div>
           @if (kind() === 'responsible') {
             <label class="primary-toggle">
               <input type="checkbox" [checked]="primary()" (change)="setPrimary($event)" />
               <span>{{ i18n.t('assignments.makePrimary') }}</span>
             </label>
           }
-          <button
-            mat-stroked-button
-            type="button"
-            [disabled]="saving() || !subjectValue()"
-            (click)="add()"
-          >
-            {{ i18n.t('common.action.add') }}
-          </button>
-        </div>
+          <footer>
+            <button mat-button type="button" [disabled]="saving()" (click)="closeEditor()">
+              {{ i18n.t('common.action.cancel') }}
+            </button>
+            <button
+              mat-flat-button
+              type="button"
+              [disabled]="saving() || !subjectValue()"
+              (click)="add()"
+            >
+              {{ i18n.t(addParticipantKey) }}
+            </button>
+          </footer>
+        </section>
       }
     </section>
   `,
@@ -118,7 +159,14 @@ export type AssignmentResourceType = 'lead' | 'deal' | 'task';
       display: grid;
       gap: 0.8rem;
     }
-    header h3 {
+    .assignment-heading {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    header h3,
+    .assignment-editor h4 {
       margin: 0;
       font-size: 0.9rem;
     }
@@ -129,32 +177,30 @@ export type AssignmentResourceType = 'lead' | 'deal' | 'task';
       font-size: 0.75rem;
     }
     .assignment-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
+      display: grid;
+      gap: 0.4rem;
     }
-    .assignment-chip {
-      display: flex;
+    .assignment-row {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto auto;
       align-items: center;
-      gap: 0.45rem;
-      min-height: 2.65rem;
-      padding: 0.25rem 0.35rem 0.25rem 0.45rem;
-      border: 1px solid var(--border);
+      gap: 0.65rem;
+      min-height: 3.25rem;
+      padding: 0.4rem 0.45rem 0.4rem 0.55rem;
       border-radius: var(--control-radius);
-      background: var(--surface-raised);
+      background: var(--surface-subtle);
     }
-    .assignment-chip > span:nth-child(2) {
+    .assignment-identity {
       display: grid;
       min-width: 0;
     }
-    .assignment-chip strong {
-      max-width: 12rem;
+    .assignment-row strong {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
       font-size: 0.78rem;
     }
-    .assignment-chip small {
+    .assignment-row small {
       color: var(--text-muted);
       font-size: 0.68rem;
     }
@@ -171,11 +217,28 @@ export type AssignmentResourceType = 'lead' | 'deal' | 'task';
     }
     .assignment-editor {
       display: grid;
-      grid-template-columns: minmax(9rem, 0.7fr) minmax(14rem, 1.5fr) auto auto;
-      align-items: end;
-      gap: 0.6rem;
-      padding-top: 0.75rem;
-      border-top: 1px solid var(--border);
+      gap: 0.85rem;
+      padding: 1rem;
+      border: 1px solid var(--border);
+      border-radius: var(--panel-radius);
+      background: var(--surface-raised);
+      transform-origin: top right;
+    }
+    .editor-fields {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(9rem, 0.6fr);
+      gap: 0.75rem;
+    }
+    .assignment-editor footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+    }
+    .add-participant {
+      flex: 0 0 auto;
+    }
+    .add-participant app-icon {
+      margin-inline-end: 0.45rem;
     }
     .primary-toggle {
       display: flex;
@@ -192,9 +255,37 @@ export type AssignmentResourceType = 'lead' | 'deal' | 'task';
       margin: 0;
       accent-color: var(--brand);
     }
+    button {
+      transition: transform 140ms cubic-bezier(0.23, 1, 0.32, 1);
+    }
+    button:active {
+      transform: scale(0.98);
+    }
     @media (max-width: 700px) {
-      .assignment-editor {
+      .assignment-heading {
+        align-items: stretch;
+        flex-direction: column;
+      }
+      .add-participant {
+        width: 100%;
+      }
+      .editor-fields {
         grid-template-columns: 1fr;
+      }
+      .assignment-row {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+      }
+      .assignment-row > button {
+        grid-column: 2 / -1;
+        justify-self: start;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      button {
+        transition: none;
+      }
+      button:active {
+        transform: none;
       }
     }
   `,
@@ -221,6 +312,10 @@ export class RecordAssignmentsComponent {
   readonly kind = signal<'responsible' | 'watcher'>('responsible');
   readonly subjectValue = signal('');
   readonly primary = signal(false);
+  readonly editorOpen = signal(false);
+  readonly addParticipantKey = 'assignments.addParticipant' as AppMessageKey;
+  private readonly addTrigger = viewChild<ElementRef<HTMLButtonElement>>('addTrigger');
+  private readonly subjectSelect = viewChild<ElementRef<HTMLSelectElement>>('subjectSelect');
 
   constructor() {
     effect(() => {
@@ -229,6 +324,21 @@ export class RecordAssignmentsComponent {
       this.version();
       void this.load();
     });
+    effect(() => {
+      if (this.editorOpen()) this.subjectSelect()?.nativeElement.focus();
+    });
+  }
+
+  toggleEditor(): void {
+    if (this.editorOpen()) this.closeEditor();
+    else this.editorOpen.set(true);
+  }
+
+  closeEditor(): void {
+    this.editorOpen.set(false);
+    this.subjectValue.set('');
+    this.primary.set(false);
+    queueMicrotask(() => this.addTrigger()?.nativeElement.focus());
   }
 
   canEdit(): boolean {
@@ -304,8 +414,7 @@ export class RecordAssignmentsComponent {
       isPrimary: this.kind() === 'responsible' && this.primary(),
     });
     await this.save(next);
-    this.subjectValue.set('');
-    this.primary.set(false);
+    if (!this.error()) this.closeEditor();
   }
 
   async remove(item: RecordAssignment): Promise<void> {

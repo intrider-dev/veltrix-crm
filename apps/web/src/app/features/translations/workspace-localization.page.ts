@@ -96,11 +96,22 @@ import { LocalizationSettingsStore } from './localization-settings.store';
     </div>
   `,
   styles: `
+    :host {
+      --locale-surface: var(--color-surface, var(--surface-raised));
+      --locale-subtle: var(--color-surface-container, var(--surface-subtle));
+      --locale-hover: var(--color-surface-container-high, var(--surface-selected));
+      --locale-border: var(--color-outline-variant, var(--border));
+      display: block;
+    }
     .locale-settings-page {
-      max-width: 56rem;
+      width: min(100%, 62rem);
+      margin-inline: auto;
     }
     .settings-card {
       padding: clamp(1rem, 3vw, 1.5rem);
+      border: 1px solid var(--locale-border);
+      border-radius: 0.9rem;
+      background: var(--locale-surface);
     }
     form {
       display: grid;
@@ -114,12 +125,12 @@ import { LocalizationSettingsStore } from './localization-settings.store';
       font-size: 0.78rem;
     }
     .native-field select {
-      min-height: 3rem;
-      padding-inline: 0.75rem;
-      border: 1px solid var(--border);
-      border-radius: 0.45rem;
+      min-height: 2.75rem;
+      padding-inline: 0.8rem 2.4rem;
+      border: 1px solid var(--locale-border);
+      border-radius: 0.65rem;
       color: var(--text);
-      background: var(--surface-raised);
+      background-color: var(--locale-surface);
     }
     fieldset {
       margin: 0;
@@ -145,11 +156,14 @@ import { LocalizationSettingsStore } from './localization-settings.store';
       grid-template-columns: auto 1fr auto;
       align-items: center;
       gap: 0.65rem;
-      min-height: 3.25rem;
-      padding: 0.65rem 0.8rem;
-      border: 1px solid var(--border);
-      border-radius: 0.55rem;
-      background: var(--surface-subtle);
+      min-height: 3.5rem;
+      padding: 0.75rem 0.9rem;
+      border: 1px solid var(--locale-border);
+      border-radius: 0.7rem;
+      background: var(--locale-subtle);
+      transition:
+        border-color 120ms ease,
+        background-color 120ms ease;
     }
     .locale-options input {
       width: 1.05rem;
@@ -168,7 +182,8 @@ import { LocalizationSettingsStore } from './localization-settings.store';
     .validation-panel,
     .saved-panel {
       padding: 0.75rem 0.9rem;
-      border-radius: 0.5rem;
+      border: 1px solid transparent;
+      border-radius: 0.65rem;
     }
     .conflict-panel {
       display: flex;
@@ -176,18 +191,45 @@ import { LocalizationSettingsStore } from './localization-settings.store';
       justify-content: space-between;
       gap: 1rem;
       color: var(--danger);
+      border-color: color-mix(in srgb, var(--danger) 24%, transparent);
       background: var(--danger-surface);
     }
     .validation-panel {
       color: var(--danger);
+      border-color: color-mix(in srgb, var(--danger) 24%, transparent);
       background: var(--danger-surface);
     }
     .saved-panel {
       color: var(--brand);
+      border-color: color-mix(in srgb, var(--brand) 24%, transparent);
       background: var(--brand-soft);
     }
     .policy-skeleton {
       min-height: 14rem;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .locale-options label:hover {
+        border-color: color-mix(in srgb, var(--brand) 32%, var(--locale-border));
+        background: var(--locale-hover);
+      }
+    }
+    @media (max-width: 520px) {
+      .page-header {
+        align-items: stretch;
+      }
+      .page-header a,
+      .form-actions button {
+        width: 100%;
+      }
+      .conflict-panel {
+        align-items: stretch;
+        flex-direction: column;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .locale-options label {
+        transition-duration: 0ms;
+      }
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

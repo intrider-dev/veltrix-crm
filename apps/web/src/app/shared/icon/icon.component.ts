@@ -7,13 +7,18 @@ export type IconName =
   | 'audit'
   | 'back'
   | 'building'
+  | 'bookmark'
   | 'chat'
   | 'chevron'
   | 'close'
+  | 'check'
+  | 'checks'
+  | 'clock'
   | 'contact'
   | 'dashboard'
   | 'deal'
   | 'language'
+  | 'like'
   | 'lead'
   | 'mail'
   | 'microphone'
@@ -28,6 +33,12 @@ export type IconName =
   | 'phone'
   | 'pin'
   | 'play'
+  | 'pause'
+  | 'reaction'
+  | 'reply'
+  | 'retry'
+  | 'download'
+  | 'file'
   | 'project'
   | 'send'
   | 'sun'
@@ -99,8 +110,47 @@ export type IconName =
         @case ('pin') {
           <path d="m9 3 6 6-2 2 3 4-1 1-4-3-2 2-6-6zM9 15l-5 5" />
         }
+        @case ('bookmark') {
+          <path d="M6 4h12v17l-6-4-6 4z" />
+        }
+        @case ('like') {
+          <path
+            d="M7 21H4V10h3M7 10l4-7c2 0 3 1.5 2 4l-.5 2H19a2 2 0 0 1 2 2l-2 8a2 2 0 0 1-2 2H7z"
+          />
+        }
+        @case ('reaction') {
+          <circle cx="12" cy="12" r="9" />
+          <path d="M8.5 10h.01M15.5 10h.01M8 14c1 1.5 2.3 2 4 2s3-.5 4-2" />
+        }
+        @case ('reply') {
+          <path d="m10 8-5 4 5 4v-3h3c3.5 0 5.5 1.3 7 4-1-5-3.5-7-7-7h-3z" />
+        }
+        @case ('check') {
+          <path d="m5 12 4 4L19 6" />
+        }
+        @case ('checks') {
+          <path d="m2.5 12 4 4 10-10M10 15l2 2 10-10" />
+        }
+        @case ('clock') {
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 7v5l3 2" />
+        }
+        @case ('retry') {
+          <path
+            d="M20 7v5h-5M4 17v-5h5M18.5 11A7 7 0 0 0 6 7.5L4 12M5.5 13A7 7 0 0 0 18 16.5l2-4.5"
+          />
+        }
+        @case ('download') {
+          <path d="M12 3v12M7 10l5 5 5-5M4 20h16" />
+        }
+        @case ('file') {
+          <path d="M6 3h8l4 4v14H6zM14 3v5h5" />
+        }
         @case ('play') {
           <path d="m8 5 11 7-11 7z" />
+        }
+        @case ('pause') {
+          <path d="M8 5v14M16 5v14" />
         }
         @case ('send') {
           <path d="m3 11 18-8-8 18-2-7zM11 14l4-5" />

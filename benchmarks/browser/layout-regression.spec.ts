@@ -11,44 +11,58 @@ import {
 async function expectChildrenContainedAndSeparated(container: Locator) {
   const containerBox = await container.boundingBox();
   expect(containerBox).not.toBeNull();
-  const boxes = await container.locator(":scope > *:visible").evaluateAll((elements) =>
-    elements.map((element) => {
-      const box = element.getBoundingClientRect();
-      return { x: box.x, y: box.y, width: box.width, height: box.height };
-    }),
-  );
+  const boxes = await container
+    .locator(":scope > *:visible")
+    .evaluateAll((elements) =>
+      elements.map((element) => {
+        const box = element.getBoundingClientRect();
+        return { x: box.x, y: box.y, width: box.width, height: box.height };
+      }),
+    );
   for (const box of boxes) {
     expect.soft(box.x).toBeGreaterThanOrEqual((containerBox?.x ?? 0) - 1);
     expect
       .soft(box.x + box.width)
-      .toBeLessThanOrEqual((containerBox?.x ?? 0) + (containerBox?.width ?? 0) + 1);
+      .toBeLessThanOrEqual(
+        (containerBox?.x ?? 0) + (containerBox?.width ?? 0) + 1,
+      );
     expect.soft(box.y).toBeGreaterThanOrEqual((containerBox?.y ?? 0) - 1);
     expect
       .soft(box.y + box.height)
-      .toBeLessThanOrEqual((containerBox?.y ?? 0) + (containerBox?.height ?? 0) + 1);
+      .toBeLessThanOrEqual(
+        (containerBox?.y ?? 0) + (containerBox?.height ?? 0) + 1,
+      );
   }
   for (let first = 0; first < boxes.length; first += 1) {
     for (let second = first + 1; second < boxes.length; second += 1) {
-      const horizontal = Math.min(
-        boxes[first]!.x + boxes[first]!.width,
-        boxes[second]!.x + boxes[second]!.width,
-      ) - Math.max(boxes[first]!.x, boxes[second]!.x);
-      const vertical = Math.min(
-        boxes[first]!.y + boxes[first]!.height,
-        boxes[second]!.y + boxes[second]!.height,
-      ) - Math.max(boxes[first]!.y, boxes[second]!.y);
+      const horizontal =
+        Math.min(
+          boxes[first]!.x + boxes[first]!.width,
+          boxes[second]!.x + boxes[second]!.width,
+        ) - Math.max(boxes[first]!.x, boxes[second]!.x);
+      const vertical =
+        Math.min(
+          boxes[first]!.y + boxes[first]!.height,
+          boxes[second]!.y + boxes[second]!.height,
+        ) - Math.max(boxes[first]!.y, boxes[second]!.y);
       expect.soft(Math.max(0, horizontal) * Math.max(0, vertical)).toBe(0);
     }
   }
 }
 
-test("forgot-password action follows the password field", async ({ context, page }) => {
+test("forgot-password action follows the password field", async ({
+  context,
+  page,
+}) => {
   const assertNoBrowserErrors = failOnBrowserErrors(page);
   await context.clearCookies();
   await page.goto("/login");
 
   const password = page.locator('input[autocomplete="current-password"]');
-  const forgot = page.getByRole("link", { name: "Forgot password?", exact: true });
+  const forgot = page.getByRole("link", {
+    name: "Forgot password?",
+    exact: true,
+  });
   await expect(password).toBeVisible();
   await expect(forgot).toBeVisible();
   const passwordBox = await password.boundingBox();
@@ -62,7 +76,9 @@ test("forgot-password action follows the password field", async ({ context, page
 });
 
 for (const route of ["/contacts", "/companies"] as const) {
-  test(`${route} toolbar keeps controls aligned and inset`, async ({ page }) => {
+  test(`${route} toolbar keeps controls aligned and inset`, async ({
+    page,
+  }) => {
     const assertNoBrowserErrors = failOnBrowserErrors(page);
     await loginAsDemo(page);
     await setAppLanguage(page, "en");
@@ -77,14 +93,17 @@ for (const route of ["/contacts", "/companies"] as const) {
     await expect(search).toBeVisible();
     await expect(toolbar.locator(".filter-search button")).toHaveCount(0);
 
-    const selectStyle = await toolbar.locator("select").first().evaluate((element) => {
-      const style = getComputedStyle(element);
-      return {
-        appearance: style.appearance,
-        backgroundPosition: style.backgroundPosition,
-        paddingRight: Number.parseFloat(style.paddingRight),
-      };
-    });
+    const selectStyle = await toolbar
+      .locator("select")
+      .first()
+      .evaluate((element) => {
+        const style = getComputedStyle(element);
+        return {
+          appearance: style.appearance,
+          backgroundPosition: style.backgroundPosition,
+          paddingRight: Number.parseFloat(style.paddingRight),
+        };
+      });
     expect(selectStyle.appearance).toBe("none");
     expect(selectStyle.backgroundPosition).toContain("calc(100% -");
     expect(selectStyle.paddingRight).toBeGreaterThanOrEqual(32);
@@ -103,7 +122,8 @@ for (const route of ["/contacts", "/companies"] as const) {
       expect(iconBox).not.toBeNull();
       expect(
         Math.abs(
-          (buttonBox?.y ?? 0) + (buttonBox?.height ?? 0) / 2 -
+          (buttonBox?.y ?? 0) +
+            (buttonBox?.height ?? 0) / 2 -
             ((iconBox?.y ?? 0) + (iconBox?.height ?? 0) / 2),
         ),
       ).toBeLessThanOrEqual(3);
@@ -112,7 +132,10 @@ for (const route of ["/contacts", "/companies"] as const) {
   });
 }
 
-test("chat creation panel stays contained without overlapping controls", async ({ page }) => {
+test("chat creation panel stays contained without overlapping controls", async (
+  { page },
+  testInfo,
+) => {
   const assertNoBrowserErrors = failOnBrowserErrors(page);
   await loginAsDemo(page);
   await setAppLanguage(page, "en");
@@ -122,15 +145,85 @@ test("chat creation panel stays contained without overlapping controls", async (
   await page.getByRole("button", { name: "Open team chat" }).click();
   const dock = page.getByRole("dialog", { name: "Team chat" });
   await expect(dock).toBeVisible();
+  await expect(dock).toHaveAttribute(
+    "aria-modal",
+    testInfo.project.name === "mobile-390" ? "true" : "false",
+  );
   await dock.getByRole("button", { name: "New conversation" }).click();
 
   const panel = dock.locator(".new-conversation");
   await expect(panel).toBeVisible();
   await expectChildrenContainedAndSeparated(panel);
-  const select = panel.locator("select");
-  const selectBox = await select.boundingBox();
+  const select = panel.getByRole("combobox", { name: "Choose a colleague" });
+  await expect(select).toBeVisible();
+  await expect(select).toBeFocused();
+  const selectBox = await panel.locator("mat-form-field").boundingBox();
   expect(selectBox?.height ?? 0).toBeGreaterThanOrEqual(40);
-  await expect(panel.getByRole("button", { name: "Cancel" })).toBeVisible();
-  await expect(panel.getByRole("button", { name: "Create" })).toBeVisible();
+  const actions = panel.getByRole("contentinfo");
+  await expect(actions.getByRole("button", { name: "Cancel" })).toBeVisible();
+  await expect(actions.getByRole("button", { name: "Create" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Open team chat" }),
+  ).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  await expect(panel).toHaveCount(0);
+  await expect(
+    dock.getByRole("button", { name: "New conversation" }),
+  ).toBeFocused();
+  assertNoBrowserErrors();
+});
+
+test("mobile navigation contains focus and restores its trigger", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile-390", "mobile-only behavior");
+  const assertNoBrowserErrors = failOnBrowserErrors(page);
+  await loginAsDemo(page);
+  await setAppLanguage(page, "en");
+  await page.goto("/dashboard");
+  await waitForAppReady(page);
+
+  const trigger = page.getByRole("button", { name: "Open navigation" });
+  const navigation = page.locator("aside.sidebar");
+  await expect(navigation).toHaveCount(0);
+  await trigger.click();
+  await expect(trigger).toHaveAttribute("aria-expanded", "true");
+  await expect(navigation).toHaveCount(1);
+  await expect(
+    navigation.getByRole("button", { name: "Close navigation" }),
+  ).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(trigger).toHaveAttribute("aria-expanded", "false");
+  await expect(trigger).toBeFocused();
+  assertNoBrowserErrors();
+});
+
+test("mobile creation drawers trap focus and close with Escape", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile-390", "mobile-only behavior");
+  const assertNoBrowserErrors = failOnBrowserErrors(page);
+  await loginAsDemo(page);
+  await setAppLanguage(page, "en");
+
+  await page.goto("/projects");
+  await waitForAppReady(page);
+  const projectTrigger = page.getByRole("button", { name: "New project" });
+  await projectTrigger.click();
+  const projectDialog = page.getByRole("dialog", { name: "Create project" });
+  await expect(projectDialog.getByLabel("Name", { exact: true })).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(projectDialog).toHaveCount(0);
+  await expect(projectTrigger).toBeFocused();
+
+  await page.goto("/deals");
+  await waitForAppReady(page);
+  const dealTrigger = page.getByRole("button", { name: "Add deal" });
+  await dealTrigger.click();
+  const dealDialog = page.getByRole("dialog", { name: "New deal" });
+  await expect(dealDialog.getByLabel("Name", { exact: true })).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(dealDialog).toHaveCount(0);
+  await expect(dealTrigger).toBeFocused();
   assertNoBrowserErrors();
 });

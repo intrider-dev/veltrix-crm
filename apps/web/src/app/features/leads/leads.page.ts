@@ -65,52 +65,54 @@ import { LeadsStore } from './leads.store';
         }
       </header>
 
-      <nav
-        class="view-switcher segmented-control"
-        [attr.aria-label]="i18n.t('leads.view.switcher')"
-      >
-        @for (mode of viewModes; track mode) {
-          <button
-            mat-button
-            type="button"
-            [class.active]="store.viewMode() === mode"
-            [attr.aria-pressed]="store.viewMode() === mode"
-            (click)="store.setViewMode(mode)"
-          >
-            {{
-              i18n.t(
-                mode === 'list'
-                  ? 'leads.view.list'
-                  : mode === 'gantt'
-                    ? 'leads.view.gantt'
-                    : 'leads.view.kanban'
-              )
-            }}
-          </button>
-        }
-      </nav>
+      <section class="workspace-controls">
+        <nav
+          class="view-switcher segmented-control"
+          [attr.aria-label]="i18n.t('leads.view.switcher')"
+        >
+          @for (mode of viewModes; track mode) {
+            <button
+              mat-button
+              type="button"
+              [class.active]="store.viewMode() === mode"
+              [attr.aria-pressed]="store.viewMode() === mode"
+              (click)="store.setViewMode(mode)"
+            >
+              {{
+                i18n.t(
+                  mode === 'list'
+                    ? 'leads.view.list'
+                    : mode === 'gantt'
+                      ? 'leads.view.gantt'
+                      : 'leads.view.kanban'
+                )
+              }}
+            </button>
+          }
+        </nav>
 
-      <form class="panel feature-toolbar" (submit)="filter($event)" role="search">
-        <label class="native-field grow">
-          <span>{{ i18n.t('leads.search') }}</span>
-          <input
-            type="search"
-            [value]="store.query()"
-            (input)="store.query.set(inputValue($event))"
-          />
-        </label>
-        <label class="native-field">
-          <span>{{ i18n.t('common.field.status') }}</span>
-          <select [value]="store.status()" (change)="setFilterStatus($event)">
-            <option value="">{{ i18n.t('leads.status.all') }}</option>
-            @for (status of statuses; track status) {
-              <option [value]="status">{{ i18n.t(statusKey(status)) }}</option>
-            }
-            <option value="converted">{{ i18n.t('leads.status.converted') }}</option>
-          </select>
-        </label>
-        <button mat-stroked-button type="submit">{{ i18n.t('common.action.search') }}</button>
-      </form>
+        <form class="feature-toolbar" (submit)="filter($event)" role="search">
+          <label class="native-field grow">
+            <span>{{ i18n.t('leads.search') }}</span>
+            <input
+              type="search"
+              [value]="store.query()"
+              (input)="store.query.set(inputValue($event))"
+            />
+          </label>
+          <label class="native-field">
+            <span>{{ i18n.t('common.field.status') }}</span>
+            <select [value]="store.status()" (change)="setFilterStatus($event)">
+              <option value="">{{ i18n.t('leads.status.all') }}</option>
+              @for (status of statuses; track status) {
+                <option [value]="status">{{ i18n.t(statusKey(status)) }}</option>
+              }
+              <option value="converted">{{ i18n.t('leads.status.converted') }}</option>
+            </select>
+          </label>
+          <button mat-stroked-button type="submit">{{ i18n.t('common.action.search') }}</button>
+        </form>
+      </section>
 
       @if (store.loadError()) {
         <app-error-panel [error]="store.loadError()" (retry)="store.load()" />
@@ -380,6 +382,7 @@ import { LeadsStore } from './leads.store';
       }
     </div>
   `,
+  styleUrl: './leads.page.scss',
   styles: `
     .editor > header {
       display: flex;

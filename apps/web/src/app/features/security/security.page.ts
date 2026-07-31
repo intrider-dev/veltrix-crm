@@ -41,12 +41,19 @@ import { SessionsPanel } from './sessions.panel';
   `,
   styles: `
     .security-page {
-      max-width: 58rem;
+      width: min(100%, 62rem);
+      margin-inline: auto;
+    }
+    .security-page > app-change-password-panel,
+    .security-page > app-mfa-panel,
+    .security-page > app-sessions-panel {
+      display: block;
     }
     .loading-panel {
       display: grid;
       gap: 0.75rem;
-      padding: 1.25rem;
+      padding: 1.5rem;
+      border-radius: 0.9rem;
     }
     .loading-panel .skeleton {
       width: min(22rem, 75%);

@@ -94,15 +94,25 @@ test("a development user can accept a one-time workspace invitation", async ({
     .click();
   const chat = page.getByRole("dialog", { name: "Team chat" });
   await expect(chat).toBeVisible();
+  const membersResponse = page.waitForResponse(
+    (response) =>
+      response.request().method() === "GET" &&
+      response.url().endsWith("/reference-users"),
+  );
   await chat
     .getByRole("button", { name: "New conversation", exact: true })
     .click();
-  const memberSelect = chat.locator(".new-conversation select");
-  await expect
-    .poll(() => memberSelect.locator("option").count(), { timeout: 15_000 })
-    .toBeGreaterThan(1);
-  await memberSelect.selectOption({ label: `Invited ${suffix}` });
+  expect((await membersResponse).status()).toBe(200);
+  const memberSelect = chat.getByRole("combobox", {
+    name: "Choose a colleague",
+    exact: true,
+  });
+  await memberSelect.click();
+  await page
+    .getByRole("option", { name: `Invited ${suffix}`, exact: true })
+    .click();
   await chat.getByRole("button", { name: "Create", exact: true }).click();
+  await expect(chat.getByPlaceholder("Message")).toBeFocused();
 
   const message = `Hello from ${suffix}`;
   await chat.getByPlaceholder("Message").fill(message);
@@ -135,7 +145,9 @@ test("a development user can accept a one-time workspace invitation", async ({
   await expect(recipientChat.locator(".message-list")).toContainText(message);
   const reply = `Reply from ${suffix}`;
   await recipientChat.getByPlaceholder("Message").fill(reply);
-  await recipientChat.getByRole("button", { name: "Send", exact: true }).click();
+  await recipientChat
+    .getByRole("button", { name: "Send", exact: true })
+    .click();
   await expect(recipientChat.locator(".message-list")).toContainText(reply);
 
   await context.clearCookies();

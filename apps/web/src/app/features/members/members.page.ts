@@ -167,13 +167,16 @@ import { MembersStore } from './members.store';
     .split-editor {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 1rem;
-      padding: 1rem;
+      overflow: hidden;
     }
     .split-editor form {
       display: grid;
       align-content: start;
       gap: 0.75rem;
+      padding: 1rem;
+    }
+    .split-editor form + form {
+      border-inline-start: 1px solid var(--border);
     }
     .split-editor h2,
     .department-membership h2 {
@@ -217,28 +220,44 @@ import { MembersStore } from './members.store';
     }
     .member-actions,
     .department-membership {
-      display: flex;
       align-items: center;
       gap: 0.6rem;
     }
+    .member-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
     .member-actions select {
       min-height: 2.35rem;
+      padding: 0 2.2rem 0 0.7rem;
       border: 1px solid var(--border);
       border-radius: 0.4rem;
       color: var(--text);
       background: var(--surface-raised);
     }
     .department-membership {
+      display: grid;
+      grid-template-columns: minmax(12rem, 0.7fr) repeat(2, minmax(13rem, 1fr)) auto;
       padding: 1rem;
-      flex-wrap: wrap;
     }
     @media (max-width: 700px) {
       .split-editor {
         grid-template-columns: 1fr;
       }
+      .split-editor form + form {
+        border-top: 1px solid var(--border);
+        border-inline-start: 0;
+      }
       .member-list article {
         align-items: stretch;
         flex-direction: column;
+      }
+      .member-actions {
+        justify-content: flex-start;
+      }
+      .department-membership {
+        grid-template-columns: 1fr;
       }
     }
   `,

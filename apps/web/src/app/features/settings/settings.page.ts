@@ -335,6 +335,125 @@ import { IconComponent } from '../../shared/icon/icon.component';
         flex: 1;
       }
     }
+
+    :host {
+      --workspace-surface: var(--color-surface, var(--surface-raised));
+      --workspace-subtle: var(--color-surface-subtle, var(--surface-subtle));
+      --workspace-hover: var(--color-surface-hover, var(--surface-selected));
+      --workspace-border: var(--color-border, var(--border));
+      --workspace-anchor: var(--color-anchor, var(--brand));
+    }
+    .settings-page {
+      max-width: 68rem;
+    }
+    .page-header {
+      margin-bottom: 0.25rem;
+    }
+    .setting-section {
+      padding: 0;
+      border-radius: var(--radius-panel, 0.875rem);
+      background: var(--workspace-surface);
+    }
+    .setting-section > header {
+      min-height: 4rem;
+      padding: 1rem 1.25rem;
+      border-color: var(--workspace-border);
+      background: var(--workspace-subtle);
+    }
+    .setting-section h2 {
+      font-size: 1rem;
+      font-weight: 650;
+    }
+    .setting-section header p {
+      max-width: 48rem;
+      line-height: 1.45;
+    }
+    .setting-row {
+      min-height: 4.75rem;
+      padding: 0.875rem 1.25rem;
+      border-color: color-mix(in srgb, var(--workspace-border) 72%, transparent);
+    }
+    .setting-row:hover {
+      background: var(--workspace-hover);
+    }
+    .setting-row > div:first-child {
+      min-width: 0;
+    }
+    .setting-row strong {
+      line-height: 1.4;
+    }
+    .segmented {
+      flex-wrap: wrap;
+      border-radius: var(--radius-control, 0.625rem);
+      background: var(--workspace-subtle);
+    }
+    .segmented .active {
+      color: var(--workspace-anchor);
+      background: var(--workspace-surface);
+      box-shadow: 0 1px 2px rgb(18 36 29 / 10%);
+    }
+    .choice-grid {
+      grid-template-columns: repeat(3, minmax(5.5rem, 7rem));
+    }
+    .choice-grid button {
+      min-height: 5rem;
+      padding: 0.75rem;
+      border-color: var(--workspace-border);
+      border-radius: var(--radius-control, 0.625rem);
+      background: var(--workspace-surface);
+      transition:
+        transform 120ms cubic-bezier(0.23, 1, 0.32, 1),
+        border-color 140ms ease;
+    }
+    .choice-grid button.active {
+      border-color: var(--workspace-anchor);
+      color: var(--workspace-anchor);
+      background: var(--color-signal-soft, var(--brand-soft));
+    }
+    .settings-message {
+      padding: 0.875rem 1rem;
+      border: 1px solid color-mix(in srgb, var(--workspace-anchor) 30%, var(--workspace-border));
+      border-radius: var(--radius-control, 0.625rem);
+    }
+    @media (max-width: 650px) {
+      .setting-section > header,
+      .setting-row {
+        padding-inline: 1rem;
+      }
+      .setting-row {
+        gap: 1rem;
+      }
+      .setting-row > a,
+      .setting-row > .segmented,
+      .setting-row > .choice-grid {
+        width: 100%;
+      }
+      .setting-row > a {
+        justify-content: center;
+      }
+      .choice-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+    @media (max-width: 420px) {
+      .choice-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .choice-grid button {
+        transition: none;
+      }
+      .choice-grid button:active {
+        transform: none;
+      }
+    }
+    @media (forced-colors: active) {
+      .segmented .active,
+      .choice-grid button.active {
+        border: 1px solid CanvasText;
+      }
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

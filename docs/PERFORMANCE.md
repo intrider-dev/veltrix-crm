@@ -1,7 +1,7 @@
 # Performance report
 
-Last updated: 2026-07-23
-Evidence status: the retained serving-performance scenario is historical evidence for application commit `3b26934ba388b7289c400733a46001d6acae6108`; the clean three-run k6 baseline was executed from documentation-only descendant `feaffdda59244d950578c452beb2a835534e2a68`. The load/Lighthouse/browser metrics were not rerun for the current lead/chat working tree and are not claimed as current-release measurements. Bundle evidence below was regenerated from the current working tree. Results are not presented as a tagged release.
+Last updated: 2026-07-31
+Evidence status: bundle, Lighthouse, browser interaction, DOM, scrolling, heap, screenshots, E2E, and runtime snapshots were regenerated from the final redesign working tree. The retained serving-performance scenario remains historical evidence for application commit `3b26934ba388b7289c400733a46001d6acae6108`; the clean three-run k6 baseline was executed from documentation-only descendant `feaffdda59244d950578c452beb2a835534e2a68`. Results are not presented as a tagged release.
 
 ## Reporting rules
 
@@ -14,7 +14,7 @@ Evidence status: the retained serving-performance scenario is historical evidenc
 
 | Field | Value |
 | --- | --- |
-| Date | 2026-07-22 |
+| Date | Server baseline: 2026-07-22; redesign browser/bundle: 2026-07-31 |
 | Host | Windows `10.0.26200`, AMD Ryzen 7 9800X3D, 16 logical CPUs, 63.6 GiB usable RAM |
 | Docker | Engine 29.5.3; Compose 5.1.4 |
 | Browser | Headless Chromium 149.0.7827.55 / Chrome 149 for Lighthouse |
@@ -26,13 +26,13 @@ Raw local artifacts are written under `benchmarks/results/` by the documented sc
 
 ## Frontend bundle
 
-Production output was compressed with Node zlib gzip level 9 and Brotli quality 11. Evidence: `benchmarks/results/bundle-report.json`, generated `2026-07-23T01:19:58.842Z`.
+Production output was compressed with Node zlib gzip level 9 and Brotli quality 11. Evidence: `benchmarks/results/bundle-report.json`, generated `2026-07-31T18:50:56.374Z`.
 
 | Metric | Measured | Target | Status |
 | --- | ---: | ---: | --- |
-| Initial JS + CSS, Brotli | 92,780 B / 90.6 KiB | ≤350 KiB | Pass |
-| Largest ordinary lazy app chunk, Brotli | 20,399 B / 19.9 KiB | ≤200 KiB | Pass |
-| Lazy AG Grid Community chunk, Brotli | 170,632 B / 166.6 KiB | lazy and documented | Pass |
+| Initial JS + CSS, Brotli | 90,978 B / 88.8 KiB | ≤350 KiB | Pass |
+| Largest ordinary lazy app chunk, Brotli | 20,397 B / 19.9 KiB | ≤200 KiB | Pass |
+| Lazy AG Grid Community chunk, Brotli | 171,215 B / 167.2 KiB | lazy and documented | Pass |
 | Optional lazy LiveKit client, Brotli | 116,990 B / 114.2 KiB | optional and lazy | Pass |
 | External font references | 0 | 0 | Pass |
 | Inline event handlers | 0 | 0 | Pass |
@@ -47,21 +47,21 @@ Lighthouse 13.4.1 measured the production-like `/login` route. The official simu
 | --- | ---: | ---: | ---: | --- |
 | Performance | 100 | 94 | ≥95 / ≥90 | Pass |
 | Accessibility | 100 | 100 | ≥95 | Pass |
-| LCP | 662.22 ms | 2,762.41 ms | mobile ≤2,000 ms | **Miss** |
+| LCP | 665.55 ms | 2,768.44 ms | mobile ≤2,000 ms | **Miss** |
 | CLS | 0 | 0 | ≤0.05 | Pass |
-| Total blocking time | 0 ms | 12.5 ms | recorded | Recorded |
+| Total blocking time | 0 ms | 13 ms | recorded | Recorded |
 
 Three browser-performance runs used a fresh authenticated context, warm HTTP cache, blocked service workers for deterministic network accounting, ten warm-up cycles, then twenty list → detail → list cycles. Medians:
 
 | Metric | Median | Target | Status |
 | --- | ---: | ---: | --- |
-| Controlled contact-search interaction | 49.1 ms | ≤150 ms | Pass |
-| Active DOM | 710 nodes | preferably ≤1,500 | Pass |
+| Controlled contact-search interaction | 48.4 ms | ≤150 ms | Pass |
+| Active DOM | 714 nodes | preferably ≤1,500 | Pass |
 | Virtualized grid scrolling | 60 FPS approximate | ≥55 FPS | Pass |
-| Forced-GC JS heap after scenario | 13.30 MiB | preferably ≤200 MiB | Pass |
-| Retained heap growth after 20 cycles | 8.3% | ≤15% | Pass |
-| Dashboard warm navigation | 587.14 ms; 54,704 B transferred | recorded | Recorded |
-| Contacts warm navigation | 619.70 ms; 210,344 B transferred | recorded | Recorded |
+| Forced-GC JS heap after scenario | 13.48 MiB | preferably ≤200 MiB | Pass |
+| Retained heap growth after 20 cycles | 8.31% | ≤15% | Pass |
+| Dashboard warm navigation | 574.70 ms; 59,514 B transferred | recorded | Recorded |
+| Contacts warm navigation | 619.80 ms; 216,223 B transferred | recorded | Recorded |
 | Browser errors across measured runs | 0 | 0 | Pass |
 
 The FPS value is requestAnimationFrame sampling in headless Chromium, not compositor telemetry. Heap is forced-GC `Runtime.getHeapUsage`, not a dominator-tree snapshot.
@@ -97,6 +97,8 @@ Median peak values across the three baseline runs:
 
 A separate post-E2E idle snapshot after 36 minutes of final-image uptime recorded app 12.61 MiB and PostgreSQL 59.74 MiB at 0.19% CPU each; app passed the ≤96 MiB idle target. Readiness log delta was approximately 221 ms, passing the ≤1 second target. These values are single observations, not three-run medians.
 
+After the redesign browser/Lighthouse runs, a separate `docker stats --no-stream` snapshot recorded app 81.53 MiB and PostgreSQL 110.5 MiB under the 128/384 MiB container limits. The app remains below its 96 MiB target; this warm post-test snapshot is not an idle median.
+
 The exported `scratch` runtime filesystem contained the Go application, CA certificates, configuration/directories, and no Node.js/npm/pnpm artifact. Runtime user is `65532:65532`.
 
 ## Optimization iterations
@@ -104,11 +106,13 @@ The exported `scratch` runtime filesystem contained the Go application, CA certi
 1. Earlier query work replaced a tenant search plan that scanned roughly 300,000 RLS-filtered documents, changed contact/company lookup to indexed lateral probes, reduced authorization round trips, and throttled session `last_seen_at` writes. AG Grid rendering and route lifecycle were also bounded. The final retained browser runs show 4.0%, 8.3%, and 8.6% heap growth.
 2. A later security-complete regression run exposed a dashboard statement whose stage-authorized fallback branch was planned/JIT-compiled even when a stored summary existed. The pre-fix three-run median was only 40.85 operations/s with read/write/search p95 of 1,590/1,992/1,982 ms. Iteration one split the stored-summary query from the stage-filtered fallback and invokes the fallback only when stage ACL rules exist. A short 50-VU diagnostic then measured 224.94 operations/s and read/write/search p95 of 99.29/187.13/93.13 ms.
 3. Iteration two added migration `000035`: search authorization facts are computed once per request, stage checks are bypassed only for the already-proven system-admin path, and candidate rows are bounded proportionally to the requested result limit. A second short diagnostic measured 242.03 operations/s and read/write/search p95 of 97.93/106.51/93.26 ms. The final full-duration, three-clean-run median is the table above; read and write p95 still miss, so neither target was weakened.
+4. Redesign iteration one enabled Angular critical-CSS inlining to remove the render-blocking stylesheet. The emitted preload fallback introduced an inline `onload` handler, failed the repository CSP policy, and was reverted. Security policy was not relaxed for an LCP score.
+5. Redesign iteration two replaced Angular's service-worker client with a smaller native post-load registration path. Initial Brotli fell by about 2 KiB, but simulated mobile LCP remained about 2.76 seconds and the explicit localized update/reload experience was lost. The change was reverted because it did not improve the missed budget and weakened a working feature.
 
 ## Budget summary
 
 Passed: initial/lazy bundles, external fonts, Lighthouse desktop/mobile performance, accessibility, CLS, interaction latency, DOM, grid FPS, browser heap/retention, error rate, search p95, app idle RSS, readiness, and combined memory aspiration.
 
-Missed: simulated mobile LCP (2.76 s vs 2.0 s), median baseline read p95 (189.09 ms vs 150 ms), and median write p95 (283.19 ms vs 250 ms).
+Missed: simulated mobile LCP (2.77 s vs 2.0 s), median baseline read p95 (189.09 ms vs 150 ms), and median write p95 (283.19 ms vs 250 ms). The final Lighthouse trace also contains a third-party security-product script injected from `gc.kis.v2.scr.kaspersky-labs.com`; its measured render-blocking cost is retained in the artifact rather than removed from the result.
 
 Not measured: 100-VU stretch, competitor products, field INP, and production internet/TLS performance. See [`BENCHMARK_METHODOLOGY.md`](BENCHMARK_METHODOLOGY.md) for reproduction and [`COMPETITOR_BENCHMARK_PROTOCOL.md`](COMPETITOR_BENCHMARK_PROTOCOL.md) for a manual, ToS-respecting comparison protocol.

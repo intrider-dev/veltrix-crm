@@ -340,14 +340,15 @@ import { MailboxStore } from './mailbox.store';
     }
     .account-editor,
     .compose {
-      padding: 1rem;
+      overflow: hidden;
     }
     .account-editor > header,
     .compose > header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 1rem;
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid var(--border);
     }
     h2 {
       margin: 0;
@@ -355,13 +356,15 @@ import { MailboxStore } from './mailbox.store';
     }
     .account-fields {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 0.75rem;
+      padding: 1rem;
     }
     .compose-fields {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 0.75rem;
+      padding: 1rem;
     }
     .message-field {
       grid-column: 1 / -1;
@@ -371,14 +374,20 @@ import { MailboxStore } from './mailbox.store';
       align-items: center;
       gap: 0.5rem;
       min-height: var(--control-height);
+      margin-inline: 1rem;
     }
     footer {
-      margin-top: 0.75rem;
+      justify-content: flex-end;
+      margin-top: 0;
+      padding: 0.75rem 1rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface-subtle);
     }
     footer span {
       flex: 1;
     }
     .mailbox-toolbar {
+      flex-wrap: wrap;
       padding: 0.65rem 0.8rem;
     }
     .mailbox-toolbar mat-form-field {
@@ -426,7 +435,8 @@ import { MailboxStore } from './mailbox.store';
     }
     .folders button.active,
     .messages button.active {
-      background: var(--brand-soft);
+      box-shadow: inset 3px 0 0 var(--brand);
+      background: color-mix(in srgb, var(--brand) 7%, var(--surface-raised));
     }
     .messages span,
     .messages small {
@@ -472,9 +482,6 @@ import { MailboxStore } from './mailbox.store';
       color: var(--text-muted);
     }
     @media (max-width: 960px) {
-      .account-fields {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
       .mailbox-layout {
         grid-template-columns: 11rem minmax(16rem, 1fr);
       }

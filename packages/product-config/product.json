@@ -7,8 +7,8 @@
   "supportUrl": "https://github.com/veltrixcrm/veltrix-crm/issues",
   "securityUrl": "https://github.com/veltrixcrm/veltrix-crm/security/policy",
   "logoPath": "/icons/veltrix-mark.svg",
-  "themeColor": "#4657d5",
-  "backgroundColor": "#f7f8fb",
+  "themeColor": "#174b40",
+  "backgroundColor": "#f4f6f3",
   "defaultLocale": "en",
   "supportedLocales": ["en", "ru"],
   "defaultTheme": "system"

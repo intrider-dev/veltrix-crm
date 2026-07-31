@@ -1,11 +1,13 @@
-.back-link {
+.back-control {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
   width: fit-content;
+  min-height: 2.5rem;
   color: var(--text-muted);
-  font-size: 0.85rem;
   text-decoration: none;
+}
+.back-control app-icon {
+  margin-inline-end: 0.4rem;
 }
 .contact-hero {
   display: grid;

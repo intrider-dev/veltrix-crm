@@ -113,9 +113,13 @@ import { ApiKeysStore } from './api-keys.store';
     }
     .editor form {
       display: grid;
-      grid-template-columns: minmax(12rem, 1fr) 2fr auto;
+      grid-template-columns: minmax(15rem, 0.8fr) minmax(20rem, 1.2fr);
       align-items: start;
       gap: 1rem;
+    }
+    .editor form > button {
+      justify-self: end;
+      grid-column: 1 / -1;
     }
     fieldset {
       border: 0;
@@ -129,7 +133,9 @@ import { ApiKeysStore } from './api-keys.store';
     }
     .scope-grid label {
       display: flex;
+      align-items: center;
       gap: 0.45rem;
+      min-height: 2rem;
       font-size: 0.78rem;
     }
     .secret-panel {
@@ -178,6 +184,7 @@ import { ApiKeysStore } from './api-keys.store';
       }
       .key-list article button {
         grid-column: 1/-1;
+        justify-self: start;
       }
     }
   `,

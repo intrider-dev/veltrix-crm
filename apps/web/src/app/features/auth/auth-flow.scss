@@ -1,7 +1,8 @@
 :host {
   display: block;
   min-height: 100dvh;
-  background: var(--surface-canvas);
+  background:
+    radial-gradient(circle at 12% 12%, var(--signal-soft), transparent 32rem), var(--surface-canvas);
 }
 
 .auth-flow {
@@ -13,8 +14,9 @@
 
 .auth-card {
   width: min(100%, 32rem);
-  padding: 0.5rem;
-  border-color: var(--border);
+  padding: 0.75rem;
+  border: 0;
+  border-radius: var(--radius-overlay);
   background: var(--surface-raised);
   box-shadow: var(--shadow-lg);
 }
@@ -24,7 +26,7 @@
   align-items: center;
   gap: 0.65rem;
   padding: 0.75rem 1rem 0.2rem;
-  color: var(--text-muted);
+  color: var(--brand);
   font-weight: 700;
 }
 
@@ -81,7 +83,7 @@ mat-form-field,
 .token-warning {
   margin: 0.35rem 0 0.75rem;
   padding: 0.75rem 0.85rem;
-  border-radius: 0.5rem;
+  border-radius: var(--radius-control);
 }
 
 .form-error,

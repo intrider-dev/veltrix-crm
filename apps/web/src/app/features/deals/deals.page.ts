@@ -1,3 +1,4 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import {
   CdkDrag,
   CdkDragHandle,
@@ -6,8 +7,17 @@ import {
   CdkDropListGroup,
   type CdkDragDrop,
 } from '@angular/cdk/drag-drop';
-import type { OnInit } from '@angular/core';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import type { ElementRef, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  HostListener,
+  Injector,
+  computed,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { FormField, form, min, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -19,6 +29,7 @@ import { RouterLink } from '@angular/router';
 import type { CreateDeal, Deal } from '../../core/api/api.types';
 import { Permissions } from '../../core/auth/permissions';
 import { I18nService } from '../../core/i18n/i18n.service';
+import { focusAfterNextRender } from '../../shared/a11y/focus-after-render';
 import { IconComponent } from '../../shared/icon/icon.component';
 import { ErrorPanelComponent } from '../../shared/state/error-panel.component';
 import { DealsStore } from './deals.store';
@@ -26,6 +37,7 @@ import { DealsStore } from './deals.store';
 @Component({
   selector: 'app-deals-page',
   imports: [
+    CdkTrapFocus,
     CdkDrag,
     CdkDragHandle,
     CdkDragPlaceholder,
@@ -50,47 +62,49 @@ import { DealsStore } from './deals.store';
           <p>{{ i18n.plural('common.resultCount', visibleDealCount()) }}</p>
         </div>
         @if (permissions.allows('deals.create')) {
-          <button mat-flat-button type="button" (click)="createOpen.set(true)">
+          <button #dealCreateTrigger mat-flat-button type="button" (click)="openCreate()">
             <app-icon name="add" />{{ i18n.t('sales.deal.add') }}
           </button>
         }
       </header>
-      @if (store.pipelines().length > 1) {
-        <mat-select
-          class="pipeline-select"
-          [value]="store.activePipelineId()"
-          (selectionChange)="store.selectPipeline($event.value)"
-          [attr.aria-label]="i18n.t('sales.deal.pipeline')"
-        >
-          @for (pipeline of store.pipelines(); track pipeline.id) {
-            <mat-option [value]="pipeline.id">{{ pipeline.displayName }}</mat-option>
-          }
-        </mat-select>
-      }
-      <nav
-        class="view-switcher segmented-control"
-        [attr.aria-label]="i18n.t('sales.deal.view.switcher')"
-      >
-        @for (mode of viewModes; track mode) {
-          <button
-            mat-button
-            type="button"
-            [class.active]="store.viewMode() === mode"
-            [attr.aria-pressed]="store.viewMode() === mode"
-            (click)="store.setViewMode(mode)"
+      <section class="workspace-controls">
+        @if (store.pipelines().length > 1) {
+          <mat-select
+            class="pipeline-select"
+            [value]="store.activePipelineId()"
+            (selectionChange)="store.selectPipeline($event.value)"
+            [attr.aria-label]="i18n.t('sales.deal.pipeline')"
           >
-            {{
-              i18n.t(
-                mode === 'list'
-                  ? 'sales.deal.view.list'
-                  : mode === 'gantt'
-                    ? 'sales.deal.view.gantt'
-                    : 'sales.deal.view.kanban'
-              )
-            }}
-          </button>
+            @for (pipeline of store.pipelines(); track pipeline.id) {
+              <mat-option [value]="pipeline.id">{{ pipeline.displayName }}</mat-option>
+            }
+          </mat-select>
         }
-      </nav>
+        <nav
+          class="view-switcher segmented-control"
+          [attr.aria-label]="i18n.t('sales.deal.view.switcher')"
+        >
+          @for (mode of viewModes; track mode) {
+            <button
+              mat-button
+              type="button"
+              [class.active]="store.viewMode() === mode"
+              [attr.aria-pressed]="store.viewMode() === mode"
+              (click)="store.setViewMode(mode)"
+            >
+              {{
+                i18n.t(
+                  mode === 'list'
+                    ? 'sales.deal.view.list'
+                    : mode === 'gantt'
+                      ? 'sales.deal.view.gantt'
+                      : 'sales.deal.view.kanban'
+                )
+              }}
+            </button>
+          }
+        </nav>
+      </section>
       @if (store.conflict()) {
         <section class="conflict" role="alert">{{ i18n.t('web.deal.conflict') }}</section>
       }
@@ -289,13 +303,15 @@ import { DealsStore } from './deals.store';
       <button
         class="drawer-scrim"
         type="button"
-        (click)="createOpen.set(false)"
+        (click)="closeCreate()"
         [attr.aria-label]="i18n.t('common.action.close')"
       ></button>
       <aside
         class="create-drawer"
         role="dialog"
         aria-modal="true"
+        cdkTrapFocus
+        [cdkTrapFocusAutoCapture]="true"
         [attr.aria-labelledby]="'new-deal-title'"
       >
         <header>
@@ -303,7 +319,7 @@ import { DealsStore } from './deals.store';
           <button
             mat-icon-button
             type="button"
-            (click)="createOpen.set(false)"
+            (click)="closeCreate()"
             [attr.aria-label]="i18n.t('common.action.close')"
           >
             <app-icon name="close" />
@@ -312,7 +328,7 @@ import { DealsStore } from './deals.store';
         <form (submit)="create($event)">
           <mat-form-field appearance="outline"
             ><mat-label>{{ i18n.t('common.field.name') }}</mat-label
-            ><input matInput [formField]="dealForm.name"
+            ><input #dealNameInput matInput [formField]="dealForm.name"
           /></mat-form-field>
           <mat-form-field appearance="outline"
             ><mat-label>{{ i18n.t('sales.deal.amount') }}</mat-label
@@ -339,7 +355,7 @@ import { DealsStore } from './deals.store';
             ><input matInput type="date" [formField]="dealForm.expectedCloseDate"
           /></mat-form-field>
           <div class="drawer-actions">
-            <button mat-button type="button" (click)="createOpen.set(false)">
+            <button mat-button type="button" (click)="closeCreate()">
               {{ i18n.t('common.action.cancel') }}</button
             ><button mat-flat-button type="submit" [disabled]="store.saving()">
               {{ i18n.t(store.saving() ? 'web.form.saving' : 'common.action.create') }}
@@ -392,6 +408,9 @@ export class DealsPage implements OnInit {
     required(schema.currency);
     required(schema.stageId);
   });
+  readonly dealCreateTrigger = viewChild<ElementRef<HTMLButtonElement>>('dealCreateTrigger');
+  readonly dealNameInput = viewChild<ElementRef<HTMLInputElement>>('dealNameInput');
+  private readonly injector = inject(Injector);
 
   ngOnInit(): void {
     void this.initialize();
@@ -400,6 +419,18 @@ export class DealsPage implements OnInit {
     await this.store.load();
     const stage = this.store.activePipeline()?.stages[0];
     if (stage) this.dealModel.update((value) => ({ ...value, stageId: stage.id }));
+  }
+  openCreate(): void {
+    this.createOpen.set(true);
+    focusAfterNextRender(this.injector, () => this.dealNameInput()?.nativeElement);
+  }
+  closeCreate(): void {
+    this.createOpen.set(false);
+    focusAfterNextRender(this.injector, () => this.dealCreateTrigger()?.nativeElement);
+  }
+  @HostListener('document:keydown.escape')
+  closeCreateFromKeyboard(): void {
+    if (this.createOpen()) this.closeCreate();
   }
   drop(event: CdkDragDrop<readonly Deal[]>, stageId: string): void {
     if (!this.permissions.allows('deals.update')) return;
@@ -446,7 +477,7 @@ export class DealsPage implements OnInit {
       expectedCloseDate: value.expectedCloseDate || null,
     };
     await this.store.create(body);
-    this.createOpen.set(false);
+    this.closeCreate();
     this.dealModel.set({
       name: '',
       amount: 0,

@@ -30,7 +30,7 @@ import { CompanyDetailsStore } from './company-details.store';
   providers: [CompanyDetailsStore],
   template: `
     <div class="page details-page">
-      <a routerLink="/companies" class="back-link"
+      <a mat-button routerLink="/companies" class="back-control"
         ><app-icon name="back" />{{ i18n.t('common.nav.companies') }}</a
       >
       @if (store.error()) {

@@ -24,7 +24,7 @@ import { NotificationsStore } from './notifications.store';
           {{ i18n.t('notifications.markAllRead') }}
         </button>
       </header>
-      <section class="panel feature-toolbar">
+      <section class="feature-toolbar notification-toolbar">
         <div class="segmented-control">
           <button
             mat-button
@@ -94,6 +94,10 @@ import { NotificationsStore } from './notifications.store';
     </div>
   `,
   styles: `
+    .notification-toolbar {
+      padding: 0.25rem 0 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
     .live-status {
       margin-inline-start: auto;
       color: var(--text-muted);
@@ -131,7 +135,9 @@ import { NotificationsStore } from './notifications.store';
     }
     .actions {
       display: flex;
+      justify-content: flex-end;
       gap: 0.25rem;
+      flex-wrap: wrap;
     }
     @media (max-width: 650px) {
       .notification-list article {

@@ -156,9 +156,9 @@ type ForecastCategory = PipelineStageInput['forecastCategory'];
         />
       }
 
-      <section class="pipeline-list" [attr.aria-busy]="store.loading()">
+      <section class="panel pipeline-list" [attr.aria-busy]="store.loading()">
         @for (pipeline of store.pipelines(); track pipeline.id) {
-          <article class="panel pipeline-card">
+          <article class="pipeline-card">
             <header>
               <div>
                 <h2>{{ pipeline.displayName }}</h2>
@@ -240,7 +240,7 @@ type ForecastCategory = PipelineStageInput['forecastCategory'];
             </ol>
           </article>
         } @empty {
-          <div class="panel empty-state">{{ i18n.t('pipelines.empty') }}</div>
+          <div class="empty-state">{{ i18n.t('pipelines.empty') }}</div>
         }
       </section>
     </div>
@@ -256,11 +256,14 @@ type ForecastCategory = PipelineStageInput['forecastCategory'];
       gap: 0.5rem;
     }
     .pipeline-list {
-      display: grid;
-      gap: 0.8rem;
+      overflow: hidden;
     }
     .pipeline-card {
       overflow: hidden;
+      border-bottom: 1px solid var(--border);
+    }
+    .pipeline-card:last-child {
+      border-bottom: 0;
     }
     .pipeline-card > header,
     .editor > header {
@@ -317,7 +320,7 @@ type ForecastCategory = PipelineStageInput['forecastCategory'];
       place-items: center;
       border-radius: 50%;
       color: var(--brand);
-      background: var(--brand-soft);
+      background: color-mix(in srgb, var(--brand) 10%, var(--surface-raised));
       font-size: 0.72rem;
       font-weight: 700;
     }

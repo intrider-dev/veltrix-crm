@@ -71,35 +71,20 @@ interface NavItem {
     <div class="shell" [class.nav-collapsed]="collapsed()" [class.mobile-open]="mobileOpen()">
       <header class="topbar">
         <button
+          #mobileMenu
           mat-icon-button
           type="button"
           class="mobile-menu"
-          (click)="mobileOpen.set(true)"
+          aria-controls="primary-navigation"
+          [attr.aria-expanded]="mobileOpen()"
+          (click)="openMobileNavigation()"
           [attr.aria-label]="i18n.t('web.shell.openNavigation')"
         >
           <app-icon name="menu" />
         </button>
-        <a routerLink="/dashboard" class="wordmark" [attr.aria-label]="product.productName">
-          <app-brand-logo />
+        <a routerLink="/dashboard" class="mobile-wordmark" [attr.aria-label]="product.productName">
+          <app-brand-logo size="small" />
         </a>
-
-        @if (workspace.active(); as activeWorkspace) {
-          <mat-select
-            class="workspace-select"
-            [value]="activeWorkspace.id"
-            [disabled]="workspaceSwitching()"
-            (selectionChange)="switchWorkspace($event.value)"
-            [attr.aria-label]="i18n.t('common.nav.workspace')"
-          >
-            @for (item of workspace.workspaces(); track item.id) {
-              <mat-option [value]="item.id">{{ item.name }}</mat-option>
-            }
-          </mat-select>
-        } @else {
-          <a mat-stroked-button routerLink="/workspace/new" class="workspace-empty">
-            {{ i18n.t('settings.settings.newWorkspace') }}
-          </a>
-        }
 
         <button
           type="button"
@@ -140,48 +125,80 @@ interface NavItem {
         </mat-menu>
       </header>
 
-      <aside class="sidebar" [attr.aria-label]="i18n.t('web.shell.navigation')">
-        <div class="mobile-sidebar-title">
-          <app-brand-logo size="small" />
-          <button
-            mat-icon-button
-            type="button"
-            (click)="mobileOpen.set(false)"
-            [attr.aria-label]="i18n.t('web.shell.closeNavigation')"
-          >
-            <app-icon name="close" />
-          </button>
-        </div>
-        <nav>
-          @for (item of visibleNavItems(); track item.path) {
-            <a
-              [routerLink]="item.path"
-              routerLinkActive="active"
-              [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
-              [attr.aria-label]="i18n.t(item.key)"
-            >
-              <app-icon [name]="item.icon" />
-              <span>{{ i18n.t(item.key) }}</span>
-            </a>
-          }
-        </nav>
-        <button
-          type="button"
-          class="collapse-button"
-          (click)="collapsed.set(!collapsed())"
-          [attr.aria-label]="
-            i18n.t(collapsed() ? 'web.shell.expandNavigation' : 'web.shell.collapseNavigation')
-          "
+      @if (!mobileViewport() || mobileOpen()) {
+        <aside
+          id="primary-navigation"
+          class="sidebar"
+          [cdkTrapFocus]="mobileViewport() && mobileOpen()"
+          [cdkTrapFocusAutoCapture]="mobileViewport() && mobileOpen()"
+          [attr.aria-label]="i18n.t('web.shell.navigation')"
         >
-          <app-icon name="chevron" /><span>{{ i18n.t('web.shell.collapseNavigation') }}</span>
-        </button>
-      </aside>
+          <div class="sidebar-head">
+            <a routerLink="/dashboard" class="wordmark" [attr.aria-label]="product.productName">
+              <app-brand-logo />
+            </a>
+            <button
+              #mobileNavClose
+              cdkFocusInitial
+              mat-icon-button
+              type="button"
+              class="mobile-sidebar-close"
+              (click)="closeMobileNavigation()"
+              [attr.aria-label]="i18n.t('web.shell.closeNavigation')"
+            >
+              <app-icon name="close" />
+            </button>
+          </div>
+          <div class="workspace-control">
+            @if (workspace.active(); as activeWorkspace) {
+              <mat-select
+                class="workspace-select"
+                [value]="activeWorkspace.id"
+                [disabled]="workspaceSwitching()"
+                (selectionChange)="switchWorkspace($event.value)"
+                [attr.aria-label]="i18n.t('common.nav.workspace')"
+              >
+                @for (item of workspace.workspaces(); track item.id) {
+                  <mat-option [value]="item.id">{{ item.name }}</mat-option>
+                }
+              </mat-select>
+            } @else {
+              <a mat-stroked-button routerLink="/workspace/new" class="workspace-empty">
+                {{ i18n.t('settings.settings.newWorkspace') }}
+              </a>
+            }
+          </div>
+          <nav>
+            @for (item of visibleNavItems(); track item.path) {
+              <a
+                [routerLink]="item.path"
+                routerLinkActive="active"
+                [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
+                [attr.aria-label]="i18n.t(item.key)"
+              >
+                <app-icon [name]="item.icon" />
+                <span>{{ i18n.t(item.key) }}</span>
+              </a>
+            }
+          </nav>
+          <button
+            type="button"
+            class="collapse-button"
+            (click)="collapsed.set(!collapsed())"
+            [attr.aria-label]="
+              i18n.t(collapsed() ? 'web.shell.expandNavigation' : 'web.shell.collapseNavigation')
+            "
+          >
+            <app-icon name="chevron" /><span>{{ i18n.t('web.shell.collapseNavigation') }}</span>
+          </button>
+        </aside>
+      }
 
       @if (mobileOpen()) {
         <button
           class="scrim"
           type="button"
-          (click)="mobileOpen.set(false)"
+          (click)="closeMobileNavigation()"
           [attr.aria-label]="i18n.t('web.shell.closeNavigation')"
         ></button>
       }
@@ -264,12 +281,15 @@ export class AppShellComponent {
   readonly product = productConfig;
   readonly collapsed = signal(false);
   readonly mobileOpen = signal(false);
+  readonly mobileViewport = signal(false);
   readonly commandOpen = signal(false);
   readonly searchPending = signal(false);
   readonly searchQuery = signal('');
   readonly searchResults = signal<readonly SearchResult[]>([]);
   readonly searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
   readonly mainContent = viewChild<ElementRef<HTMLElement>>('mainContent');
+  readonly mobileMenu = viewChild<ElementRef<HTMLButtonElement>>('mobileMenu');
+  readonly mobileNavClose = viewChild.required<ElementRef<HTMLButtonElement>>('mobileNavClose');
   readonly workspaceSwitching = signal(false);
   readonly navItems: readonly NavItem[] = [
     { path: '/dashboard', key: 'common.nav.dashboard', icon: 'dashboard', exact: true },
@@ -302,6 +322,17 @@ export class AppShellComponent {
   private readonly searchTerms = new Subject<string>();
 
   constructor() {
+    if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+      const mobileQuery = window.matchMedia('(max-width: 820px)');
+      const syncMobileViewport = (matches: boolean) => {
+        this.mobileViewport.set(matches);
+        if (!matches) this.mobileOpen.set(false);
+      };
+      syncMobileViewport(mobileQuery.matches);
+      const listener = (event: MediaQueryListEvent) => syncMobileViewport(event.matches);
+      mobileQuery.addEventListener('change', listener);
+      this.destroyRef.onDestroy(() => mobileQuery.removeEventListener('change', listener));
+    }
     this.router.events
       .pipe(
         filter((event): event is NavigationEnd => event instanceof NavigationEnd),
@@ -350,9 +381,20 @@ export class AppShellComponent {
       event.preventDefault();
       if (this.commandOpen()) this.closeCommandPalette();
       else this.openCommandPalette();
-    } else if (event.key === 'Escape' && this.commandOpen()) {
-      this.closeCommandPalette();
+    } else if (event.key === 'Escape') {
+      if (this.commandOpen()) this.closeCommandPalette();
+      else if (this.mobileOpen()) this.closeMobileNavigation();
     }
+  }
+
+  openMobileNavigation(): void {
+    this.mobileOpen.set(true);
+    focusAfterNextRender(this.injector, () => this.mobileNavClose().nativeElement);
+  }
+
+  closeMobileNavigation(): void {
+    this.mobileOpen.set(false);
+    focusAfterNextRender(this.injector, () => this.mobileMenu()?.nativeElement);
   }
 
   openCommandPalette(): void {

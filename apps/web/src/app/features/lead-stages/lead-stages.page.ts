@@ -215,12 +215,15 @@ interface StageModel {
       gap: 0.5rem;
     }
     .editor {
-      padding: 1rem;
+      overflow: hidden;
     }
     .editor header {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 1rem;
+      padding: 0.8rem 1rem;
+      border-bottom: 1px solid var(--border);
     }
     .editor h2 {
       margin: 0;
@@ -230,7 +233,12 @@ interface StageModel {
       display: grid;
       grid-template-columns: 2fr 1fr 1fr;
       gap: 0.75rem;
-      margin-top: 1rem;
+      padding: 1rem;
+    }
+    .editor .form-actions {
+      padding: 0.75rem 1rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface-subtle);
     }
     .color-field {
       display: grid;
@@ -271,6 +279,9 @@ interface StageModel {
       padding: 0.75rem 1rem;
       border-bottom: 1px solid var(--border);
     }
+    .stage-list article:hover {
+      background: var(--surface-subtle);
+    }
     .stage-list article:last-child {
       border-bottom: 0;
     }
@@ -305,6 +316,10 @@ interface StageModel {
       .stage-actions {
         grid-column: 2;
         justify-self: start;
+      }
+      .stage-actions {
+        align-items: flex-start;
+        flex-wrap: wrap;
       }
     }
   `,

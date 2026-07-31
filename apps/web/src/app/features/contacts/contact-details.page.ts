@@ -36,7 +36,7 @@ import { ContactDetailsStore } from './contact-details.store';
   providers: [ContactDetailsStore],
   template: `
     <div class="page details-page">
-      <a routerLink="/contacts" class="back-link"
+      <a mat-button routerLink="/contacts" class="back-control"
         ><app-icon name="back" />{{ i18n.t('web.contact.back') }}</a
       >
       @if (store.error()) {

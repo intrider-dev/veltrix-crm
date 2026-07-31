@@ -5,13 +5,16 @@
   // mobile viewport even when the nested grid items have `min-width: 0`.
   grid-template-columns: minmax(0, 1fr);
 }
-.back-link {
+.back-control {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
   width: fit-content;
+  min-height: 2.5rem;
   color: var(--text-muted);
   text-decoration: none;
+}
+.back-control app-icon {
+  margin-inline-end: 0.4rem;
 }
 .company-hero {
   display: flex;

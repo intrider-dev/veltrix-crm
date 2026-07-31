@@ -124,15 +124,15 @@ const editablePermissions: readonly Permission[] = [
         </section>
       }
 
-      <section class="role-list" [attr.aria-busy]="store.loading()">
+      <section class="panel role-list" [attr.aria-busy]="store.loading()">
         @if (store.loading()) {
-          <div class="panel list-skeleton">
+          <div class="list-skeleton">
             <div class="skeleton"></div>
             <div class="skeleton"></div>
           </div>
         } @else {
           @for (role of store.roles(); track role.id) {
-            <article class="panel role-card">
+            <article class="role-card">
               <div class="role-heading">
                 <div>
                   <h2>{{ role.system ? i18n.t(systemRoleKey(role.baseRole)) : role.name }}</h2>
@@ -159,7 +159,7 @@ const editablePermissions: readonly Permission[] = [
               </div>
             </article>
           } @empty {
-            <div class="panel empty-state">{{ i18n.t('roles.empty') }}</div>
+            <div class="empty-state">{{ i18n.t('roles.empty') }}</div>
           }
         }
       </section>
@@ -227,15 +227,18 @@ const editablePermissions: readonly Permission[] = [
       opacity: 0.65;
     }
     .role-list {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 0.75rem;
+      overflow: hidden;
     }
     .role-card {
       display: grid;
-      align-content: start;
-      gap: 0.75rem;
-      padding: 1rem;
+      grid-template-columns: minmax(15rem, 0.8fr) minmax(18rem, 1.2fr);
+      align-items: start;
+      gap: 0.85rem 1.5rem;
+      padding: 1rem 1.1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .role-card:last-child {
+      border-bottom: 0;
     }
     .role-heading > div:first-child {
       display: flex;
@@ -243,9 +246,15 @@ const editablePermissions: readonly Permission[] = [
       gap: 0.55rem;
     }
     .role-card p {
+      grid-column: 1;
       margin: 0;
       color: var(--text-muted);
       font-size: 0.78rem;
+    }
+    .permission-chips {
+      grid-column: 2;
+      grid-row: 1 / span 2;
+      align-self: center;
     }
     .card-actions,
     .permission-chips {
@@ -261,15 +270,24 @@ const editablePermissions: readonly Permission[] = [
       background: var(--surface-subtle);
       font-size: 0.68rem;
     }
+    .list-skeleton {
+      display: grid;
+      gap: 0.75rem;
+      padding: 1rem;
+    }
     @media (max-width: 760px) {
       .editor-fields,
       .permission-grid,
-      .role-list {
+      .role-card {
         grid-template-columns: 1fr;
       }
       .role-heading {
         align-items: stretch;
         flex-direction: column;
+      }
+      .permission-chips {
+        grid-column: auto;
+        grid-row: auto;
       }
     }
   `,

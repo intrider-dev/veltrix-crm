@@ -145,40 +145,52 @@ import { ReportsStore } from './reports.store';
   `,
   styles: `
     .segmented {
-      display: flex;
-      gap: 0.15rem;
-      padding: 0.15rem;
-      border-radius: 0.55rem;
-      background: var(--surface-subtle);
+      align-self: center;
     }
     .segmented .active {
-      color: var(--brand);
+      color: var(--text);
       background: var(--surface-raised);
     }
     .metric-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 0.75rem;
+      gap: 0.875rem;
     }
     .metric-card {
       display: grid;
-      min-height: 6.5rem;
+      min-height: 7.5rem;
       align-content: center;
-      gap: 0.4rem;
-      padding: 1rem;
+      gap: 0.65rem;
+      padding: 1.25rem;
+      border: 0;
+      box-shadow: var(--shadow-sm);
+    }
+    .metric-card:first-child {
+      color: white;
+      background: var(--brand);
+    }
+    .metric-card:nth-child(2) {
+      color: var(--on-signal);
+      background: var(--signal);
+    }
+    .metric-card:first-child span,
+    .metric-card:nth-child(2) span {
+      color: inherit;
+      opacity: 0.78;
     }
     .metric-card span {
       color: var(--text-muted);
       font-size: 0.76rem;
+      font-weight: 620;
     }
     .metric-card strong {
-      font-size: 1.55rem;
-      letter-spacing: -0.03em;
+      font-size: 1.75rem;
+      letter-spacing: -0.045em;
     }
     .report-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 0.75rem;
+      gap: 0.875rem;
     }
     .report-card > header {
       padding: 0.85rem 1rem;
@@ -210,14 +222,14 @@ import { ReportsStore } from './reports.store';
     .bar-track {
       height: 0.5rem;
       overflow: hidden;
-      border-radius: 999px;
+      border-radius: var(--radius-pill);
       background: var(--surface-subtle);
     }
     .bar-track span {
       display: block;
       height: 100%;
       border-radius: inherit;
-      background: var(--brand);
+      background: linear-gradient(90deg, var(--brand), var(--signal));
     }
     .table-scroll {
       overflow-x: auto;
@@ -277,6 +289,139 @@ import { ReportsStore } from './reports.store';
       }
       .report-card.full {
         grid-column: auto;
+      }
+    }
+
+    :host {
+      --workspace-surface: var(--color-surface, var(--surface-raised));
+      --workspace-subtle: var(--color-surface-subtle, var(--surface-subtle));
+      --workspace-hover: var(--color-surface-hover, var(--surface-selected));
+      --workspace-border: var(--color-border, var(--border));
+      --workspace-anchor: var(--color-anchor, var(--brand));
+    }
+    .page-header {
+      align-items: flex-end;
+      margin-bottom: 0.25rem;
+    }
+    .page-header p {
+      max-width: 48rem;
+    }
+    .segmented {
+      flex-wrap: wrap;
+      padding: 0.2rem;
+      border-radius: var(--radius-control, 0.625rem);
+      background: var(--workspace-subtle);
+    }
+    .segmented .active {
+      color: var(--workspace-anchor);
+      background: var(--workspace-surface);
+      box-shadow: 0 1px 2px rgb(18 36 29 / 10%);
+    }
+    .metric-grid,
+    .report-grid {
+      gap: 0.75rem;
+    }
+    .metric-card {
+      min-width: 0;
+      min-height: 8rem;
+      padding: 1.25rem;
+      border-radius: var(--radius-panel, 0.875rem);
+      box-shadow: none;
+    }
+    .metric-card:not(:first-child):not(:nth-child(2)) {
+      border-color: var(--workspace-border);
+      background: var(--workspace-surface);
+    }
+    .metric-card strong {
+      overflow-wrap: anywhere;
+      font-size: clamp(1.5rem, 3vw, 2rem);
+      line-height: 1.15;
+    }
+    .report-card {
+      overflow: hidden;
+      padding: 0;
+      border-radius: var(--radius-panel, 0.875rem);
+      background: var(--workspace-surface);
+    }
+    .report-card > header {
+      min-height: 3.5rem;
+      display: flex;
+      align-items: center;
+      padding: 0.875rem 1rem;
+      border-color: var(--workspace-border);
+      background: var(--workspace-subtle);
+    }
+    .bar-row {
+      min-height: 4rem;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid color-mix(in srgb, var(--workspace-border) 72%, transparent);
+    }
+    .bar-row:last-child {
+      border-bottom: 0;
+    }
+    .bar-track {
+      background: var(--workspace-subtle);
+    }
+    .bar-track span {
+      background: linear-gradient(90deg, var(--workspace-anchor), var(--signal));
+    }
+    th,
+    td {
+      min-height: 2.75rem;
+      border-color: color-mix(in srgb, var(--workspace-border) 72%, transparent);
+    }
+    th {
+      background: var(--workspace-subtle);
+      font-weight: 600;
+    }
+    tbody tr:hover {
+      background: var(--workspace-hover);
+    }
+    .activity-bars {
+      gap: 0.375rem;
+      min-height: 14rem;
+      padding: 1.25rem;
+    }
+    .activity-bars > div {
+      min-width: 1.75rem;
+    }
+    .activity-bars span {
+      background: var(--workspace-anchor);
+    }
+    @media (max-width: 800px) {
+      .page-header {
+        align-items: stretch;
+      }
+      .page-header .segmented {
+        align-self: stretch;
+      }
+      .page-header .segmented button {
+        flex: 1;
+      }
+      .bar-row {
+        grid-template-columns: minmax(8rem, 1fr) minmax(8rem, 2fr) auto;
+      }
+    }
+    @media (max-width: 560px) {
+      .metric-grid {
+        grid-template-columns: 1fr;
+      }
+      .bar-row {
+        grid-template-columns: 1fr auto;
+      }
+      .bar-track {
+        grid-column: 1 / -1;
+        grid-row: 2;
+      }
+      .activity-bars {
+        padding-inline: 0.75rem;
+      }
+    }
+    @media (forced-colors: active) {
+      .segmented .active,
+      .metric-card:first-child,
+      .metric-card:nth-child(2) {
+        border: 1px solid CanvasText;
       }
     }
   `,

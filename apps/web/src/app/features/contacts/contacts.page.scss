@@ -405,3 +405,168 @@ th {
     border: 1px solid CanvasText;
   }
 }
+
+/* Veltrix Signal workspace layer */
+:host {
+  --workspace-surface: var(--color-surface, var(--surface-raised));
+  --workspace-subtle: var(--color-surface-subtle, var(--surface-subtle));
+  --workspace-hover: var(--color-surface-hover, var(--surface-selected));
+  --workspace-border: var(--color-border, var(--border));
+  --workspace-anchor: var(--color-anchor, var(--brand));
+}
+
+.page-header {
+  align-items: flex-end;
+  margin-bottom: 0.25rem;
+}
+
+.contacts-filter-toolbar {
+  display: grid;
+  grid-template-columns:
+    auto minmax(15rem, 1fr) minmax(9.5rem, 12rem) minmax(11rem, 14rem)
+    auto auto;
+  gap: 0.75rem;
+  align-items: end;
+  padding: 0.75rem;
+  border-radius: var(--radius-panel, 0.875rem);
+  background: var(--workspace-surface);
+}
+
+.contacts-filter-toolbar .view-switcher {
+  align-self: center;
+  width: max-content;
+}
+
+.contacts-filter-toolbar .view-switcher button {
+  white-space: nowrap;
+}
+
+.contacts-filter-toolbar .view-switcher button.active {
+  color: var(--workspace-anchor);
+  background: var(--workspace-surface);
+  box-shadow: 0 1px 2px rgb(18 36 29 / 10%);
+}
+
+.contacts-filter-toolbar .filter-field {
+  min-width: 0;
+}
+
+.contacts-filter-toolbar .filter-search,
+.contacts-filter-toolbar .filter-search-control,
+.contacts-filter-toolbar input,
+.contacts-filter-toolbar select {
+  width: 100%;
+}
+
+.contacts-filter-toolbar input,
+.contacts-filter-toolbar select {
+  min-height: var(--control-height, 2.5rem);
+}
+
+.saved-views,
+.bulk-bar,
+.persistent-message {
+  border-radius: var(--radius-panel, 0.875rem);
+  background: var(--workspace-surface);
+}
+
+.saved-views {
+  min-height: 4rem;
+  padding: 0.75rem;
+}
+
+.compact-field select,
+.saved-view-form input,
+.mapping-grid select {
+  border-radius: var(--radius-control, 0.625rem);
+}
+
+.bulk-bar {
+  top: 0.75rem;
+  min-height: 4rem;
+  padding: 0.75rem 1rem;
+}
+
+.grid-panel,
+.trash-panel {
+  border-radius: var(--radius-panel, 0.875rem);
+  background: var(--workspace-surface);
+}
+
+.grid-panel {
+  border-color: var(--workspace-border);
+}
+
+.trash-panel > header {
+  padding: 1rem 1.25rem;
+  background: var(--workspace-subtle);
+}
+
+th {
+  background: var(--workspace-subtle);
+  text-transform: none;
+}
+
+tbody tr:hover {
+  background: var(--workspace-hover);
+}
+
+.create-drawer,
+.drawer-actions {
+  background: var(--workspace-surface);
+}
+
+.create-drawer {
+  padding: 1.25rem;
+}
+
+.file-picker,
+.import-progress {
+  border-radius: var(--radius-control, 0.625rem);
+  background: var(--workspace-subtle);
+}
+
+@media (max-width: 1180px) {
+  .contacts-filter-toolbar {
+    grid-template-columns: auto minmax(15rem, 1fr) repeat(2, minmax(10rem, 1fr));
+  }
+
+  .contacts-filter-toolbar > button {
+    justify-self: start;
+  }
+}
+
+@media (max-width: 860px) {
+  .contacts-filter-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+  }
+
+  .contacts-filter-toolbar .view-switcher,
+  .contacts-filter-toolbar .filter-search {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .contacts-filter-toolbar .view-switcher button {
+    flex: 1;
+  }
+}
+
+@media (max-width: 600px) {
+  .page-header {
+    align-items: stretch;
+  }
+
+  .contacts-filter-toolbar {
+    grid-template-columns: 1fr;
+    gap: 0.625rem;
+    padding: 0.625rem;
+  }
+
+  .contacts-filter-toolbar .view-switcher,
+  .contacts-filter-toolbar .filter-search,
+  .contacts-filter-toolbar > * {
+    grid-column: 1;
+  }
+}

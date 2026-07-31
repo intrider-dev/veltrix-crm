@@ -1,0 +1,328 @@
+:host {
+  --workspace-surface: var(--color-surface, var(--surface-raised));
+  --workspace-subtle: var(--color-surface-subtle, var(--surface-subtle));
+  --workspace-hover: var(--color-surface-hover, var(--surface-selected));
+  --workspace-border: var(--color-border, var(--border));
+  --workspace-anchor: var(--color-anchor, var(--brand));
+}
+
+.page-header {
+  align-items: flex-end;
+  margin-bottom: 0.25rem;
+}
+
+.page-header p {
+  max-width: 48rem;
+}
+
+.workspace-controls {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 1rem;
+  align-items: end;
+  padding: 0.75rem;
+  border: 1px solid var(--workspace-border);
+  border-radius: var(--radius-panel, 0.875rem);
+  background: var(--workspace-surface);
+}
+
+.page .view-switcher {
+  align-self: center;
+  width: max-content;
+  margin: 0;
+}
+
+.page .view-switcher button {
+  min-width: 5.5rem;
+}
+
+.page .view-switcher button.active {
+  color: var(--workspace-anchor);
+  background: var(--workspace-surface);
+  box-shadow: 0 1px 2px rgb(18 36 29 / 10%);
+}
+
+.page .feature-toolbar {
+  display: grid;
+  grid-template-columns: minmax(15rem, 1fr) minmax(11rem, 14rem) auto;
+  gap: 0.75rem;
+  align-items: end;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.page .feature-toolbar .native-field {
+  min-width: 0;
+  margin: 0;
+}
+
+.page .feature-toolbar input,
+.page .feature-toolbar select {
+  width: 100%;
+  min-height: var(--control-height, 2.5rem);
+}
+
+.page .editor {
+  overflow: hidden;
+  border-radius: var(--radius-panel, 0.875rem);
+  background: var(--workspace-surface);
+}
+
+.page .editor > header {
+  min-height: 3.5rem;
+  padding-inline: 1.25rem;
+  background: var(--workspace-subtle);
+}
+
+.page .feature-form {
+  gap: 0.25rem 1rem;
+  padding: 1.25rem;
+}
+
+.page .record-list {
+  overflow: hidden;
+  padding: 0;
+  border-radius: var(--radius-panel, 0.875rem);
+  background: var(--workspace-surface);
+}
+
+.page .record-list article {
+  min-height: 4.5rem;
+  padding: 0.75rem 1rem;
+  border-color: color-mix(in srgb, var(--workspace-border) 72%, transparent);
+}
+
+.page .record-list article:hover {
+  background: var(--workspace-hover);
+}
+
+.page .record-avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-control, 0.625rem);
+  color: var(--workspace-anchor);
+  background: var(--color-signal-soft, var(--brand-soft));
+}
+
+.page .record-main h2 a,
+.page .lead-card h3 a,
+.page .gantt-label {
+  color: inherit;
+  text-decoration: none;
+}
+
+.page .record-main h2 a:hover,
+.page .record-main h2 a:focus-visible,
+.page .lead-card h3 a:hover,
+.page .lead-card h3 a:focus-visible,
+.page .gantt-label:hover,
+.page .gantt-label:focus-visible {
+  color: var(--workspace-anchor);
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.page .record-meta {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.page .record-meta select,
+.page .lead-card select {
+  min-width: 10rem;
+  min-height: 2.5rem;
+  padding-inline: 0.75rem 2.5rem;
+  border-radius: var(--radius-control, 0.625rem);
+}
+
+.page .lead-kanban {
+  gap: 0.75rem;
+  padding: 0.25rem 0.125rem 0.75rem;
+  scrollbar-color: var(--workspace-border) transparent;
+}
+
+.page .lead-stage {
+  min-width: 18rem;
+  overflow: hidden;
+  border-color: var(--workspace-border);
+  border-radius: var(--radius-panel, 0.875rem);
+  background: var(--workspace-subtle);
+}
+
+.page .lead-stage > header {
+  min-height: 3.5rem;
+  padding: 0.75rem 0.875rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--workspace-border) 75%, transparent);
+}
+
+.page .lead-stage > header h2 {
+  font-size: 0.875rem;
+  font-weight: 650;
+}
+
+.page .lead-stage > header > span {
+  display: grid;
+  min-width: 1.75rem;
+  min-height: 1.75rem;
+  place-items: center;
+  border: 1px solid var(--workspace-border);
+  border-radius: var(--radius-pill, 999px);
+  background: var(--workspace-surface);
+  font-size: 0.75rem;
+}
+
+.page .lead-drop-zone {
+  min-height: 24rem;
+  padding: 0.625rem;
+}
+
+.page .lead-card {
+  display: grid;
+  gap: 0.5rem;
+  margin-bottom: 0.625rem;
+  padding: 0.875rem;
+  border-color: color-mix(in srgb, var(--workspace-border) 88%, transparent);
+  border-radius: var(--radius-control, 0.625rem);
+  background: var(--workspace-surface);
+  box-shadow: 0 1px 2px rgb(18 36 29 / 7%);
+}
+
+.page .lead-card p,
+.page .lead-card time {
+  margin: 0;
+}
+
+.page .drag-handle {
+  min-width: 2rem;
+  min-height: 2rem;
+  padding: 0;
+  border-radius: 0.5rem;
+}
+
+.page .lead-gantt {
+  padding: 0;
+  border-radius: var(--radius-panel, 0.875rem);
+  background: var(--workspace-surface);
+}
+
+.page .gantt-range {
+  align-items: center;
+  min-height: 3rem;
+  padding: 0 1rem;
+  border-bottom: 1px solid var(--workspace-border);
+  background: var(--workspace-subtle);
+}
+
+.page .gantt-grid {
+  grid-template-columns: minmax(10rem, 15rem) minmax(34rem, 1fr);
+  gap: 0;
+  margin: 0;
+}
+
+.page .gantt-label,
+.page .gantt-track {
+  min-height: 3.25rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--workspace-border) 72%, transparent);
+}
+
+.page .gantt-label {
+  display: flex;
+  align-items: center;
+  padding-inline: 1rem;
+}
+
+.page .gantt-track {
+  height: auto;
+  border-radius: 0;
+  background-color: transparent;
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent 0,
+    transparent calc(10% - 1px),
+    color-mix(in srgb, var(--workspace-border) 65%, transparent) calc(10% - 1px),
+    color-mix(in srgb, var(--workspace-border) 65%, transparent) 10%
+  );
+}
+
+.page .gantt-bar {
+  inset-block: 0.625rem;
+  min-height: 2rem;
+  border-radius: 0.5rem;
+  color: var(--color-canvas, var(--brand-contrast));
+  background: var(--workspace-anchor);
+}
+
+.page .unscheduled {
+  margin: 0;
+  padding: 0.875rem 1rem;
+  border-top: 1px solid var(--workspace-border);
+}
+
+.page .assignment-panel {
+  padding: 1.25rem;
+  border-radius: var(--radius-panel, 0.875rem);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .page .lead-card:hover {
+    border-color: color-mix(in srgb, var(--workspace-anchor) 38%, var(--workspace-border));
+  }
+}
+
+@media (max-width: 980px) {
+  .workspace-controls {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .page .view-switcher {
+    width: 100%;
+  }
+
+  .page .view-switcher button {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 680px) {
+  .page-header {
+    align-items: stretch;
+  }
+
+  .page-header > button {
+    width: 100%;
+  }
+
+  .workspace-controls {
+    gap: 0.75rem;
+    padding: 0.625rem;
+  }
+
+  .page .feature-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .page .feature-toolbar button {
+    width: 100%;
+  }
+
+  .page .record-meta {
+    justify-content: flex-start;
+  }
+
+  .page .record-meta > *,
+  .page .record-meta select {
+    width: 100%;
+  }
+}
+
+@media (forced-colors: active) {
+  .page .view-switcher button.active,
+  .page .lead-card,
+  .page .lead-stage > header > span {
+    border: 1px solid CanvasText;
+  }
+}

@@ -116,10 +116,10 @@ import { CustomFieldsStore } from './custom-fields.store';
       max-width: 70rem;
     }
     .editor {
-      padding: 1rem;
+      padding: 1rem 1rem 0.85rem;
     }
     .feature-form {
-      grid-template-columns: repeat(3, minmax(11rem, 1fr));
+      grid-template-columns: repeat(2, minmax(14rem, 1fr));
     }
     .wide {
       grid-column: span 2;
@@ -129,6 +129,11 @@ import { CustomFieldsStore } from './custom-fields.store';
       align-items: center;
       gap: 0.5rem;
       min-height: 3.5rem;
+    }
+    .feature-form .form-actions {
+      grid-column: 1 / -1;
+      padding-top: 0.25rem;
+      border-top: 1px solid var(--border);
     }
     .field-list article {
       display: grid;
@@ -155,6 +160,9 @@ import { CustomFieldsStore } from './custom-fields.store';
         grid-template-columns: 1fr;
       }
       .wide {
+        grid-column: auto;
+      }
+      .feature-form .form-actions {
         grid-column: auto;
       }
     }

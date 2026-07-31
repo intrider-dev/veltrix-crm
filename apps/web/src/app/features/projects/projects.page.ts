@@ -1,5 +1,14 @@
-import type { OnInit } from '@angular/core';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { CdkTrapFocus } from '@angular/cdk/a11y';
+import type { ElementRef, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  HostListener,
+  Injector,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { FormField, form, maxLength, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -10,6 +19,7 @@ import { apiErrorMessage } from '../../core/api/api-error-message';
 import type { ProjectInput } from '../../core/api/api.types';
 import { Permissions } from '../../core/auth/permissions';
 import { I18nService } from '../../core/i18n/i18n.service';
+import { focusAfterNextRender } from '../../shared/a11y/focus-after-render';
 import { IconComponent } from '../../shared/icon/icon.component';
 import { ErrorPanelComponent } from '../../shared/state/error-panel.component';
 import { ProjectsStore } from './projects.store';
@@ -25,6 +35,7 @@ interface ProjectCreateModel {
 @Component({
   selector: 'app-projects-page',
   imports: [
+    CdkTrapFocus,
     ErrorPanelComponent,
     FormField,
     IconComponent,
@@ -42,7 +53,7 @@ interface ProjectCreateModel {
           <p>{{ i18n.t('projects.subtitle') }}</p>
         </div>
         @if (permissions.allows('records.create')) {
-          <button mat-flat-button type="button" (click)="openCreate()">
+          <button #projectCreateTrigger mat-flat-button type="button" (click)="openCreate()">
             <app-icon name="add" />{{ i18n.t('projects.add') }}
           </button>
         }
@@ -93,6 +104,8 @@ interface ProjectCreateModel {
         class="create-drawer"
         role="dialog"
         aria-modal="true"
+        cdkTrapFocus
+        [cdkTrapFocusAutoCapture]="true"
         aria-labelledby="project-create-title"
       >
         <header>
@@ -110,6 +123,7 @@ interface ProjectCreateModel {
           <mat-form-field appearance="outline">
             <mat-label>{{ i18n.t('common.field.name') }}</mat-label>
             <input
+              #projectNameInput
               matInput
               [formField]="projectForm.name"
               [attr.aria-invalid]="createAttempted() && projectForm.name().invalid()"
@@ -209,6 +223,9 @@ export class ProjectsPage implements OnInit {
     maxLength(schema.name, 200);
     maxLength(schema.description, 20_000);
   });
+  readonly projectCreateTrigger = viewChild<ElementRef<HTMLButtonElement>>('projectCreateTrigger');
+  readonly projectNameInput = viewChild<ElementRef<HTMLInputElement>>('projectNameInput');
+  private readonly injector = inject(Injector);
 
   ngOnInit(): void {
     void this.store.load();
@@ -229,6 +246,7 @@ export class ProjectsPage implements OnInit {
     this.dateRangeInvalid.set(false);
     this.createAttempted.set(false);
     this.createOpen.set(true);
+    focusAfterNextRender(this.injector, () => this.projectNameInput()?.nativeElement);
   }
 
   closeCreate(): void {
@@ -236,6 +254,12 @@ export class ProjectsPage implements OnInit {
     this.createError.set(null);
     this.dateRangeInvalid.set(false);
     this.createAttempted.set(false);
+    focusAfterNextRender(this.injector, () => this.projectCreateTrigger()?.nativeElement);
+  }
+
+  @HostListener('document:keydown.escape')
+  closeCreateFromKeyboard(): void {
+    if (this.createOpen()) this.closeCreate();
   }
 
   async create(event: SubmitEvent): Promise<void> {
