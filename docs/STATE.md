@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-07-23
+Last updated: 2026-07-31
 
 ## Completed
 
@@ -50,21 +50,24 @@ Last updated: 2026-07-23
 - Kept lead/deal custom fields consistent between their JSON aggregates and the normalized query/index table; incompatible schema changes remain blocked and deleting a definition removes the denormalized key.
 - Hardened chat upload/call boundaries after independent review: ambiguous media retries return the existing attachment, provisional deletion and call creation are idempotent, stale async media acquisition is generation-guarded, and joined calls are released when the dock/workspace disappears.
 - Fixed the PostgreSQL 18 attachment `storage_key` constraint so valid keys up to 500 characters can be inserted without the unsupported regex repetition count.
+- Researched the public dpopstudio FluxCRM concept, official CRM documentation, current accessibility guidance, and existing application screenshots; adopted the original `Veltrix Signal` direction in `DESIGN.md`, recorded the evidence and exclusions in `docs/DESIGN_RESEARCH.md`, and added an implementation-ready redesign prompt plus ADR 0020.
 
 ## Current phase
 
-Phase 5 - verified pre-release handoff with explicit roadmap gaps.
+Phase 5 - design-system replacement specified; implementation is the current product-polish priority.
 
 ## Next actions
 
-1. Run the pinned hosted GitHub Actions, CodeQL, Trivy, SBOM, and Linux race jobs after publication; no hosted result is claimed locally.
-2. Profile the remaining read/write p95 misses with Linux `perf`, PostgreSQL statement statistics, and the documented full-duration workload without weakening thresholds.
-3. Retain optional AI consent UI, extended mailbox/chat capabilities, 100-VU stretch, and two-browser LiveKit media validation as explicit roadmap items.
+1. Implement `DESIGN.md` in the staged order defined by `docs/REDESIGN_PROMPT.md`, beginning with semantic tokens and shared controls rather than page-specific fixes.
+2. Rebuild the shell, list workspace, preview drawer, record layouts, assignment overlay, and messenger/media/read-state experience against the new component contracts.
+3. Renew real browser screenshots, accessibility checks, bundle measurements, and affected performance evidence only after the running redesign is complete.
+4. Run the pinned hosted GitHub Actions, CodeQL, Trivy, SBOM, and Linux race jobs after publication; no hosted result is claimed locally.
 
 ## Last successful verification commands
 
 | Date       | Command                                                                                                      | Result                                                                                                                                                                                                                                                                                                |
 | ---------- | ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-07-31 | Browser inspection of public FluxCRM references and existing `output/playwright` screenshots                | Completed; ambiguity, adoptable visual principles, and rejected copy-specific motifs are recorded in `docs/DESIGN_RESEARCH.md`. Docker Desktop was not running, so no new local application screenshot or runtime claim was made.                                                                       |
 | 2026-07-21 | `docker compose config --quiet` and all optional profiles                                                    | Valid Compose configuration                                                                                                                                                                                                                                                                           |
 | 2026-07-21 | clean migrations `000001` through `000008` on PostgreSQL 18.4                                                | Passed                                                                                                                                                                                                                                                                                                |
 | 2026-07-21 | `go test -tags=integration -count=1 ./...` from `apps/api`                                                   | Passed, including RLS/tenant negative tests                                                                                                                                                                                                                                                           |
