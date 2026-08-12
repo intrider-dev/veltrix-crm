@@ -20,7 +20,7 @@ func TestTranslateFallbackAndParams(t *testing.T) {
 	if got := Translate("ru", "problems.problem.generic", map[string]any{"requestId": "req-1"}); got != "Произошла ошибка. ID запроса: req-1" {
 		t.Fatalf("Translate = %q", got)
 	}
-	if got := Translate("xx", "auth.login.title", nil); got != "Sign in" {
+	if got := Translate("xx", "auth.login.title", nil); got != "Welcome back" {
 		t.Fatalf("fallback = %q", got)
 	}
 }
