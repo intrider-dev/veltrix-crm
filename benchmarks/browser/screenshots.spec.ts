@@ -32,6 +32,10 @@ test("captures real application portfolio views", async ({
   await capture(page, testInfo, "deal-pipeline", "/deals", async () => {
     await expect(page.locator(".deal-card").first()).toBeVisible();
   });
+  await capture(page, testInfo, "tasks-workspace", "/activities", async () => {
+    await expect(page.locator(".activity-list")).toBeVisible();
+    await expect(page.locator(".task-insights")).toBeVisible();
+  });
   await capture(page, testInfo, "reports", "/reports", async () => {
     await expect(
       page.getByRole("heading", { name: "Reports", level: 1 }),

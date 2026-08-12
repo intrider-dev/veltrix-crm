@@ -111,7 +111,7 @@ test("company, deal, and task lifecycle is usable end to end", async ({
   await page.goto("/activities");
   await waitForAppReady(page);
   const taskName = `Follow up ${suffix}`;
-  await page.getByRole("button", { name: "Add activity", exact: true }).click();
+  await page.getByRole("button", { name: "Create task", exact: true }).click();
   const createPanel = page.locator(".create-panel");
   await createPanel.getByLabel("Activity type").selectOption("task");
   await createPanel.getByLabel("Title").fill(taskName);

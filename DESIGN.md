@@ -232,6 +232,10 @@ View, filters, sorting, saved view, density, and selected record must be reflect
 
 The companies index uses the dark, high-density workspace language: a compact title/count/search/create header, four factual loaded-page summary cards, a filter and saved-view strip, a responsive semantic table, and an adjacent quick-view panel. Summary cards may show only values returned by or derived from the loaded API page; deal revenue, contact counts, growth, and activity claims are not displayed until dedicated aggregate endpoints exist. Desktop keeps the quick view adjacent to the table, tablet stacks it below the data, and mobile collapses secondary columns into the full record rather than shrinking text below a usable size. Search has one native clear mechanism, primary button icon/text alignment is invariant across breakpoints, and all existing create, trash/restore, cursor loading, and saved-view behavior remains functional.
 
+#### Tasks workspace
+
+The task workspace presents tasks as the primary view while retaining calls, meetings, notes, and the combined activity feed as explicit tabs. Its summary cards are derived only from the loaded activity response: loaded tasks, open, completed, overdue, high priority, and due today. The main table preserves completion and assignment actions; the adjacent insight rail shows an actual current-month due-date calendar, priority distribution, and overdue items. No project title or assignee display name is inferred from opaque IDs. Desktop uses a table plus insight rail, tablet places three insight cards below the table, and mobile keeps only task identity and status in the row while exposing the complete record actions through the normal flow.
+
 ### Preview drawer
 
 - Opens without losing list position, filters, or selection.
