@@ -1,322 +1,128 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormField, email, form, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { productConfig, type SupportedLocale } from '@veltrix-crm/product-config';
 
 import { ApiError } from '../../core/api/api-error';
 import { safeLocalReturnUrl } from '../../core/auth/auth.guard';
 import { AuthStore } from '../../core/auth/auth.store';
 import { I18nService } from '../../core/i18n/i18n.service';
-import { BrandLogoComponent } from '../../shared/brand/brand-logo.component';
+import { IconComponent } from '../../shared/icon/icon.component';
+import { AuthShellComponent } from './auth-shell.component';
 
 @Component({
   selector: 'app-login-page',
   imports: [
-    BrandLogoComponent,
+    AuthShellComponent,
     FormField,
+    IconComponent,
     MatButtonModule,
-    MatCardModule,
     MatFormFieldModule,
     MatInputModule,
     RouterLink,
   ],
   template: `
-    <main class="login-layout">
-      <section class="story" aria-labelledby="product-name">
-        <app-brand-logo [showName]="false" size="large" />
-        <p class="eyebrow">{{ product.shortName }}</p>
-        <h1 id="product-name">
-          {{ i18n.t('common.product.welcome', { productName: product.productName }) }}
-        </h1>
-        <p>{{ i18n.t('auth.login.subtitle') }}</p>
-      </section>
+    <app-auth-shell
+      [title]="i18n.t(mfaChallenge() ? 'auth.mfa.title' : 'auth.login.title')"
+      [subtitle]="i18n.t(mfaChallenge() ? 'auth.mfa.subtitle' : 'auth.login.subtitle')"
+    >
+      @if (mfaChallenge()) {
+        <form (submit)="verifyMFA($event)" novalidate>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ i18n.t('auth.mfa.code') }}</mat-label>
+            <input
+              matInput
+              autocomplete="one-time-code"
+              inputmode="numeric"
+              [formField]="mfaForm.code"
+            />
+            <mat-hint>{{ i18n.t('auth.mfa.recoveryHint') }}</mat-hint>
+            @if (mfaForm.code().touched() && mfaForm.code().invalid()) {
+              <mat-error>{{ i18n.t('auth.validation.required') }}</mat-error>
+            }
+          </mat-form-field>
 
-      <mat-card appearance="outlined" class="login-card">
-        <div
-          class="locale-switch"
-          role="group"
-          [attr.aria-label]="i18n.t('settings.language.label')"
-        >
-          @for (locale of i18n.supportedLocales; track locale) {
+          @if (error()) {
+            <div class="form-error" role="alert">{{ error() }}</div>
+          }
+
+          <button mat-flat-button class="submit" type="submit" [disabled]="auth.pending()">
+            {{ i18n.t(auth.pending() ? 'web.login.progress' : 'auth.mfa.submit') }}
+          </button>
+          <button mat-button class="secondary-action" type="button" (click)="backToPassword()">
+            {{ i18n.t('auth.login.back') }}
+          </button>
+        </form>
+      } @else {
+        <form (submit)="submit($event)" novalidate>
+          <label class="field-label" for="login-email">{{ i18n.t('auth.login.email') }}</label>
+          <mat-form-field appearance="outline">
+            <app-icon matPrefix name="mail" />
+            <input
+              id="login-email"
+              matInput
+              autocomplete="username"
+              inputmode="email"
+              [placeholder]="i18n.t('auth.login.email')"
+              [formField]="loginForm.email"
+            />
+            @if (loginForm.email().touched() && loginForm.email().invalid()) {
+              <mat-error>{{ i18n.t('auth.validation.email') }}</mat-error>
+            }
+          </mat-form-field>
+
+          <div class="password-label-row field-label">
+            <label for="login-password">{{ i18n.t('auth.login.password') }}</label>
+            <a routerLink="/password-reset">{{ i18n.t('auth.login.forgot') }}</a>
+          </div>
+          <mat-form-field appearance="outline" class="password-field">
+            <input
+              id="login-password"
+              matInput
+              autocomplete="current-password"
+              [placeholder]="i18n.t('auth.login.password')"
+              [type]="passwordVisible() ? 'text' : 'password'"
+              [formField]="loginForm.password"
+            />
             <button
-              mat-button
+              mat-icon-button
+              matSuffix
               type="button"
-              [class.active]="i18n.locale() === locale"
-              (click)="setLocale(locale)"
+              class="visibility-button"
+              (click)="passwordVisible.set(!passwordVisible())"
+              [attr.aria-label]="i18n.t('auth.login.showPassword')"
+              [attr.aria-pressed]="passwordVisible()"
             >
-              {{ i18n.languageName(locale) }}
+              <app-icon [name]="passwordVisible() ? 'eyeOff' : 'eye'" />
             </button>
+            @if (loginForm.password().touched() && loginForm.password().invalid()) {
+              <mat-error>{{ i18n.t('auth.validation.required') }}</mat-error>
+            }
+          </mat-form-field>
+
+          @if (error()) {
+            <div class="form-error" role="alert">{{ error() }}</div>
           }
-        </div>
-        <mat-card-header>
-          <mat-card-title>{{ i18n.t('auth.login.title') }}</mat-card-title>
-          <mat-card-subtitle>{{ i18n.t('auth.login.subtitle') }}</mat-card-subtitle>
-        </mat-card-header>
-        <mat-card-content>
-          @if (mfaChallenge()) {
-            <form (submit)="verifyMFA($event)" novalidate>
-              <p class="mfa-copy">{{ i18n.t('auth.mfa.subtitle') }}</p>
-              <mat-form-field appearance="outline">
-                <mat-label>{{ i18n.t('auth.mfa.code') }}</mat-label>
-                <input
-                  matInput
-                  autocomplete="one-time-code"
-                  inputmode="numeric"
-                  [formField]="mfaForm.code"
-                />
-                <mat-hint>{{ i18n.t('auth.mfa.recoveryHint') }}</mat-hint>
-                @if (mfaForm.code().touched() && mfaForm.code().invalid()) {
-                  <mat-error>{{ i18n.t('auth.validation.required') }}</mat-error>
-                }
-              </mat-form-field>
 
-              @if (error()) {
-                <div class="form-error" role="alert">{{ error() }}</div>
-              }
-
-              <button mat-flat-button class="submit" type="submit" [disabled]="auth.pending()">
-                {{ i18n.t(auth.pending() ? 'web.login.progress' : 'auth.mfa.submit') }}
-              </button>
-              <button mat-button class="submit" type="button" (click)="backToPassword()">
-                {{ i18n.t('auth.login.back') }}
-              </button>
-            </form>
-          } @else {
-            <form (submit)="submit($event)" novalidate>
-              <mat-form-field appearance="outline">
-                <mat-label>{{ i18n.t('auth.login.email') }}</mat-label>
-                <input
-                  matInput
-                  autocomplete="username"
-                  inputmode="email"
-                  [formField]="loginForm.email"
-                />
-                @if (loginForm.email().touched() && loginForm.email().invalid()) {
-                  <mat-error>{{ i18n.t('auth.validation.email') }}</mat-error>
-                }
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>{{ i18n.t('auth.login.password') }}</mat-label>
-                <input
-                  matInput
-                  autocomplete="current-password"
-                  [type]="passwordVisible() ? 'text' : 'password'"
-                  [formField]="loginForm.password"
-                />
-                <button
-                  mat-button
-                  matSuffix
-                  type="button"
-                  (click)="passwordVisible.set(!passwordVisible())"
-                  [attr.aria-pressed]="passwordVisible()"
-                >
-                  {{ i18n.t('auth.login.showPassword') }}
-                </button>
-                @if (loginForm.password().touched() && loginForm.password().invalid()) {
-                  <mat-error>{{ i18n.t('auth.validation.required') }}</mat-error>
-                }
-              </mat-form-field>
-
-              <a mat-button class="forgot" routerLink="/password-reset">
-                {{ i18n.t('auth.login.forgot') }}
-              </a>
-
-              @if (error()) {
-                <div class="form-error" role="alert">{{ error() }}</div>
-              }
-
-              <button mat-flat-button class="submit" type="submit" [disabled]="auth.pending()">
-                {{ i18n.t(auth.pending() ? 'web.login.progress' : 'auth.login.submit') }}
-              </button>
-              <a mat-button class="registration" routerLink="/register">
-                {{ i18n.t('auth.login.developmentRegister') }}
-              </a>
-            </form>
-          }
-        </mat-card-content>
-      </mat-card>
-    </main>
+          <button mat-flat-button class="submit" type="submit" [disabled]="auth.pending()">
+            {{ i18n.t(auth.pending() ? 'web.login.progress' : 'auth.login.submit') }}
+          </button>
+          <p class="account-switch">
+            {{ i18n.t('auth.login.noAccount') }}
+            <a routerLink="/register">{{ i18n.t('auth.login.createAccount') }}</a>
+          </p>
+        </form>
+      }
+    </app-auth-shell>
   `,
-  styles: `
-    :host {
-      min-height: 100dvh;
-      display: block;
-      background: var(--surface-raised);
-    }
-    .login-layout {
-      min-height: 100dvh;
-      display: grid;
-      grid-template-columns: minmax(22rem, 0.85fr) minmax(28rem, 1.15fr);
-      align-items: center;
-      gap: 0;
-      padding: 0;
-    }
-    .story {
-      position: relative;
-      display: flex;
-      min-height: 100dvh;
-      flex-direction: column;
-      justify-content: center;
-      overflow: hidden;
-      padding: clamp(2rem, 7vw, 7rem);
-      color: white;
-      background: var(--brand);
-    }
-    .story::after {
-      position: absolute;
-      right: -8rem;
-      bottom: -10rem;
-      width: 24rem;
-      height: 24rem;
-      border-radius: 50%;
-      background: var(--signal);
-      content: '';
-      opacity: 0.92;
-    }
-    .brand-mark {
-      display: grid;
-      place-items: center;
-      width: 2.75rem;
-      height: 2.75rem;
-      border-radius: 0.8rem;
-      color: white;
-      background: var(--brand);
-      font-weight: 750;
-      box-shadow: 0 0.5rem 1.5rem color-mix(in srgb, var(--brand) 24%, transparent);
-    }
-    .eyebrow {
-      margin: 2.5rem 0 0.65rem;
-      color: var(--signal);
-      font-weight: 700;
-      letter-spacing: 0.03em;
-    }
-    h1 {
-      position: relative;
-      z-index: 1;
-      max-width: 11ch;
-      margin: 0;
-      font-size: clamp(2.5rem, 6vw, 4.75rem);
-      line-height: 0.98;
-      letter-spacing: -0.055em;
-      overflow-wrap: normal;
-      word-break: normal;
-    }
-    .story > p:last-child {
-      position: relative;
-      z-index: 1;
-      max-width: 48ch;
-      color: rgb(255 255 255 / 78%);
-      font-size: 1.05rem;
-      line-height: 1.65;
-    }
-    .login-card {
-      justify-self: center;
-      width: min(calc(100% - 2rem), 31rem);
-      padding: 0.5rem;
-      border: 0;
-      border-radius: var(--radius-overlay);
-      background: var(--surface-raised);
-      box-shadow: 0 1.5rem 5rem rgb(18 44 36 / 13%);
-    }
-    mat-card-header {
-      padding: 1rem 1rem 1.5rem;
-    }
-    mat-card-title {
-      font-size: 1.5rem;
-      font-weight: 720;
-      letter-spacing: -0.02em;
-    }
-    mat-card-subtitle {
-      margin-top: 0.35rem;
-    }
-    form {
-      display: grid;
-      gap: 0.25rem;
-    }
-    mat-form-field,
-    .submit {
-      width: 100%;
-    }
-    .submit {
-      min-height: 2.9rem;
-      margin-top: 0.5rem;
-    }
-    .forgot {
-      justify-self: end;
-      margin: -0.65rem 0 0.25rem;
-    }
-    .registration {
-      justify-self: center;
-    }
-    .mfa-copy {
-      margin: 0 0 1rem;
-      color: var(--text-muted);
-      line-height: 1.5;
-    }
-    .locale-switch {
-      display: flex;
-      justify-content: flex-end;
-      padding: 0.5rem;
-      gap: 0.15rem;
-    }
-    .locale-switch button {
-      min-width: auto;
-      padding-inline: 0.75rem;
-    }
-    .locale-switch .active {
-      background: var(--brand-soft);
-      color: var(--brand);
-    }
-    .form-error {
-      margin: 0 0 0.5rem;
-      border-left: 3px solid var(--danger);
-      padding: 0.7rem 0.8rem;
-      color: var(--danger);
-      background: var(--danger-surface);
-      border-radius: 0.25rem;
-    }
-    @media (max-width: 760px) {
-      .login-layout {
-        grid-template-columns: 1fr;
-        gap: 0;
-        padding: 1rem;
-        background: var(--surface-canvas);
-      }
-      .story {
-        min-height: auto;
-        padding: 1.5rem 0.75rem 2rem;
-        color: var(--text);
-        background: transparent;
-      }
-      .story::after {
-        display: none;
-      }
-      .story > p:last-child {
-        display: none;
-      }
-      h1 {
-        font-size: 2.25rem;
-      }
-      .eyebrow {
-        margin-top: 1.25rem;
-        color: var(--brand);
-      }
-      .login-card {
-        width: 100%;
-      }
-    }
-  `,
+  styleUrl: './auth-flow.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoginPage {
   readonly auth = inject(AuthStore);
   readonly i18n = inject(I18nService);
-  readonly product = productConfig;
   readonly passwordVisible = signal(false);
   private readonly problem = signal<{ readonly code: string; readonly requestId: string } | null>(
     null,
@@ -339,10 +145,6 @@ export class LoginPage {
   private readonly returnUrl = safeLocalReturnUrl(
     inject(ActivatedRoute).snapshot.queryParamMap.get('returnUrl'),
   );
-
-  async setLocale(locale: SupportedLocale): Promise<void> {
-    await this.i18n.setLocale(locale);
-  }
 
   async submit(event: SubmitEvent): Promise<void> {
     event.preventDefault();

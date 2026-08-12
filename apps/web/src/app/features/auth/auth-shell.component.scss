@@ -1,0 +1,291 @@
+:host {
+  display: block;
+  min-height: 100dvh;
+  color: #eef2ff;
+  background: #070d18;
+}
+
+.auth-shell {
+  display: grid;
+  min-height: 100dvh;
+  grid-template-columns: minmax(26rem, 0.92fr) minmax(34rem, 1.08fr);
+}
+
+.brand-story,
+.auth-pane {
+  position: relative;
+  min-width: 0;
+}
+
+.brand-story {
+  display: flex;
+  min-height: 100dvh;
+  flex-direction: column;
+  overflow: hidden;
+  padding: clamp(2rem, 5vw, 4.25rem);
+  border-right: 1px solid rgb(148 163 184 / 14%);
+  background:
+    radial-gradient(circle at 80% 58%, rgb(124 58 237 / 34%), transparent 34%),
+    radial-gradient(circle at 18% 12%, rgb(37 99 235 / 20%), transparent 32%),
+    linear-gradient(155deg, #08152c 0%, #0d1235 55%, #120c31 100%);
+  isolation: isolate;
+}
+
+.brand-story app-brand-logo {
+  position: relative;
+  z-index: 3;
+  font-size: 1.45rem;
+}
+
+.story-copy {
+  position: relative;
+  z-index: 3;
+  max-width: 36rem;
+  margin-top: clamp(3rem, 8vh, 6.5rem);
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+h1 {
+  max-width: 13ch;
+  font-size: clamp(2.4rem, 4.6vw, 4rem);
+  line-height: 1.08;
+  letter-spacing: -0.045em;
+}
+
+.story-copy p {
+  max-width: 33rem;
+  margin-top: 1.25rem;
+  color: #aeb9d0;
+  font-size: 1.05rem;
+  line-height: 1.65;
+}
+
+.benefits {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  max-width: 36rem;
+  gap: 1.15rem;
+  margin: 2rem 0 10rem;
+  padding: 0;
+  list-style: none;
+}
+
+.benefits li {
+  display: grid;
+  grid-template-columns: 3rem 1fr;
+  align-items: center;
+  gap: 1rem;
+}
+
+.benefit-icon {
+  display: grid;
+  width: 3rem;
+  height: 3rem;
+  place-items: center;
+  border: 1px solid rgb(139 92 246 / 20%);
+  border-radius: 0.8rem;
+  color: #9b87ff;
+  background: rgb(99 75 210 / 13%);
+}
+
+.benefits strong,
+.benefits small {
+  display: block;
+}
+
+.benefits strong {
+  font-size: 0.96rem;
+}
+
+.benefits small {
+  margin-top: 0.25rem;
+  color: #9ca9c2;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.aurora {
+  position: absolute;
+  z-index: 0;
+  right: -12rem;
+  bottom: 5rem;
+  width: 42rem;
+  height: 18rem;
+  border-radius: 50%;
+  background: #7c3aed;
+  filter: blur(5rem);
+  opacity: 0.2;
+}
+
+.mountains {
+  position: absolute;
+  z-index: 1;
+  right: -4rem;
+  bottom: 0;
+  left: 0;
+  height: 34%;
+  opacity: 0.78;
+}
+
+.mountains span {
+  position: absolute;
+  bottom: 0;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  background: linear-gradient(145deg, #263785 0%, #111937 44%, #090e1e 100%);
+}
+
+.mountains span:first-child {
+  left: 12%;
+  width: 55%;
+  height: 82%;
+}
+
+.mountains span:nth-child(2) {
+  right: 0;
+  width: 62%;
+  height: 100%;
+  background: linear-gradient(145deg, #7054d7 0%, #19183f 45%, #090e1e 100%);
+}
+
+.mountains span:last-child {
+  right: 28%;
+  width: 42%;
+  height: 62%;
+}
+
+.auth-pane {
+  display: grid;
+  min-height: 100dvh;
+  grid-template-rows: auto 1fr auto;
+  padding: clamp(1.25rem, 4vw, 3rem);
+  background: radial-gradient(circle at 70% 20%, rgb(58 83 130 / 10%), transparent 28rem), #080f1c;
+}
+
+.locale-wrap {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.locale-control {
+  display: flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.55rem;
+  padding-inline: 0.85rem 0.35rem;
+  border: 1px solid #243146;
+  border-radius: 0.65rem;
+  color: #c9d3e6;
+  background: #0d1624;
+}
+
+.locale-control select {
+  min-width: 7.5rem;
+  border: 0;
+  padding: 0.6rem 1.8rem 0.6rem 0.2rem;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+.locale-control select:focus-visible {
+  outline: 2px solid #8b7cff;
+  outline-offset: 3px;
+}
+
+.auth-card {
+  align-self: center;
+  justify-self: center;
+  width: min(100%, 37.5rem);
+  padding: clamp(1.5rem, 4vw, 3rem);
+  border: 1px solid #263247;
+  border-radius: 1rem;
+  background: linear-gradient(145deg, rgb(17 28 44 / 96%), rgb(10 18 31 / 96%));
+  box-shadow: 0 2.5rem 7rem rgb(0 0 0 / 32%);
+}
+
+.auth-card header {
+  margin-bottom: 1.75rem;
+  text-align: center;
+}
+
+.auth-card h2 {
+  font-size: clamp(1.75rem, 3vw, 2.15rem);
+  letter-spacing: -0.035em;
+}
+
+.auth-card header p {
+  margin-top: 0.5rem;
+  color: #9eabc1;
+  line-height: 1.5;
+}
+
+footer {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  color: #75839a;
+  font-size: 0.78rem;
+}
+
+footer span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (max-width: 860px) {
+  .auth-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .brand-story {
+    min-height: auto;
+    padding: 1.25rem;
+    border-right: 0;
+    border-bottom: 1px solid rgb(148 163 184 / 14%);
+  }
+
+  .story-copy,
+  .benefits,
+  .mountains,
+  .aurora {
+    display: none;
+  }
+
+  .auth-pane {
+    min-height: calc(100dvh - 5.75rem);
+    padding: 1rem;
+  }
+
+  .auth-card {
+    margin-block: 1rem;
+    padding: 1.5rem;
+  }
+
+  footer {
+    flex-wrap: wrap;
+    gap: 0.75rem 1.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora {
+    filter: none;
+  }
+}

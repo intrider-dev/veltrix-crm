@@ -25,6 +25,7 @@ export type IconName =
   | 'menu'
   | 'moon'
   | 'search'
+  | 'shield'
   | 'settings'
   | 'calendar'
   | 'automation'
@@ -38,6 +39,8 @@ export type IconName =
   | 'reply'
   | 'retry'
   | 'download'
+  | 'eye'
+  | 'eyeOff'
   | 'file'
   | 'project'
   | 'send'
@@ -143,6 +146,15 @@ export type IconName =
         @case ('download') {
           <path d="M12 3v12M7 10l5 5 5-5M4 20h16" />
         }
+        @case ('eye') {
+          <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" />
+          <circle cx="12" cy="12" r="2.5" />
+        }
+        @case ('eyeOff') {
+          <path
+            d="m3 3 18 18M10.6 6.2A10 10 0 0 1 12 6c6 0 9.5 6 9.5 6a15 15 0 0 1-2.3 3M6.5 6.5C4 8.2 2.5 12 2.5 12s3.5 6 9.5 6c1.4 0 2.6-.3 3.7-.7M10 10a2.8 2.8 0 0 0 4 4"
+          />
+        }
         @case ('file') {
           <path d="M6 3h8l4 4v14H6zM14 3v5h5" />
         }
@@ -170,6 +182,10 @@ export type IconName =
           <path
             d="M12 2v3M12 19v3M4.9 4.9 7 7M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"
           />
+        }
+        @case ('shield') {
+          <path d="M12 3 20 6v5c0 5-3.2 8.2-8 10-4.8-1.8-8-5-8-10V6z" />
+          <path d="m8.5 12 2.2 2.2 4.8-5" />
         }
         @case ('audit') {
           <path d="M5 3h14v18H5zM8 8h8M8 12h8M8 16h5" />

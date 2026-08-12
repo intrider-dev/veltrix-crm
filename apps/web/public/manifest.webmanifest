@@ -6,8 +6,8 @@
   "start_url": "/dashboard",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#f4f6f3",
-  "theme_color": "#174b40",
+  "background_color": "#070d17",
+  "theme_color": "#7061f2",
   "icons": [
     {
       "src": "/icons/veltrix-mark.svg",

@@ -1,122 +1,109 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormField, email, form, minLength, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { ApiClient } from '../../core/api/api-client.service';
 import { I18nService } from '../../core/i18n/i18n.service';
-import { BrandLogoComponent } from '../../shared/brand/brand-logo.component';
+import { AuthShellComponent } from './auth-shell.component';
 import { identityErrorMessage } from './identity-error';
 
 @Component({
   selector: 'app-password-reset-page',
   imports: [
-    BrandLogoComponent,
+    AuthShellComponent,
     FormField,
     MatButtonModule,
-    MatCardModule,
     MatFormFieldModule,
     MatInputModule,
     RouterLink,
   ],
   template: `
-    <main class="auth-flow">
-      <mat-card appearance="outlined" class="auth-card">
-        <app-brand-logo class="brand" />
-        <mat-card-header>
-          <mat-card-title>{{
-            i18n.t(token() ? 'identity.reset.confirmTitle' : 'identity.reset.requestTitle')
-          }}</mat-card-title>
-          <mat-card-subtitle>{{
-            i18n.t(token() ? 'identity.reset.confirmSubtitle' : 'identity.reset.requestSubtitle')
-          }}</mat-card-subtitle>
-        </mat-card-header>
-        <mat-card-content>
-          @if (complete()) {
-            <div class="success-panel" role="status" aria-live="polite">
-              {{
-                i18n.t(token() ? 'identity.reset.confirmSuccess' : 'identity.reset.requestSuccess')
-              }}
-            </div>
-            <a mat-flat-button class="submit" routerLink="/login">
-              {{ i18n.t('identity.action.continueToLogin') }}
-            </a>
-          } @else if (token()) {
-            <form (submit)="confirm($event)" novalidate>
-              <mat-form-field appearance="outline">
-                <mat-label>{{ i18n.t('identity.field.newPassword') }}</mat-label>
-                <input
-                  matInput
-                  type="password"
-                  autocomplete="new-password"
-                  [formField]="confirmationForm.newPassword"
-                />
-                @if (
-                  confirmationForm.newPassword().touched() &&
-                  confirmationForm.newPassword().invalid()
-                ) {
-                  <mat-error>{{ i18n.t('identity.validation.passwordLength') }}</mat-error>
-                }
-              </mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>{{ i18n.t('identity.field.confirmPassword') }}</mat-label>
-                <input
-                  matInput
-                  type="password"
-                  autocomplete="new-password"
-                  [formField]="confirmationForm.confirmPassword"
-                />
-                @if (
-                  confirmationForm.confirmPassword().touched() &&
-                  (confirmationForm.confirmPassword().invalid() || passwordMismatch())
-                ) {
-                  <mat-error>{{
-                    i18n.t(
-                      passwordMismatch()
-                        ? 'identity.validation.passwordMismatch'
-                        : 'auth.validation.required'
-                    )
-                  }}</mat-error>
-                }
-              </mat-form-field>
-              @if (error()) {
-                <div class="form-error" role="alert">{{ error() }}</div>
-              }
-              <button mat-flat-button class="submit" type="submit" [disabled]="pending()">
-                {{ i18n.t(pending() ? 'web.form.saving' : 'identity.reset.confirmSubmit') }}
-              </button>
-            </form>
-          } @else {
-            <form (submit)="request($event)" novalidate>
-              <mat-form-field appearance="outline">
-                <mat-label>{{ i18n.t('auth.login.email') }}</mat-label>
-                <input
-                  matInput
-                  inputmode="email"
-                  autocomplete="email"
-                  [formField]="requestForm.email"
-                />
-                @if (requestForm.email().touched() && requestForm.email().invalid()) {
-                  <mat-error>{{ i18n.t('auth.validation.email') }}</mat-error>
-                }
-              </mat-form-field>
-              @if (error()) {
-                <div class="form-error" role="alert">{{ error() }}</div>
-              }
-              <button mat-flat-button class="submit" type="submit" [disabled]="pending()">
-                {{ i18n.t(pending() ? 'web.form.saving' : 'identity.reset.requestSubmit') }}
-              </button>
-              <a mat-button class="footer-link" routerLink="/login">
-                {{ i18n.t('identity.action.backToLogin') }}
-              </a>
-            </form>
+    <app-auth-shell
+      [title]="i18n.t(token() ? 'identity.reset.confirmTitle' : 'identity.reset.requestTitle')"
+      [subtitle]="
+        i18n.t(token() ? 'identity.reset.confirmSubtitle' : 'identity.reset.requestSubtitle')
+      "
+    >
+      @if (complete()) {
+        <div class="success-panel" role="status" aria-live="polite">
+          {{ i18n.t(token() ? 'identity.reset.confirmSuccess' : 'identity.reset.requestSuccess') }}
+        </div>
+        <a mat-flat-button class="submit" routerLink="/login">
+          {{ i18n.t('identity.action.continueToLogin') }}
+        </a>
+      } @else if (token()) {
+        <form (submit)="confirm($event)" novalidate>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ i18n.t('identity.field.newPassword') }}</mat-label>
+            <input
+              matInput
+              type="password"
+              autocomplete="new-password"
+              [formField]="confirmationForm.newPassword"
+            />
+            @if (
+              confirmationForm.newPassword().touched() && confirmationForm.newPassword().invalid()
+            ) {
+              <mat-error>{{ i18n.t('identity.validation.passwordLength') }}</mat-error>
+            }
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ i18n.t('identity.field.confirmPassword') }}</mat-label>
+            <input
+              matInput
+              type="password"
+              autocomplete="new-password"
+              [formField]="confirmationForm.confirmPassword"
+            />
+            @if (
+              confirmationForm.confirmPassword().touched() &&
+              (confirmationForm.confirmPassword().invalid() || passwordMismatch())
+            ) {
+              <mat-error>{{
+                i18n.t(
+                  passwordMismatch()
+                    ? 'identity.validation.passwordMismatch'
+                    : 'auth.validation.required'
+                )
+              }}</mat-error>
+            }
+          </mat-form-field>
+          @if (error()) {
+            <div class="form-error" role="alert">{{ error() }}</div>
           }
-        </mat-card-content>
-      </mat-card>
-    </main>
+          <button mat-flat-button class="submit" type="submit" [disabled]="pending()">
+            {{ i18n.t(pending() ? 'web.form.saving' : 'identity.reset.confirmSubmit') }}
+          </button>
+        </form>
+      } @else {
+        <form (submit)="request($event)" novalidate>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ i18n.t('auth.login.email') }}</mat-label>
+            <input
+              matInput
+              inputmode="email"
+              autocomplete="email"
+              [formField]="requestForm.email"
+            />
+            @if (requestForm.email().touched() && requestForm.email().invalid()) {
+              <mat-error>{{ i18n.t('auth.validation.email') }}</mat-error>
+            }
+          </mat-form-field>
+          @if (error()) {
+            <div class="form-error" role="alert">{{ error() }}</div>
+          }
+          <button mat-flat-button class="submit" type="submit" [disabled]="pending()">
+            {{ i18n.t(pending() ? 'web.form.saving' : 'identity.reset.requestSubmit') }}
+          </button>
+          <a mat-button class="footer-link" routerLink="/login">
+            {{ i18n.t('identity.action.backToLogin') }}
+          </a>
+        </form>
+      }
+    </app-auth-shell>
   `,
   styleUrl: './auth-flow.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
