@@ -27,7 +27,7 @@
     "@veltrix-crm/product-config": "workspace:*",
     "ag-grid-angular": "36.0.1",
     "ag-grid-community": "36.0.1",
-    "livekit-client": "2.20.2",
+    "livekit-client": "2.21.0",
     "rxjs": "7.8.2",
     "tslib": "2.8.1"
   },
