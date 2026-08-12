@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   Injector,
+  computed,
   inject,
   signal,
   viewChild,
@@ -22,6 +23,9 @@ import { IconComponent } from '../../shared/icon/icon.component';
 import { ErrorPanelComponent } from '../../shared/state/error-panel.component';
 import { CalendarStore, type CalendarView } from './calendar.store';
 
+type ActivityType = CalendarActivity['type'];
+type VisibilityScope = CalendarActivity['visibilityScope'];
+
 @Component({
   selector: 'app-calendar-page',
   imports: [
@@ -35,65 +39,84 @@ import { CalendarStore, type CalendarView } from './calendar.store';
   ],
   providers: [CalendarStore],
   template: `
-    <div class="page">
-      <header class="page-header">
-        <div>
+    <div class="calendar-page">
+      <header class="calendar-header">
+        <div class="title-block">
           <h1>{{ i18n.t('common.nav.calendar') }}</h1>
-          <p>{{ rangeLabel() }}</p>
+          <p>{{ i18n.t('calendar.subtitle') }}</p>
         </div>
-        <div class="header-actions">
+
+        <div class="calendar-actions" [attr.aria-label]="i18n.t('calendar.controls')">
+          <div
+            class="segmented-control view-switcher"
+            role="group"
+            [attr.aria-label]="i18n.t('calendar.view')"
+          >
+            @for (view of views; track view) {
+              <button
+                mat-button
+                type="button"
+                [class.active]="store.view() === view"
+                [attr.aria-pressed]="store.view() === view"
+                (click)="store.setView(view)"
+              >
+                {{ i18n.t(viewKey(view)) }}
+              </button>
+            }
+          </div>
+
+          <div class="period-navigation">
+            <button mat-stroked-button type="button" (click)="store.today()">
+              {{ i18n.t('common.date.today') }}
+            </button>
+            <button
+              mat-button
+              type="button"
+              class="icon-button"
+              (click)="store.move(-1)"
+              [attr.aria-label]="i18n.t('calendar.previous')"
+            >
+              <app-icon name="back" />
+            </button>
+            <button
+              mat-button
+              type="button"
+              class="icon-button"
+              (click)="store.move(1)"
+              [attr.aria-label]="i18n.t('calendar.next')"
+            >
+              <app-icon name="chevron" />
+            </button>
+          </div>
+
+          <label class="compact-select">
+            <span class="visually-hidden">{{ i18n.t('calendar.typeFilter') }}</span>
+            <select [value]="typeFilter()" (change)="setTypeFilter($event)">
+              <option value="all">{{ i18n.t('calendar.allTypes') }}</option>
+              @for (type of activityTypes; track type) {
+                <option [value]="type">{{ i18n.t(typeKey(type)) }}</option>
+              }
+            </select>
+          </label>
+
           @if (store.icsUrl(); as url) {
-            <a mat-stroked-button [href]="url" download="calendar.ics">{{
-              i18n.t('calendar.export')
-            }}</a>
+            <a
+              mat-stroked-button
+              class="export-action"
+              [href]="url"
+              download="calendar.ics"
+              [attr.aria-label]="i18n.t('calendar.export')"
+            >
+              <app-icon name="download" />
+            </a>
           }
           @if (permissions.allows('records.create')) {
-            <button mat-flat-button type="button" (click)="openCreate()">
+            <button mat-flat-button type="button" class="create-action" (click)="openCreate()">
               <app-icon name="add" />{{ i18n.t('calendar.add') }}
             </button>
           }
         </div>
       </header>
-
-      <section class="panel calendar-toolbar" [attr.aria-label]="i18n.t('calendar.controls')">
-        <div
-          class="segmented segmented-control"
-          role="group"
-          [attr.aria-label]="i18n.t('calendar.view')"
-        >
-          @for (view of views; track view) {
-            <button
-              mat-button
-              type="button"
-              [class.active]="store.view() === view"
-              (click)="store.setView(view)"
-            >
-              {{ i18n.t(viewKey(view)) }}
-            </button>
-          }
-        </div>
-        <div class="date-navigation">
-          <button
-            mat-button
-            type="button"
-            (click)="store.move(-1)"
-            [attr.aria-label]="i18n.t('calendar.previous')"
-          >
-            <app-icon name="back" />
-          </button>
-          <button mat-stroked-button type="button" (click)="store.today()">
-            {{ i18n.t('common.date.today') }}
-          </button>
-          <button
-            mat-button
-            type="button"
-            (click)="store.move(1)"
-            [attr.aria-label]="i18n.t('calendar.next')"
-          >
-            <app-icon name="chevron" />
-          </button>
-        </div>
-      </section>
 
       @if (store.error()) {
         <app-error-panel [error]="store.error()" (retry)="store.load()" />
@@ -106,6 +129,15 @@ import { CalendarStore, type CalendarView } from './calendar.store';
         <section class="panel editor" aria-labelledby="calendar-create-title">
           <header>
             <h2 id="calendar-create-title">{{ i18n.t('calendar.createTitle') }}</h2>
+            <button
+              mat-button
+              type="button"
+              class="icon-button"
+              (click)="closeCreate()"
+              [attr.aria-label]="i18n.t('common.action.close')"
+            >
+              <app-icon name="close" />
+            </button>
           </header>
           <form class="feature-form" (submit)="create($event)" novalidate>
             <mat-form-field appearance="outline">
@@ -185,334 +217,166 @@ import { CalendarStore, type CalendarView } from './calendar.store';
         </section>
       }
 
-      <section
-        class="calendar-grid"
-        [class.day-view]="store.view() === 'day'"
-        [attr.aria-busy]="store.loading()"
-        [attr.aria-label]="i18n.t('common.nav.calendar')"
-        tabindex="0"
-      >
-        @if (store.loading() && store.activities().length === 0) {
-          @for (placeholder of placeholders; track placeholder) {
-            <div class="panel skeleton day-card"></div>
+      <div class="calendar-workspace">
+        <section class="calendar-surface" [attr.aria-busy]="store.loading()">
+          <header class="surface-heading">
+            <h2>{{ periodLabel() }}</h2>
+            <span>{{ visibleActivities().length }} {{ i18n.t('calendar.eventsCount') }}</span>
+          </header>
+
+          @if (store.view() === 'month') {
+            <div class="weekday-row" aria-hidden="true">
+              @for (weekday of weekdayLabels(); track weekday) {
+                <span>{{ weekday }}</span>
+              }
+            </div>
           }
-        } @else {
-          @for (day of store.days(); track day.key) {
-            <article class="panel day-card" [class.outside]="!day.currentMonth">
-              <header>
-                <time [attr.datetime]="day.key">{{
-                  i18n.date(day.date, {
-                    weekday: 'short',
-                    day: 'numeric',
-                    month: store.view() === 'month' ? undefined : 'short',
-                  })
-                }}</time>
-                @if (day.items.length) {
-                  <span>{{ day.items.length }}</span>
-                }
-              </header>
-              <div class="day-events">
-                @for (item of day.items; track item.id) {
-                  <div class="calendar-event" [class.completed]="item.status === 'completed'">
-                    <time [attr.datetime]="item.occurredAt">{{
-                      i18n.date(item.occurredAt, { hour: '2-digit', minute: '2-digit' })
-                    }}</time>
-                    <strong>{{ item.title }}</strong>
-                    <span class="scope-badge">{{ i18n.t(scopeKey(item.visibilityScope)) }}</span>
-                    @if (item.location) {
-                      <small>{{ item.location }}</small>
+
+          <div
+            class="calendar-grid"
+            [class.month-view]="store.view() === 'month'"
+            [class.week-view]="store.view() === 'week'"
+            [class.day-view]="store.view() === 'day'"
+            [attr.aria-label]="i18n.t('common.nav.calendar')"
+            tabindex="0"
+          >
+            @if (store.loading() && store.activities().length === 0) {
+              @for (placeholder of placeholders; track placeholder) {
+                <div class="skeleton day-cell"></div>
+              }
+            } @else {
+              @for (day of visibleDays(); track day.key) {
+                <article
+                  class="day-cell"
+                  [class.outside]="!day.currentMonth"
+                  [class.today]="isToday(day.date)"
+                  [attr.aria-label]="dayAriaLabel(day.date, day.items.length)"
+                >
+                  <button class="day-number" type="button" (click)="openCreate(day.date)">
+                    <time [attr.datetime]="day.key">{{ day.date.getDate() }}</time>
+                  </button>
+                  <div class="day-events">
+                    @for (item of day.items.slice(0, eventLimit()); track item.id) {
+                      <article
+                        class="calendar-event"
+                        [class]="'calendar-event type-' + item.type"
+                        [class.is-completed]="item.status === 'completed'"
+                      >
+                        <span class="event-dot"></span>
+                        <time [attr.datetime]="item.occurredAt">{{ eventTime(item) }}</time>
+                        <strong>{{ item.title }}</strong>
+                        @if (store.view() !== 'month') {
+                          <span class="event-meta">{{
+                            i18n.t(scopeKey(item.visibilityScope))
+                          }}</span>
+                          @if (item.location) {
+                            <small>{{ item.location }}</small>
+                          }
+                        }
+                      </article>
+                    }
+                    @if (day.items.length > eventLimit()) {
+                      <span class="more-events"
+                        >+{{ day.items.length - eventLimit() }} {{ i18n.t('calendar.more') }}</span
+                      >
                     }
                   </div>
-                } @empty {
-                  <span class="no-events">{{ i18n.t('calendar.noEvents') }}</span>
-                }
+                </article>
+              }
+            }
+          </div>
+        </section>
+
+        <aside class="calendar-insights" [attr.aria-label]="i18n.t('calendar.insights')">
+          <section class="insight-card mini-calendar">
+            <header>
+              <div>
+                <h2>{{ i18n.t('calendar.miniCalendar') }}</h2>
+                <p>{{ monthLabel() }}</p>
               </div>
-            </article>
-          }
-        }
-      </section>
+              <div class="mini-navigation">
+                <button
+                  type="button"
+                  (click)="store.moveMonth(-1)"
+                  [attr.aria-label]="i18n.t('calendar.previous')"
+                >
+                  <app-icon name="back" />
+                </button>
+                <button
+                  type="button"
+                  (click)="store.moveMonth(1)"
+                  [attr.aria-label]="i18n.t('calendar.next')"
+                >
+                  <app-icon name="chevron" />
+                </button>
+              </div>
+            </header>
+            <div class="mini-weekdays" aria-hidden="true">
+              @for (weekday of weekdayLabels(); track weekday) {
+                <span>{{ weekday }}</span>
+              }
+            </div>
+            <div class="mini-days">
+              @for (day of miniDays(); track day.key) {
+                <button
+                  type="button"
+                  [class.outside]="!day.currentMonth"
+                  [class.today]="isToday(day.date)"
+                  [class.has-events]="day.items.length > 0"
+                  (click)="selectDay(day.date)"
+                  [attr.aria-label]="dayAriaLabel(day.date, day.items.length)"
+                >
+                  {{ day.date.getDate() }}
+                </button>
+              }
+            </div>
+          </section>
+
+          <section class="insight-card upcoming-card">
+            <header>
+              <h2>{{ i18n.t('calendar.upcoming') }}</h2>
+              <span>{{ upcomingActivities().length }}</span>
+            </header>
+            <div class="upcoming-list">
+              @for (item of upcomingActivities(); track item.id) {
+                <article>
+                  <i [class]="'type-' + item.type"></i>
+                  <div>
+                    <time [attr.datetime]="item.occurredAt">{{ upcomingDate(item) }}</time>
+                    <strong>{{ item.title }}</strong>
+                    <span>{{ i18n.t(scopeKey(item.visibilityScope)) }}</span>
+                  </div>
+                </article>
+              } @empty {
+                <p class="empty-copy">{{ i18n.t('calendar.noUpcoming') }}</p>
+              }
+            </div>
+          </section>
+
+          <section class="insight-card calendars-card">
+            <header>
+              <h2>{{ i18n.t('calendar.calendars') }}</h2>
+            </header>
+            <div class="calendar-filters">
+              @for (scope of scopes; track scope) {
+                <label>
+                  <input
+                    type="checkbox"
+                    [checked]="visibleScopes().has(scope)"
+                    (change)="toggleScope(scope)"
+                  />
+                  <span [class]="'scope-swatch scope-' + scope"></span>
+                  <span>{{ i18n.t(scopeKey(scope)) }}</span>
+                  <strong>{{ scopeCount(scope) }}</strong>
+                </label>
+              }
+            </div>
+          </section>
+        </aside>
+      </div>
     </div>
   `,
-  styles: `
-    .header-actions,
-    .calendar-toolbar,
-    .date-navigation {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    .calendar-toolbar {
-      justify-content: space-between;
-      padding: 0.55rem;
-    }
-    .segmented {
-      display: flex;
-      gap: 0.15rem;
-      padding: 0.15rem;
-      border-radius: 0.55rem;
-      background: var(--surface-subtle);
-    }
-    .segmented .active {
-      color: var(--brand);
-      background: var(--surface-raised);
-    }
-    .editor {
-      padding: 1rem;
-    }
-    .editor h2 {
-      margin: 0 0 1rem;
-      font-size: 1rem;
-    }
-    .feature-form {
-      grid-template-columns: repeat(3, minmax(12rem, 1fr));
-    }
-    .calendar-grid {
-      display: grid;
-      grid-template-columns: repeat(7, minmax(8rem, 1fr));
-      gap: 0.5rem;
-      overflow-x: auto;
-    }
-    .calendar-grid:focus-visible {
-      outline: 3px solid var(--brand);
-      outline-offset: 2px;
-    }
-    .calendar-grid.day-view {
-      grid-template-columns: minmax(18rem, 1fr);
-    }
-    .day-card {
-      min-height: 8.5rem;
-      overflow: hidden;
-    }
-    .day-card > header {
-      display: flex;
-      justify-content: space-between;
-      padding: 0.55rem 0.65rem;
-      border-bottom: 1px solid var(--border);
-      color: var(--text-muted);
-      font-size: 0.72rem;
-    }
-    .day-card.outside {
-      border-style: dashed;
-    }
-    .day-events {
-      display: grid;
-      gap: 0.35rem;
-      padding: 0.45rem;
-    }
-    .calendar-event {
-      display: grid;
-      grid-template-columns: auto 1fr;
-      gap: 0.25rem 0.45rem;
-      min-width: 0;
-      padding: 0.4rem;
-      border-radius: 0.4rem;
-      background: var(--brand-soft);
-      font-size: 0.72rem;
-    }
-    .calendar-event time {
-      color: var(--brand);
-    }
-    .calendar-event strong {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .scope-badge {
-      grid-column: 2;
-      color: var(--text-muted);
-      font-size: 0.65rem;
-    }
-    .calendar-event small {
-      grid-column: 2;
-      color: var(--text-muted);
-    }
-    .calendar-event.completed {
-      border-left-color: var(--border-strong);
-      background: var(--surface-subtle);
-    }
-    .calendar-event.completed strong {
-      text-decoration: line-through;
-    }
-    .no-events {
-      color: var(--text-faint);
-      font-size: 0.68rem;
-    }
-    @media (max-width: 760px) {
-      .header-actions,
-      .calendar-toolbar {
-        align-items: stretch;
-        flex-direction: column;
-      }
-      .feature-form {
-        grid-template-columns: 1fr;
-      }
-      .calendar-grid {
-        grid-template-columns: 1fr;
-        overflow: visible;
-      }
-      .day-card.outside {
-        display: none;
-      }
-    }
-
-    :host {
-      --workspace-surface: var(--color-surface, var(--surface-raised));
-      --workspace-subtle: var(--color-surface-subtle, var(--surface-subtle));
-      --workspace-hover: var(--color-surface-hover, var(--surface-selected));
-      --workspace-border: var(--color-border, var(--border));
-      --workspace-anchor: var(--color-anchor, var(--brand));
-    }
-    .page-header {
-      align-items: flex-end;
-      margin-bottom: 0.25rem;
-    }
-    .header-actions {
-      flex-wrap: wrap;
-      justify-content: flex-end;
-    }
-    .calendar-toolbar {
-      min-height: 4rem;
-      padding: 0.75rem;
-      border-radius: var(--radius-panel, 0.875rem);
-      background: var(--workspace-surface);
-    }
-    .segmented {
-      border-radius: var(--radius-control, 0.625rem);
-      background: var(--workspace-subtle);
-    }
-    .segmented .active {
-      color: var(--workspace-anchor);
-      background: var(--workspace-surface);
-      box-shadow: 0 1px 2px rgb(18 36 29 / 10%);
-    }
-    .date-navigation {
-      justify-content: flex-end;
-    }
-    .date-navigation > button:first-child,
-    .date-navigation > button:last-child {
-      min-width: 2.5rem;
-      padding-inline: 0.5rem;
-    }
-    .editor {
-      overflow: hidden;
-      padding: 0;
-      border-radius: var(--radius-panel, 0.875rem);
-      background: var(--workspace-surface);
-    }
-    .editor > header {
-      min-height: 3.5rem;
-      padding: 1rem 1.25rem;
-      border-bottom: 1px solid var(--workspace-border);
-      background: var(--workspace-subtle);
-    }
-    .editor h2 {
-      margin: 0;
-    }
-    .feature-form {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 0.25rem 1rem;
-      padding: 1.25rem;
-    }
-    .form-actions {
-      grid-column: 1 / -1;
-    }
-    .calendar-grid {
-      gap: 0;
-      overflow: auto;
-      border: 1px solid var(--workspace-border);
-      border-radius: var(--radius-panel, 0.875rem);
-      background: var(--workspace-surface);
-    }
-    .calendar-grid:focus-visible {
-      outline: 2px solid var(--workspace-anchor);
-      outline-offset: 2px;
-    }
-    .day-card {
-      min-height: 9.5rem;
-      border: 0;
-      border-right: 1px solid color-mix(in srgb, var(--workspace-border) 72%, transparent);
-      border-bottom: 1px solid color-mix(in srgb, var(--workspace-border) 72%, transparent);
-      border-radius: 0;
-      background: var(--workspace-surface);
-    }
-    .day-card > header {
-      min-height: 2.5rem;
-      align-items: center;
-      padding: 0.625rem 0.75rem;
-      border-color: color-mix(in srgb, var(--workspace-border) 72%, transparent);
-      background: var(--workspace-subtle);
-    }
-    .day-card > header span {
-      display: grid;
-      min-width: 1.5rem;
-      min-height: 1.5rem;
-      place-items: center;
-      border-radius: var(--radius-pill, 999px);
-      background: var(--workspace-surface);
-    }
-    .day-card.outside {
-      border-style: solid;
-      color: var(--text-muted);
-      background: color-mix(in srgb, var(--workspace-subtle) 54%, var(--workspace-surface));
-    }
-    .day-events {
-      gap: 0.375rem;
-      padding: 0.5rem;
-    }
-    .calendar-event {
-      gap: 0.25rem 0.5rem;
-      padding: 0.5rem;
-      border-left: 3px solid var(--workspace-anchor);
-      border-radius: var(--radius-control, 0.625rem);
-      background: var(--color-signal-soft, var(--brand-soft));
-    }
-    .calendar-event time {
-      color: var(--workspace-anchor);
-    }
-    @media (max-width: 760px) {
-      .page-header {
-        align-items: stretch;
-      }
-      .header-actions,
-      .calendar-toolbar {
-        align-items: stretch;
-      }
-      .header-actions > *,
-      .segmented,
-      .date-navigation {
-        width: 100%;
-      }
-      .segmented button,
-      .date-navigation button {
-        flex: 1;
-      }
-      .feature-form {
-        grid-template-columns: 1fr;
-        padding: 1rem;
-      }
-      .form-actions {
-        grid-column: 1;
-      }
-      .calendar-grid {
-        gap: 0.625rem;
-        overflow: visible;
-        border: 0;
-        background: transparent;
-      }
-      .day-card {
-        min-height: 7rem;
-        border: 1px solid var(--workspace-border);
-        border-radius: var(--radius-panel, 0.875rem);
-      }
-    }
-    @media (forced-colors: active) {
-      .segmented .active,
-      .calendar-event,
-      .day-card > header span {
-        border: 1px solid CanvasText;
-      }
-    }
-  `,
+  styleUrl: './calendar.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CalendarPage implements OnInit {
@@ -521,8 +385,64 @@ export class CalendarPage implements OnInit {
   readonly permissions = inject(Permissions);
   readonly createOpen = signal(false);
   readonly validationError = signal(false);
+  readonly typeFilter = signal<'all' | ActivityType>('all');
+  readonly visibleScopes = signal<ReadonlySet<VisibilityScope>>(
+    new Set(['workspace', 'department', 'user']),
+  );
   readonly views = ['day', 'week', 'month'] as const;
-  readonly placeholders = [1, 2, 3, 4, 5, 6, 7] as const;
+  readonly activityTypes = ['meeting', 'call', 'task', 'note'] as const;
+  readonly scopes = ['workspace', 'department', 'user'] as const;
+  readonly placeholders = Array.from({ length: 14 }, (_, index) => index);
+
+  readonly visibleActivities = computed(() =>
+    this.store.activities().filter((item) => this.matchesFilters(item)),
+  );
+  readonly visibleDays = computed(() => {
+    const activities = this.visibleActivities();
+    const byDay = new Map<string, CalendarActivity[]>();
+    for (const item of activities) {
+      const key = dateKey(new Date(item.occurredAt));
+      const items = byDay.get(key) ?? [];
+      items.push(item);
+      byDay.set(key, items);
+    }
+    return this.store.days().map((day) => ({
+      ...day,
+      items: [...(byDay.get(day.key) ?? [])].sort(
+        (left, right) => Date.parse(left.occurredAt) - Date.parse(right.occurredAt),
+      ),
+    }));
+  });
+  readonly upcomingActivities = computed(() => {
+    const now = Date.now();
+    const future = [...this.visibleActivities()]
+      .filter(
+        (item) => Date.parse(item.endsAt ?? item.occurredAt) >= now && item.status !== 'cancelled',
+      )
+      .sort((left, right) => Date.parse(left.occurredAt) - Date.parse(right.occurredAt));
+    return future.slice(0, 5);
+  });
+  readonly weekdayLabels = computed(() =>
+    Array.from({ length: 7 }, (_, index) =>
+      this.i18n.date(new Date(2026, 0, 5 + index, 12), { weekday: 'short' }),
+    ),
+  );
+  readonly miniDays = computed(() => {
+    const anchor = this.store.anchor();
+    const first = new Date(anchor.getFullYear(), anchor.getMonth(), 1);
+    const start = addDays(first, -((first.getDay() + 6) % 7));
+    return Array.from({ length: 42 }, (_, index) => {
+      const date = addDays(start, index);
+      const key = dateKey(date);
+      return {
+        date,
+        key,
+        currentMonth: date.getMonth() === anchor.getMonth(),
+        items: this.store.activities().filter((item) => dateKey(new Date(item.occurredAt)) === key),
+      };
+    });
+  });
+
   readonly model = signal<{
     readonly type: CalendarActivityInput['type'];
     readonly title: string;
@@ -555,10 +475,17 @@ export class CalendarPage implements OnInit {
     void this.store.loadAudienceOptions();
   }
 
-  openCreate(): void {
+  openCreate(date = new Date()): void {
     this.validationError.set(false);
-    const start = new Date();
-    start.setMinutes(Math.ceil(start.getMinutes() / 30) * 30, 0, 0);
+    const start = new Date(date);
+    const now = new Date();
+    start.setHours(
+      dateKey(date) === dateKey(now) ? now.getHours() : 9,
+      dateKey(date) === dateKey(now) ? Math.ceil(now.getMinutes() / 30) * 30 : 0,
+      0,
+      0,
+    );
+    if (start.getMinutes() === 60) start.setHours(start.getHours() + 1, 0, 0, 0);
     const end = new Date(start.getTime() + 3_600_000);
     this.model.update((value) => ({
       ...value,
@@ -577,19 +504,79 @@ export class CalendarPage implements OnInit {
     this.validationError.set(false);
   }
 
-  rangeLabel(): string {
+  periodLabel(): string {
+    if (this.store.view() === 'month') return this.monthLabel();
     const range = this.store.range();
     return `${this.i18n.date(range.start, { dateStyle: 'medium' })} – ${this.i18n.date(new Date(range.end.getTime() - 1), { dateStyle: 'medium' })}`;
+  }
+
+  monthLabel(): string {
+    return this.i18n.date(this.store.anchor(), { month: 'long', year: 'numeric' });
+  }
+
+  eventLimit(): number {
+    return this.store.view() === 'month' ? 3 : 12;
+  }
+
+  eventTime(item: CalendarActivity): string {
+    return this.i18n.date(item.occurredAt, { hour: '2-digit', minute: '2-digit', hour12: false });
+  }
+
+  upcomingDate(item: CalendarActivity): string {
+    return this.i18n.date(item.occurredAt, {
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+  }
+
+  isToday(date: Date): boolean {
+    return dateKey(date) === dateKey(new Date());
+  }
+
+  dayAriaLabel(date: Date, count: number): string {
+    return `${this.i18n.date(date, { dateStyle: 'full' })}, ${count} ${this.i18n.t('calendar.eventsCount')}`;
   }
 
   viewKey(view: CalendarView): 'calendar.view.day' | 'calendar.view.week' | 'calendar.view.month' {
     return `calendar.view.${view}`;
   }
 
+  typeKey(
+    type: ActivityType,
+  ):
+    | 'activities.activity.task'
+    | 'activities.activity.call'
+    | 'activities.activity.meeting'
+    | 'activities.activity.note' {
+    return `activities.activity.${type}`;
+  }
+
   scopeKey(
-    scope: CalendarActivity['visibilityScope'],
+    scope: VisibilityScope,
   ): 'calendar.audience.workspace' | 'calendar.audience.department' | 'calendar.audience.user' {
     return `calendar.audience.${scope}`;
+  }
+
+  setTypeFilter(event: Event): void {
+    this.typeFilter.set((event.target as HTMLSelectElement).value as 'all' | ActivityType);
+  }
+
+  toggleScope(scope: VisibilityScope): void {
+    const next = new Set(this.visibleScopes());
+    if (next.has(scope) && next.size > 1) next.delete(scope);
+    else next.add(scope);
+    this.visibleScopes.set(next);
+  }
+
+  scopeCount(scope: VisibilityScope): number {
+    return this.store.activities().filter((item) => item.visibilityScope === scope).length;
+  }
+
+  async selectDay(date: Date): Promise<void> {
+    await this.store.selectDate(date, 'day');
   }
 
   scopeChanged(): void {
@@ -617,9 +604,8 @@ export class CalendarPage implements OnInit {
     if (
       (value.visibilityScope === 'user' && !value.scopeUserId) ||
       (value.visibilityScope === 'department' && !value.scopeDepartmentId)
-    ) {
+    )
       return;
-    }
     this.validationError.set(false);
     await this.store.create({
       type: value.type,
@@ -645,9 +631,26 @@ export class CalendarPage implements OnInit {
     });
     this.closeCreate();
   }
+
+  private matchesFilters(item: CalendarActivity): boolean {
+    return (
+      (this.typeFilter() === 'all' || item.type === this.typeFilter()) &&
+      this.visibleScopes().has(item.visibilityScope)
+    );
+  }
 }
 
 function localDateTime(date: Date): string {
   const offset = date.getTimezoneOffset() * 60_000;
   return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+}
+
+function dateKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function addDays(date: Date, days: number): Date {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
 }

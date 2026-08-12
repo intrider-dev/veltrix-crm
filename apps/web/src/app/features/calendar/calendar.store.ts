@@ -108,8 +108,21 @@ export class CalendarStore {
     await this.load();
   }
 
+  async moveMonth(direction: -1 | 1): Promise<void> {
+    const date = new Date(this.anchor());
+    date.setMonth(date.getMonth() + direction);
+    this.anchor.set(startOfDay(date));
+    await this.load();
+  }
+
   async today(): Promise<void> {
     this.anchor.set(startOfDay(new Date()));
+    await this.load();
+  }
+
+  async selectDate(date: Date, view: CalendarView = this.view()): Promise<void> {
+    this.anchor.set(startOfDay(date));
+    this.view.set(view);
     await this.load();
   }
 

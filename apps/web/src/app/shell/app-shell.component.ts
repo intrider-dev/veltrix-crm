@@ -382,7 +382,8 @@ export class AppShellComponent {
         path === '/deals' ||
         path === '/contacts' ||
         path === '/companies' ||
-        path === '/activities',
+        path === '/activities' ||
+        path === '/calendar',
     );
   }
 

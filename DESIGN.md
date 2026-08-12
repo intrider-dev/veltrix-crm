@@ -236,6 +236,10 @@ The companies index uses the dark, high-density workspace language: a compact ti
 
 The task workspace presents tasks as the primary view while retaining calls, meetings, notes, and the combined activity feed as explicit tabs. Its summary cards are derived only from the loaded activity response: loaded tasks, open, completed, overdue, high priority, and due today. The main table preserves completion and assignment actions; the adjacent insight rail shows an actual current-month due-date calendar, priority distribution, and overdue items. No project title or assignee display name is inferred from opaque IDs. Desktop uses a table plus insight rail, tablet places three insight cards below the table, and mobile keeps only task identity and status in the row while exposing the complete record actions through the normal flow.
 
+#### Calendar workspace
+
+The calendar uses a dense Monday-first month grid with day and week alternatives, type-coded event cards, and a current-period counter. The adjacent rail reuses the loaded period data for a navigable mini-calendar, the next five real events, and visibility-scope filters; it never invents participants or meetings. Selecting a day opens that date for creation or focused day review. At tablet widths the rail becomes a set of cards below the calendar; on mobile the month grid remains horizontally scrollable so dates and event labels keep a usable size instead of collapsing into unreadable cells.
+
 ### Preview drawer
 
 - Opens without losing list position, filters, or selection.
