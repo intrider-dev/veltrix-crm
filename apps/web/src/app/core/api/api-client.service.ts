@@ -671,11 +671,15 @@ export class ApiClient {
     stageId?: string,
     cursor?: string,
     limit = 25,
+    query?: string,
+    status?: string,
   ): Promise<DealPage> {
     let params = new HttpParams();
     if (pipelineId) params = params.set('pipelineId', pipelineId);
     if (stageId) params = params.set('stageId', stageId);
     if (cursor) params = params.set('cursor', cursor);
+    if (query) params = params.set('query', query);
+    if (status) params = params.set('status', status);
     params = params.set('limit', limit);
     return this.request(
       this.http.get<DealPage>(this.workspaceUrl(workspaceId, 'deals'), { params }),

@@ -81,6 +81,8 @@ describe('DealsStore', () => {
       undefined,
       undefined,
       50,
+      undefined,
+      undefined,
     );
     expect(store.listDeals()).toEqual([deal]);
     expect(store.listNextCursor()).toBe('next-page');

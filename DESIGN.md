@@ -386,6 +386,14 @@ Audio and video call controls are visible only when a provider is configured and
 
 ## 8. Feedback and motion
 
+### Deal workspace
+
+The deals route is a dense, dark pipeline workspace rather than a collection of disconnected cards. Its first row keeps the page identity, Kanban/List/Gantt tabs, server-backed search, and the primary create action on one visual axis. A second row contains the active pipeline, four metrics calculated only from records actually loaded by the bounded data source, and the status filter.
+
+Kanban columns use restrained stage tinting, compact monetary cards, keyboard-accessible stage selectors, and CDK drag-and-drop with rollback. Selecting a card opens an adjacent quick-view pane; the canonical details route remains the editing surface. On narrower screens the pane moves below the board and the board scrolls horizontally without expanding the document viewport. List and Gantt are alternate views of the same server state, not separate datasets.
+
+Never total unlike currencies into a fictional number. When a loaded result contains multiple currencies, show the localized mixed-currency label and preserve the individual amounts. Loaded counts and conversion values must be labeled as current-view summaries rather than workspace-wide analytics.
+
 - Short successful operations may use toasts.
 - Critical failures, validation, permissions, conflicts, and unsaved state stay near the affected content.
 - Optimistic updates require rollback and a visible conflict path.

@@ -20,6 +20,8 @@ export class DealsStore {
   readonly listNextCursor = signal<string | null>(null);
   readonly nextCursorByStage = signal<Readonly<Record<string, string | null>>>({});
   readonly viewMode = signal<DealViewMode>(readInitialViewMode());
+  readonly query = signal('');
+  readonly status = signal<Deal['status'] | ''>('');
   readonly loading = signal(false);
   readonly saving = signal(false);
   readonly error = signal<unknown>(null);
@@ -84,7 +86,15 @@ export class DealsStore {
     if (!workspaceId || !pipelineId || !cursor || this.loading()) return;
     this.loading.set(true);
     try {
-      const page = await this.api.listDeals(workspaceId, pipelineId, undefined, cursor, 50);
+      const page = await this.api.listDeals(
+        workspaceId,
+        pipelineId,
+        undefined,
+        cursor,
+        50,
+        this.query() || undefined,
+        this.status() || undefined,
+      );
       const existing = new Set(this.listDeals().map((deal) => deal.id));
       this.listDeals.update((deals) => [
         ...deals,
@@ -105,7 +115,15 @@ export class DealsStore {
     if (!workspaceId || !pipelineId || !cursor || this.loading()) return;
     this.loading.set(true);
     try {
-      const page = await this.api.listDeals(workspaceId, pipelineId, stageId, cursor);
+      const page = await this.api.listDeals(
+        workspaceId,
+        pipelineId,
+        stageId,
+        cursor,
+        25,
+        this.query() || undefined,
+        this.status() || undefined,
+      );
       const existing = new Set(this.deals().map((deal) => deal.id));
       this.deals.update((deals) => [
         ...deals,
@@ -194,7 +212,17 @@ export class DealsStore {
   private async loadActiveView(workspaceId: string, pipeline: PipelineRecord): Promise<void> {
     if (this.viewMode() === 'kanban') {
       const pages = await Promise.all(
-        pipeline.stages.map((stage) => this.api.listDeals(workspaceId, pipeline.id, stage.id)),
+        pipeline.stages.map((stage) =>
+          this.api.listDeals(
+            workspaceId,
+            pipeline.id,
+            stage.id,
+            undefined,
+            25,
+            this.query() || undefined,
+            this.status() || undefined,
+          ),
+        ),
       );
       this.deals.set(pages.flatMap((page) => page.items));
       this.nextCursorByStage.set(
@@ -204,7 +232,15 @@ export class DealsStore {
       );
       return;
     }
-    const page = await this.api.listDeals(workspaceId, pipeline.id, undefined, undefined, 50);
+    const page = await this.api.listDeals(
+      workspaceId,
+      pipeline.id,
+      undefined,
+      undefined,
+      50,
+      this.query() || undefined,
+      this.status() || undefined,
+    );
     this.listDeals.set(page.items);
     this.listNextCursor.set(page.nextCursor ?? null);
   }

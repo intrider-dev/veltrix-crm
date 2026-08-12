@@ -58,17 +58,46 @@ import { DealsStore } from './deals.store';
     <div class="page deals-page">
       <header class="page-header">
         <div>
-          <h1>{{ i18n.t('sales.pipeline.title') }}</h1>
-          <p>{{ i18n.plural('common.resultCount', visibleDealCount()) }}</p>
+          <div class="title-line">
+            <h1>{{ i18n.t('sales.deal.title') }}</h1>
+            <span>{{ visibleDealCount() }}</span>
+          </div>
+          <nav class="view-tabs" [attr.aria-label]="i18n.t('sales.deal.view.switcher')">
+            @for (mode of viewModes; track mode) {
+              <button
+                type="button"
+                [class.active]="store.viewMode() === mode"
+                [attr.aria-pressed]="store.viewMode() === mode"
+                (click)="store.setViewMode(mode)"
+              >
+                {{ viewModeLabel(mode) }}
+              </button>
+            }
+          </nav>
         </div>
-        @if (permissions.allows('deals.create')) {
-          <button #dealCreateTrigger mat-flat-button type="button" (click)="openCreate()">
-            <app-icon name="add" />{{ i18n.t('sales.deal.add') }}
-          </button>
-        }
+        <form class="deal-search" role="search" (submit)="applyFilters($event)">
+          <app-icon name="search" />
+          <label class="visually-hidden" for="deal-search">{{ i18n.t('sales.deal.search') }}</label>
+          <input
+            id="deal-search"
+            type="search"
+            [placeholder]="i18n.t('sales.deal.search')"
+            [value]="store.query()"
+            (input)="store.query.set(inputValue($event))"
+          />
+          <kbd>/</kbd>
+        </form>
+        <div class="header-actions">
+          @if (permissions.allows('deals.create')) {
+            <button #dealCreateTrigger mat-flat-button type="button" (click)="openCreate()">
+              <app-icon name="add" />{{ i18n.t('sales.deal.add') }}
+            </button>
+          }
+        </div>
       </header>
-      <section class="workspace-controls">
-        @if (store.pipelines().length > 1) {
+      <section class="pipeline-summary">
+        <div class="pipeline-control">
+          <span>{{ i18n.t('sales.deal.pipeline') }}</span>
           <mat-select
             class="pipeline-select"
             [value]="store.activePipelineId()"
@@ -79,31 +108,34 @@ import { DealsStore } from './deals.store';
               <mat-option [value]="pipeline.id">{{ pipeline.displayName }}</mat-option>
             }
           </mat-select>
-        }
-        <nav
-          class="view-switcher segmented-control"
-          [attr.aria-label]="i18n.t('sales.deal.view.switcher')"
-        >
-          @for (mode of viewModes; track mode) {
-            <button
-              mat-button
-              type="button"
-              [class.active]="store.viewMode() === mode"
-              [attr.aria-pressed]="store.viewMode() === mode"
-              (click)="store.setViewMode(mode)"
-            >
-              {{
-                i18n.t(
-                  mode === 'list'
-                    ? 'sales.deal.view.list'
-                    : mode === 'gantt'
-                      ? 'sales.deal.view.gantt'
-                      : 'sales.deal.view.kanban'
-                )
-              }}
-            </button>
-          }
-        </nav>
+        </div>
+        <dl class="deal-metrics">
+          <div>
+            <dt>{{ i18n.t('sales.deal.summary.loaded') }}</dt>
+            <dd>{{ visibleDealCount() }}</dd>
+          </div>
+          <div>
+            <dt>{{ i18n.t('sales.deal.summary.amount') }}</dt>
+            <dd>{{ totalAmountLabel() }}</dd>
+          </div>
+          <div>
+            <dt>{{ i18n.t('sales.deal.summary.weighted') }}</dt>
+            <dd>{{ weightedAmountLabel() }}</dd>
+          </div>
+          <div>
+            <dt>{{ i18n.t('sales.deal.summary.wonRate') }}</dt>
+            <dd>{{ wonRate() }}%</dd>
+          </div>
+        </dl>
+        <label class="status-filter">
+          <span>{{ i18n.t('common.field.status') }}</span>
+          <select class="crm-native-select" [value]="store.status()" (change)="setStatus($event)">
+            <option value="">{{ i18n.t('sales.deal.status.all') }}</option>
+            <option value="open">{{ i18n.t('sales.status.open') }}</option>
+            <option value="won">{{ i18n.t('sales.status.won') }}</option>
+            <option value="lost">{{ i18n.t('sales.status.lost') }}</option>
+          </select>
+        </label>
       </section>
       @if (store.conflict()) {
         <section class="conflict" role="alert">{{ i18n.t('web.deal.conflict') }}</section>
@@ -119,80 +151,165 @@ import { DealsStore } from './deals.store';
         </div>
       } @else if (store.activePipeline(); as pipeline) {
         @if (store.viewMode() === 'kanban') {
-          <section
-            class="kanban"
-            cdkDropListGroup
-            tabindex="0"
-            [attr.aria-label]="i18n.t('sales.pipeline.title')"
-            [attr.aria-busy]="store.saving()"
-          >
-            @for (stage of pipeline.stages; track stage.id) {
-              <article class="stage">
-                <header>
-                  <div>
-                    <h2>{{ stage.displayName }}</h2>
-                    <small>{{ stage.probability }}%</small>
-                  </div>
-                  <span>{{ store.dealsFor(stage.id).length }}</span>
-                </header>
-                <div
-                  class="drop-zone"
-                  cdkDropList
-                  [id]="stage.id"
-                  [cdkDropListData]="store.dealsFor(stage.id)"
-                  (cdkDropListDropped)="drop($event, stage.id)"
-                >
-                  @for (deal of store.dealsFor(stage.id); track deal.id) {
-                    <article
-                      class="deal-card"
-                      cdkDrag
-                      [cdkDragData]="deal"
-                      [cdkDragDisabled]="!permissions.allows('deals.update')"
-                    >
-                      <div class="drag-handle" cdkDragHandle aria-hidden="true">···</div>
-                      <h3>
-                        <a [routerLink]="['/deals', deal.id]">{{ deal.name }}</a>
-                      </h3>
-                      <strong>{{ i18n.money(deal.amountMinor, deal.currency) }}</strong>
-                      @if (deal.expectedCloseDate) {
-                        <time [attr.datetime]="deal.expectedCloseDate">{{
-                          i18n.date(deal.expectedCloseDate)
-                        }}</time>
-                      }
-                      <label
-                        ><span class="visually-hidden">{{
-                          i18n.t('web.deal.moveWithKeyboard')
-                        }}</span
-                        ><select
-                          [ngModel]="deal.stageId"
-                          [disabled]="!permissions.allows('deals.update')"
-                          (ngModelChange)="moveFromSelect(deal, $event)"
-                          [attr.aria-label]="i18n.t('web.deal.moveWithKeyboard')"
-                        >
-                          @for (target of pipeline.stages; track target.id) {
-                            <option [value]="target.id">{{ target.displayName }}</option>
-                          }
-                        </select></label
+          <div class="kanban-workspace" [class.preview-open]="previewDeal()">
+            <section
+              class="kanban"
+              cdkDropListGroup
+              tabindex="0"
+              [attr.aria-label]="i18n.t('sales.pipeline.title')"
+              [attr.aria-busy]="store.saving()"
+            >
+              @for (stage of pipeline.stages; track stage.id; let stageIndex = $index) {
+                <article class="stage" [style.--stage-index]="stageIndex">
+                  <header>
+                    <div>
+                      <h2>{{ stage.displayName }}</h2>
+                      <small>{{
+                        i18n.t('sales.deal.stageCount', { count: store.dealsFor(stage.id).length })
+                      }}</small>
+                    </div>
+                    <strong>{{ stageAmountLabel(stage.id) }}</strong>
+                  </header>
+                  <div
+                    class="drop-zone"
+                    cdkDropList
+                    [id]="stage.id"
+                    [cdkDropListData]="store.dealsFor(stage.id)"
+                    (cdkDropListDropped)="drop($event, stage.id)"
+                  >
+                    @for (deal of store.dealsFor(stage.id); track deal.id) {
+                      <article
+                        class="deal-card"
+                        cdkDrag
+                        [cdkDragData]="deal"
+                        [cdkDragDisabled]="!permissions.allows('deals.update')"
                       >
-                      <div class="deal-placeholder" *cdkDragPlaceholder></div>
-                    </article>
-                  } @empty {
-                    <p class="stage-empty">{{ i18n.t('sales.pipeline.empty') }}</p>
-                  }
-                  @if (store.nextCursorByStage()[stage.id]) {
-                    <button
-                      mat-button
-                      type="button"
-                      class="load-more"
-                      (click)="store.loadMore(stage.id)"
-                    >
-                      {{ i18n.t('sales.deal.loadMore') }}
-                    </button>
-                  }
+                        <div class="drag-handle" cdkDragHandle aria-hidden="true">
+                          <app-icon name="menu" />
+                        </div>
+                        <button
+                          mat-icon-button
+                          type="button"
+                          class="preview-trigger"
+                          [attr.aria-label]="i18n.t('sales.deal.preview.open')"
+                          (click)="selectDeal(deal.id, $event)"
+                        >
+                          <app-icon name="chevron" />
+                        </button>
+                        <h3>
+                          <a [routerLink]="['/deals', deal.id]">{{ deal.name }}</a>
+                        </h3>
+                        <strong>{{ i18n.money(deal.amountMinor, deal.currency) }}</strong>
+                        @if (deal.expectedCloseDate) {
+                          <time [attr.datetime]="deal.expectedCloseDate">{{
+                            i18n.date(deal.expectedCloseDate)
+                          }}</time>
+                        }
+                        <label
+                          ><span class="visually-hidden">{{
+                            i18n.t('web.deal.moveWithKeyboard')
+                          }}</span
+                          ><select
+                            class="crm-native-select"
+                            [ngModel]="deal.stageId"
+                            [disabled]="!permissions.allows('deals.update')"
+                            (ngModelChange)="moveFromSelect(deal, $event)"
+                            [attr.aria-label]="i18n.t('web.deal.moveWithKeyboard')"
+                          >
+                            @for (target of pipeline.stages; track target.id) {
+                              <option [value]="target.id">{{ target.displayName }}</option>
+                            }
+                          </select></label
+                        >
+                        <div class="deal-placeholder" *cdkDragPlaceholder></div>
+                      </article>
+                    } @empty {
+                      <p class="stage-empty">{{ i18n.t('sales.pipeline.empty') }}</p>
+                    }
+                    @if (store.nextCursorByStage()[stage.id]) {
+                      <button
+                        mat-button
+                        type="button"
+                        class="load-more"
+                        (click)="store.loadMore(stage.id)"
+                      >
+                        {{ i18n.t('sales.deal.loadMore') }}
+                      </button>
+                    }
+                  </div>
+                </article>
+              }
+            </section>
+            @if (previewDeal(); as deal) {
+              <aside class="deal-preview" [attr.aria-label]="i18n.t('sales.deal.preview.title')">
+                <header>
+                  <span>{{ i18n.t('sales.deal.preview.title') }}</span>
+                  <button
+                    mat-icon-button
+                    type="button"
+                    [attr.aria-label]="i18n.t('common.action.close')"
+                    (click)="selectedDealId.set(null)"
+                  >
+                    <app-icon name="close" />
+                  </button>
+                </header>
+                <div class="preview-heading">
+                  <span class="deal-mark" aria-hidden="true">{{ deal.name.charAt(0) }}</span>
+                  <div>
+                    <h2>{{ deal.name }}</h2>
+                    <strong>{{ i18n.money(deal.amountMinor, deal.currency) }}</strong>
+                  </div>
                 </div>
-              </article>
+                <dl>
+                  <div>
+                    <dt>{{ i18n.t('sales.deal.stage') }}</dt>
+                    <dd>{{ dealStageLabel(deal) }}</dd>
+                  </div>
+                  <div>
+                    <dt>{{ i18n.t('sales.deal.probability') }}</dt>
+                    <dd>{{ dealProbability(deal) }}%</dd>
+                  </div>
+                  <div>
+                    <dt>{{ i18n.t('common.field.status') }}</dt>
+                    <dd>
+                      <span class="status-chip" [attr.data-status]="deal.status">{{
+                        i18n.t(dealStatusKey(deal.status))
+                      }}</span>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>{{ i18n.t('sales.deal.plannedStart') }}</dt>
+                    <dd>{{ deal.plannedStartDate ? i18n.date(deal.plannedStartDate) : '—' }}</dd>
+                  </div>
+                  <div>
+                    <dt>{{ i18n.t('sales.deal.expectedClose') }}</dt>
+                    <dd>{{ deal.expectedCloseDate ? i18n.date(deal.expectedCloseDate) : '—' }}</dd>
+                  </div>
+                  <div>
+                    <dt>{{ i18n.t('sales.deal.preview.updated') }}</dt>
+                    <dd>{{ i18n.date(deal.updatedAt) }}</dd>
+                  </div>
+                </dl>
+                <div class="preview-stage">
+                  <label [for]="'preview-stage-' + deal.id">{{ i18n.t('sales.deal.move') }}</label>
+                  <select
+                    class="crm-native-select"
+                    [id]="'preview-stage-' + deal.id"
+                    [ngModel]="deal.stageId"
+                    [disabled]="!permissions.allows('deals.update')"
+                    (ngModelChange)="moveFromSelect(deal, $event)"
+                  >
+                    @for (stage of pipeline.stages; track stage.id) {
+                      <option [value]="stage.id">{{ stage.displayName }}</option>
+                    }
+                  </select>
+                </div>
+                <a mat-flat-button [routerLink]="['/deals', deal.id]">{{
+                  i18n.t('sales.deal.preview.details')
+                }}</a>
+              </aside>
             }
-          </section>
+          </div>
         } @else if (store.viewMode() === 'list') {
           <section class="deal-list panel" [attr.aria-busy]="store.loading()">
             <div class="table-scroll">
@@ -214,6 +331,7 @@ import { DealsStore } from './deals.store';
                       </td>
                       <td>
                         <select
+                          class="crm-native-select"
                           [ngModel]="deal.stageId"
                           [disabled]="!permissions.allows('deals.update')"
                           (ngModelChange)="moveFromSelect(deal, $event)"
@@ -372,11 +490,19 @@ export class DealsPage implements OnInit {
   readonly store = inject(DealsStore);
   readonly i18n = inject(I18nService);
   readonly permissions = inject(Permissions);
-  readonly viewModes = ['list', 'kanban', 'gantt'] as const;
+  readonly viewModes = ['kanban', 'list', 'gantt'] as const;
   readonly createOpen = signal(false);
+  readonly selectedDealId = signal<string | null>(null);
   readonly visibleDealCount = computed(() =>
     this.store.viewMode() === 'kanban' ? this.store.deals().length : this.store.listDeals().length,
   );
+  readonly visibleDeals = computed(() =>
+    this.store.viewMode() === 'kanban' ? this.store.deals() : this.store.listDeals(),
+  );
+  readonly previewDeal = computed(() => {
+    const id = this.selectedDealId();
+    return id ? (this.store.deals().find((deal) => deal.id === id) ?? null) : null;
+  });
   readonly scheduledDeals = computed(() =>
     this.store
       .listDeals()
@@ -419,6 +545,75 @@ export class DealsPage implements OnInit {
     await this.store.load();
     const stage = this.store.activePipeline()?.stages[0];
     if (stage) this.dealModel.update((value) => ({ ...value, stageId: stage.id }));
+    this.selectedDealId.set(this.store.deals()[0]?.id ?? null);
+  }
+
+  inputValue(event: Event): string {
+    return (event.target as HTMLInputElement).value;
+  }
+
+  applyFilters(event?: Event): void {
+    event?.preventDefault();
+    void this.store.load();
+  }
+
+  setStatus(event: Event): void {
+    this.store.status.set((event.target as HTMLSelectElement).value as Deal['status'] | '');
+    void this.store.load();
+  }
+
+  selectDeal(dealId: string, event: Event): void {
+    event.stopPropagation();
+    this.selectedDealId.set(dealId);
+  }
+
+  viewModeLabel(mode: (typeof this.viewModes)[number]): string {
+    return this.i18n.t(
+      mode === 'list'
+        ? 'sales.deal.view.list'
+        : mode === 'gantt'
+          ? 'sales.deal.view.gantt'
+          : 'sales.deal.view.kanban',
+    );
+  }
+
+  totalAmountLabel(): string {
+    return this.aggregateAmountLabel(this.visibleDeals(), false);
+  }
+
+  weightedAmountLabel(): string {
+    return this.aggregateAmountLabel(this.visibleDeals(), true);
+  }
+
+  wonRate(): number {
+    const deals = this.visibleDeals();
+    return deals.length
+      ? Math.round((deals.filter((deal) => deal.status === 'won').length / deals.length) * 100)
+      : 0;
+  }
+
+  stageAmountLabel(stageId: string): string {
+    return this.aggregateAmountLabel(this.store.dealsFor(stageId), false);
+  }
+
+  dealStageLabel(deal: Deal): string {
+    return (
+      this.store.activePipeline()?.stages.find((stage) => stage.id === deal.stageId)?.displayName ??
+      '—'
+    );
+  }
+
+  dealProbability(deal: Deal): number {
+    return (
+      this.store.activePipeline()?.stages.find((stage) => stage.id === deal.stageId)?.probability ??
+      0
+    );
+  }
+
+  dealStatusKey(
+    status: Deal['status'],
+  ): 'sales.status.open' | 'sales.status.won' | 'sales.status.lost' {
+    return `sales.status.${status}`;
   }
   openCreate(): void {
     this.createOpen.set(true);
@@ -477,6 +672,8 @@ export class DealsPage implements OnInit {
       expectedCloseDate: value.expectedCloseDate || null,
     };
     await this.store.create(body);
+    const created = this.store.deals().at(-1) ?? this.store.listDeals()[0];
+    if (created) this.selectedDealId.set(created.id);
     this.closeCreate();
     this.dealModel.set({
       name: '',
@@ -486,6 +683,17 @@ export class DealsPage implements OnInit {
       plannedStartDate: '',
       expectedCloseDate: '',
     });
+  }
+
+  private aggregateAmountLabel(deals: readonly Deal[], weighted: boolean): string {
+    const currencies = new Set(deals.map((deal) => deal.currency));
+    if (currencies.size > 1) return this.i18n.t('sales.deal.summary.mixedCurrencies');
+    const currency = deals[0]?.currency ?? 'USD';
+    const amount = deals.reduce((sum, deal) => {
+      const probability = weighted ? this.dealProbability(deal) / 100 : 1;
+      return sum + Math.round(deal.amountMinor * probability);
+    }, 0);
+    return this.i18n.money(amount, currency);
   }
 }
 
