@@ -374,17 +374,7 @@ export class AppShellComponent {
   }
 
   private syncWorkspaceAppearance(): void {
-    const url = this.router.url;
-    const path = url.split(/[?#]/, 1)[0] ?? url;
-    this.darkWorkspaceRoute.set(
-      path.startsWith('/dashboard') ||
-        path.startsWith('/leads') ||
-        path === '/deals' ||
-        path === '/contacts' ||
-        path === '/companies' ||
-        path === '/activities' ||
-        path === '/calendar',
-    );
+    this.darkWorkspaceRoute.set(true);
   }
 
   readonly initials = () => {

@@ -11,27 +11,27 @@
 }
 
 .shell.dark-workspace-route {
-  --brand: #5b7cff;
+  --brand: #7061f2;
   --on-brand: #ffffff;
-  --brand-soft: #17274f;
-  --signal: #6f8cff;
+  --brand-soft: #252050;
+  --signal: #806fff;
   --on-signal: #ffffff;
-  --signal-soft: #1b2950;
-  --surface-canvas: #070c12;
-  --surface-raised: #0b121b;
-  --surface-subtle: #111a26;
-  --surface-selected: #17233a;
+  --signal-soft: #282153;
+  --surface-canvas: #070d17;
+  --surface-raised: #0b1320;
+  --surface-subtle: #111b29;
+  --surface-selected: #242044;
   --text: #f2f5f9;
   --text-muted: #9ba6b7;
   --text-faint: #8996a9;
   --border: #1d2837;
   --border-strong: #2b384b;
-  --focus: rgb(111 140 255 / 58%);
+  --focus: rgb(128 111 255 / 62%);
   color-scheme: dark;
 }
 
 .dark-workspace-route .sidebar {
-  background: radial-gradient(circle at 15% 0%, rgb(38 83 170 / 10%), transparent 16rem), #080e16;
+  background: radial-gradient(circle at 15% 0%, rgb(103 78 224 / 12%), transparent 16rem), #080f19;
 }
 
 .dark-workspace-route .topbar {
@@ -44,27 +44,27 @@
 }
 
 .dark-workspace-route .avatar {
-  border-color: #485b9f;
-  color: #c0cbff;
-  background: #17274f;
+  border-color: #655ac2;
+  color: #d3ceff;
+  background: #252050;
 }
 
 .dark-workspace-route main {
-  background: radial-gradient(circle at 48% -14%, rgb(43 96 205 / 8%), transparent 34rem), #070c12;
+  background: radial-gradient(circle at 48% -14%, rgb(99 72 214 / 9%), transparent 34rem), #070d17;
 }
 
 .dark-workspace-route .sidebar nav a.active {
   color: #eef3ff;
-  background: linear-gradient(90deg, #173c91, #1d4cbb);
-  box-shadow: 0 0.45rem 1.4rem rgb(17 67 167 / 18%);
+  background: linear-gradient(90deg, #37278d, #4936b9);
+  box-shadow: 0 0.45rem 1.4rem rgb(78 55 190 / 22%);
 }
 
 .dark-workspace-route .sidebar nav a.active::before {
-  background: #80a0ff;
+  background: #a99cff;
 }
 
 .dark-workspace-route .sidebar nav a.active app-icon {
-  color: #b7c7ff;
+  color: #d4ceff;
 }
 
 .topbar {
