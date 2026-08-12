@@ -380,7 +380,8 @@ export class AppShellComponent {
       path.startsWith('/dashboard') ||
         path.startsWith('/leads') ||
         path === '/deals' ||
-        path === '/contacts',
+        path === '/contacts' ||
+        path === '/companies',
     );
   }
 

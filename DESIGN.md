@@ -228,6 +228,10 @@ Toolbars must use stable zones and must not form broken multi-line rows. At narr
 
 View, filters, sorting, saved view, density, and selected record must be reflected in URL or persisted view state so switching views does not reset the user's work.
 
+#### Companies workspace
+
+The companies index uses the dark, high-density workspace language: a compact title/count/search/create header, four factual loaded-page summary cards, a filter and saved-view strip, a responsive semantic table, and an adjacent quick-view panel. Summary cards may show only values returned by or derived from the loaded API page; deal revenue, contact counts, growth, and activity claims are not displayed until dedicated aggregate endpoints exist. Desktop keeps the quick view adjacent to the table, tablet stacks it below the data, and mobile collapses secondary columns into the full record rather than shrinking text below a usable size. Search has one native clear mechanism, primary button icon/text alignment is invariant across breakpoints, and all existing create, trash/restore, cursor loading, and saved-view behavior remains functional.
+
 ### Preview drawer
 
 - Opens without losing list position, filters, or selection.

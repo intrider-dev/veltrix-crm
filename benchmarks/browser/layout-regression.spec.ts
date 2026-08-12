@@ -89,7 +89,10 @@ for (const route of ["/contacts", "/companies"] as const) {
     await expect(toolbar).toBeVisible();
     await expectChildrenContainedAndSeparated(toolbar);
 
-    const search = toolbar.locator('input[type="search"]');
+    const search =
+      route === "/companies"
+        ? page.locator(".header-search input")
+        : toolbar.locator('input[type="search"]');
     await expect(search).toBeVisible();
     await expect(toolbar.locator(".filter-search button")).toHaveCount(0);
 
@@ -118,7 +121,10 @@ for (const route of ["/contacts", "/companies"] as const) {
     expect(radius).toBeGreaterThanOrEqual(6);
 
     if (route === "/companies") {
-      const add = page.getByRole("button", { name: "Add", exact: true });
+      const add = page.getByRole("button", {
+        name: "Add company",
+        exact: true,
+      });
       const buttonBox = await add.boundingBox();
       const iconBox = await add.locator("app-icon").boundingBox();
       expect(buttonBox).not.toBeNull();
@@ -135,10 +141,9 @@ for (const route of ["/contacts", "/companies"] as const) {
   });
 }
 
-test("chat creation panel stays contained without overlapping controls", async (
-  { page },
-  testInfo,
-) => {
+test("chat creation panel stays contained without overlapping controls", async ({
+  page,
+}, testInfo) => {
   const assertNoBrowserErrors = failOnBrowserErrors(page);
   await loginAsDemo(page);
   await setAppLanguage(page, "en");

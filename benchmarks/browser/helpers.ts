@@ -111,7 +111,7 @@ export async function createCompany(
 ): Promise<string> {
   await page.goto("/companies");
   await waitForAppReady(page);
-  await page.getByRole("button", { name: "Add", exact: true }).click();
+  await page.getByRole("button", { name: "Add company", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "New company" });
   await dialog.getByLabel("Name", { exact: true }).fill(input.name);
   await dialog.getByLabel("Domain", { exact: true }).fill(input.domain);
@@ -191,9 +191,13 @@ export async function persistWorkspaceFixture(
   workspaceName: string,
 ): Promise<void> {
   const session = await currentSession(page);
-  const workspace = session.workspaces.find((item) => item.name === workspaceName);
+  const workspace = session.workspaces.find(
+    (item) => item.name === workspaceName,
+  );
   if (!workspace)
-    throw new Error(`Workspace fixture ${JSON.stringify(workspaceName)} is absent`);
+    throw new Error(
+      `Workspace fixture ${JSON.stringify(workspaceName)} is absent`,
+    );
   await page.evaluate(async (selected) => {
     const databaseName = (await indexedDB.databases())
       .map((database) => database.name)

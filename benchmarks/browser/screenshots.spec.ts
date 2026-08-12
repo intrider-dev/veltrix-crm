@@ -61,6 +61,7 @@ test("captures real application portfolio views", async ({
     firstCompany,
     "the deterministic seed must contain a company",
   ).toBeVisible();
+  await captureCurrent(page, testInfo, "companies-workspace");
   await firstCompany.click();
   await expect(page).toHaveURL(/\/companies\/[0-9a-f-]+$/);
   await waitForAppReady(page);

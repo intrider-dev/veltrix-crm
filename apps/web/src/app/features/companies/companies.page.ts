@@ -1,6 +1,6 @@
 import { A11yModule } from '@angular/cdk/a11y';
 import type { OnDestroy, OnInit } from '@angular/core';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormField, form, maxLength, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -32,172 +32,264 @@ import { CompaniesStore } from './companies.store';
   template: `
     <div class="page">
       <header class="page-header">
-        <div>
-          <h1>{{ i18n.t('common.nav.companies') }}</h1>
-          <p>{{ i18n.plural('common.resultCount', visibleCount()) }}</p>
+        <div class="page-heading">
+          <div class="title-line">
+            <h1>{{ i18n.t('common.nav.companies') }}</h1>
+            <span class="count-badge">{{ visibleCount() }}</span>
+          </div>
+          <p>{{ i18n.t('companies.subtitle') }}</p>
         </div>
+        <label class="header-search">
+          <span class="visually-hidden">{{ i18n.t('companies.filters.search') }}</span>
+          <app-icon name="search" />
+          <input
+            type="search"
+            [placeholder]="i18n.t('companies.filters.search')"
+            [value]="store.query()"
+            (input)="searchChanged($event)"
+          />
+          <kbd>Ctrl K</kbd>
+        </label>
         @if (permissions.allows('records.create')) {
-          <button mat-flat-button type="button" (click)="openCreate()">
-            <app-icon name="add" />{{ i18n.t('common.action.add') }}
+          <button class="add-company" mat-flat-button type="button" (click)="openCreate()">
+            <app-icon name="add" />{{ i18n.t('companies.actions.add') }}
           </button>
         }
       </header>
 
-      <section
-        class="panel filter-toolbar company-toolbar"
-        [attr.aria-label]="i18n.t('companies.filters.search')"
-      >
-        <div
-          class="mode-switch segmented-control"
-          role="group"
-          [attr.aria-label]="i18n.t('common.nav.companies')"
-        >
-          <button
-            mat-button
-            type="button"
-            [class.selected]="store.mode() === 'companies'"
-            (click)="store.setMode('companies')"
-          >
-            {{ i18n.t('companies.actions.activeList') }}
-          </button>
-          <button
-            mat-button
-            type="button"
-            [class.selected]="store.mode() === 'trash'"
-            (click)="store.setMode('trash')"
-          >
-            {{ i18n.t('companies.actions.trashList') }}
-          </button>
-        </div>
-
-        @if (store.mode() === 'companies') {
-          <label class="filter-field filter-search">
-            <span class="visually-hidden">{{ i18n.t('companies.filters.search') }}</span>
-            <span class="filter-search-control">
-              <app-icon name="search" />
-              <input
-                type="search"
-                [placeholder]="i18n.t('companies.filters.search')"
-                [value]="store.query()"
-                (input)="searchChanged($event)"
-              />
-            </span>
-          </label>
-          <label class="filter-field">
-            <span>{{ i18n.t('common.field.status') }}</span>
-            <select [value]="store.status()" (change)="statusChanged($event)">
-              <option value="all">{{ i18n.t('companies.filters.allStatuses') }}</option>
-              <option value="active">{{ i18n.t('common.status.active') }}</option>
-              <option value="inactive">{{ i18n.t('common.status.inactive') }}</option>
-            </select>
-          </label>
-          <label class="filter-field saved-view-select">
-            <span>{{ i18n.t('companies.savedViews.title') }}</span>
-            <select [value]="selectedViewId()" (change)="savedViewChanged($event)">
-              <option value="">{{ i18n.t('companies.savedViews.current') }}</option>
-              @for (view of store.savedViews(); track view.id) {
-                <option [value]="view.id">{{ view.name }}</option>
-              }
-            </select>
-          </label>
-          @if (permissions.allows('records.update')) {
-            <button mat-stroked-button type="button" (click)="saveViewOpen.set(true)">
-              {{ i18n.t('companies.savedViews.save') }}
-            </button>
-            @if (selectedView()) {
-              <button mat-button type="button" class="danger-action" (click)="deleteSelectedView()">
-                {{ i18n.t('companies.savedViews.delete') }}
-              </button>
-            }
-          }
-        }
+      <section class="summary-grid" [attr.aria-label]="i18n.t('companies.summary.title')">
+        <article class="summary-card summary-card--violet">
+          <span class="summary-icon"><app-icon name="building" /></span>
+          <div>
+            <small>{{ i18n.t('companies.summary.loaded') }}</small
+            ><strong>{{ loadedCount() }}</strong>
+          </div>
+          <span class="sparkline" aria-hidden="true"></span>
+        </article>
+        <article class="summary-card summary-card--blue">
+          <span class="summary-icon"><app-icon name="check" /></span>
+          <div>
+            <small>{{ i18n.t('companies.summary.active') }}</small
+            ><strong>{{ activeCount() }}</strong>
+          </div>
+          <span class="sparkline" aria-hidden="true"></span>
+        </article>
+        <article class="summary-card summary-card--green">
+          <span class="summary-icon"><app-icon name="file" /></span>
+          <div>
+            <small>{{ i18n.t('companies.summary.withDomain') }}</small
+            ><strong>{{ withDomainCount() }}</strong>
+          </div>
+          <span class="sparkline" aria-hidden="true"></span>
+        </article>
+        <article class="summary-card summary-card--orange">
+          <span class="summary-icon"><app-icon name="deal" /></span>
+          <div>
+            <small>{{ i18n.t('companies.summary.withIndustry') }}</small
+            ><strong>{{ withIndustryCount() }}</strong>
+          </div>
+          <span class="sparkline" aria-hidden="true"></span>
+        </article>
       </section>
 
-      @if (store.error()) {
-        <app-error-panel [error]="store.error()" (retry)="store.load(true)" />
-      }
-      @if (store.operationError()) {
-        <div class="form-error" role="alert">{{ operationErrorMessage() }}</div>
-      }
-
-      <section class="panel company-list" [attr.aria-busy]="store.loading()">
-        @if (store.loading() && visibleCount() === 0) {
-          <div class="list-skeleton">
-            <div class="skeleton"></div>
-            <div class="skeleton"></div>
-            <div class="skeleton"></div>
+      <div class="company-workspace">
+        <section
+          class="panel filter-toolbar company-toolbar"
+          [attr.aria-label]="i18n.t('companies.filters.search')"
+        >
+          <div
+            class="mode-switch segmented-control"
+            role="group"
+            [attr.aria-label]="i18n.t('common.nav.companies')"
+          >
+            <button
+              mat-button
+              type="button"
+              [class.selected]="store.mode() === 'companies'"
+              (click)="store.setMode('companies')"
+            >
+              {{ i18n.t('companies.actions.activeList') }}
+            </button>
+            <button
+              mat-button
+              type="button"
+              [class.selected]="store.mode() === 'trash'"
+              (click)="store.setMode('trash')"
+            >
+              {{ i18n.t('companies.actions.trashList') }}
+            </button>
           </div>
-        } @else if (store.mode() === 'companies') {
-          @if (store.companies().length === 0) {
-            <div class="empty-state">{{ i18n.t('companies.empty.active') }}</div>
-          } @else {
-            @for (company of store.companies(); track company.id) {
-              <a [routerLink]="['/companies', company.id]">
-                <span class="company-mark" aria-hidden="true">{{ company.name.charAt(0) }}</span>
-                <span class="company-summary">
-                  <strong>{{ company.name }}</strong>
-                  <small>{{ company.domain || company.industry || '—' }}</small>
-                </span>
-                <span class="company-status">{{ i18n.t(statusKey(company.status)) }}</span>
-                <app-icon name="chevron" />
-              </a>
-            }
-            @if (store.nextCursor()) {
-              <div class="load-more">
+
+          @if (store.mode() === 'companies') {
+            <label class="filter-field">
+              <span>{{ i18n.t('common.field.status') }}</span>
+              <select [value]="store.status()" (change)="statusChanged($event)">
+                <option value="all">{{ i18n.t('companies.filters.allStatuses') }}</option>
+                <option value="active">{{ i18n.t('common.status.active') }}</option>
+                <option value="inactive">{{ i18n.t('common.status.inactive') }}</option>
+              </select>
+            </label>
+            <label class="filter-field saved-view-select">
+              <span>{{ i18n.t('companies.savedViews.title') }}</span>
+              <select [value]="selectedViewId()" (change)="savedViewChanged($event)">
+                <option value="">{{ i18n.t('companies.savedViews.current') }}</option>
+                @for (view of store.savedViews(); track view.id) {
+                  <option [value]="view.id">{{ view.name }}</option>
+                }
+              </select>
+            </label>
+            @if (permissions.allows('records.update')) {
+              <button mat-stroked-button type="button" (click)="saveViewOpen.set(true)">
+                {{ i18n.t('companies.savedViews.save') }}
+              </button>
+              @if (selectedView()) {
                 <button
-                  mat-stroked-button
+                  mat-button
                   type="button"
-                  [disabled]="store.loading()"
-                  (click)="store.load(false)"
+                  class="danger-action"
+                  (click)="deleteSelectedView()"
                 >
-                  {{ i18n.t('companies.list.loadMore') }}
+                  {{ i18n.t('companies.savedViews.delete') }}
                 </button>
-              </div>
+              }
             }
           }
-        } @else {
-          @if (store.trash().length === 0) {
-            <div class="empty-state">{{ i18n.t('companies.empty.trash') }}</div>
-          } @else {
-            @for (company of store.trash(); track company.id) {
-              <article class="trash-row">
-                <span class="company-mark" aria-hidden="true">{{
-                  company.displayName.charAt(0)
-                }}</span>
-                <span class="company-summary">
-                  <strong>{{ company.displayName }}</strong>
-                  <small>{{ company.domain || '—' }}</small>
-                </span>
-                <time [attr.datetime]="company.deletedAt">
-                  {{ i18n.t('companies.trash.deletedAt') }} · {{ i18n.date(company.deletedAt) }}
-                </time>
-                @if (permissions.allows('records.update')) {
+        </section>
+
+        @if (store.error()) {
+          <app-error-panel [error]="store.error()" (retry)="store.load(true)" />
+        }
+        @if (store.operationError()) {
+          <div class="form-error" role="alert">{{ operationErrorMessage() }}</div>
+        }
+
+        <section class="panel company-list" [attr.aria-busy]="store.loading()">
+          @if (store.mode() === 'companies' && store.companies().length > 0) {
+            <div class="company-columns" aria-hidden="true">
+              <span></span>
+              <span>{{ i18n.t('companies.columns.company') }}</span>
+              <span>{{ i18n.t('companies.columns.industry') }}</span>
+              <span>{{ i18n.t('companies.columns.domain') }}</span>
+              <span>{{ i18n.t('common.field.status') }}</span>
+              <span>{{ i18n.t('companies.columns.created') }}</span>
+              <span></span>
+            </div>
+          }
+          @if (store.loading() && visibleCount() === 0) {
+            <div class="list-skeleton">
+              <div class="skeleton"></div>
+              <div class="skeleton"></div>
+              <div class="skeleton"></div>
+            </div>
+          } @else if (store.mode() === 'companies') {
+            @if (store.companies().length === 0) {
+              <div class="empty-state">{{ i18n.t('companies.empty.active') }}</div>
+            } @else {
+              @for (company of store.companies(); track company.id) {
+                <a [routerLink]="['/companies', company.id]">
+                  <span class="company-mark" aria-hidden="true">{{ company.name.charAt(0) }}</span>
+                  <span class="company-summary">
+                    <strong>{{ company.name }}</strong>
+                    <small>{{ company.domain || company.industry || '—' }}</small>
+                  </span>
+                  <span class="company-cell">{{ company.industry || '—' }}</span>
+                  <span class="company-cell company-domain">{{ company.domain || '—' }}</span>
+                  <span class="company-status">{{ i18n.t(statusKey(company.status)) }}</span>
+                  <time class="company-cell" [attr.datetime]="company.createdAt">{{
+                    i18n.date(company.createdAt)
+                  }}</time>
+                  <app-icon name="chevron" />
+                </a>
+              }
+              @if (store.nextCursor()) {
+                <div class="load-more">
                   <button
                     mat-stroked-button
                     type="button"
-                    [disabled]="store.operationPending()"
-                    (click)="store.restore(company)"
+                    [disabled]="store.loading()"
+                    (click)="store.load(false)"
                   >
-                    {{ i18n.t('companies.trash.restore') }}
+                    {{ i18n.t('companies.list.loadMore') }}
                   </button>
-                }
-              </article>
+                </div>
+              }
             }
-            @if (store.trashNextCursor()) {
-              <div class="load-more">
-                <button
-                  mat-stroked-button
-                  type="button"
-                  [disabled]="store.loading()"
-                  (click)="store.load(false)"
-                >
-                  {{ i18n.t('companies.trash.loadMore') }}
-                </button>
-              </div>
+          } @else {
+            @if (store.trash().length === 0) {
+              <div class="empty-state">{{ i18n.t('companies.empty.trash') }}</div>
+            } @else {
+              @for (company of store.trash(); track company.id) {
+                <article class="trash-row">
+                  <span class="company-mark" aria-hidden="true">{{
+                    company.displayName.charAt(0)
+                  }}</span>
+                  <span class="company-summary">
+                    <strong>{{ company.displayName }}</strong>
+                    <small>{{ company.domain || '—' }}</small>
+                  </span>
+                  <time [attr.datetime]="company.deletedAt">
+                    {{ i18n.t('companies.trash.deletedAt') }} · {{ i18n.date(company.deletedAt) }}
+                  </time>
+                  @if (permissions.allows('records.update')) {
+                    <button
+                      mat-stroked-button
+                      type="button"
+                      [disabled]="store.operationPending()"
+                      (click)="store.restore(company)"
+                    >
+                      {{ i18n.t('companies.trash.restore') }}
+                    </button>
+                  }
+                </article>
+              }
+              @if (store.trashNextCursor()) {
+                <div class="load-more">
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    [disabled]="store.loading()"
+                    (click)="store.load(false)"
+                  >
+                    {{ i18n.t('companies.trash.loadMore') }}
+                  </button>
+                </div>
+              }
             }
           }
+        </section>
+        @if (store.mode() === 'companies' && previewCompany(); as company) {
+          <aside class="company-preview" [attr.aria-label]="i18n.t('companies.preview.title')">
+            <header>
+              <span class="company-mark" aria-hidden="true">{{ company.name.charAt(0) }}</span>
+              <div>
+                <h2>{{ company.name }}</h2>
+                <span class="company-status">{{ i18n.t(statusKey(company.status)) }}</span>
+              </div>
+            </header>
+            <dl>
+              <div>
+                <dt>{{ i18n.t('companies.columns.domain') }}</dt>
+                <dd>{{ company.domain || '—' }}</dd>
+              </div>
+              <div>
+                <dt>{{ i18n.t('companies.columns.industry') }}</dt>
+                <dd>{{ company.industry || '—' }}</dd>
+              </div>
+              <div>
+                <dt>{{ i18n.t('companies.columns.created') }}</dt>
+                <dd>{{ i18n.date(company.createdAt) }}</dd>
+              </div>
+              <div>
+                <dt>{{ i18n.t('companies.preview.updated') }}</dt>
+                <dd>{{ i18n.date(company.updatedAt) }}</dd>
+              </div>
+            </dl>
+            <a mat-stroked-button [routerLink]="['/companies', company.id]"
+              >{{ i18n.t('companies.preview.open') }}<app-icon name="chevron"
+            /></a>
+          </aside>
         }
-      </section>
+      </div>
     </div>
 
     @if (saveViewOpen()) {
@@ -338,6 +430,19 @@ export class CompaniesPage implements OnInit, OnDestroy {
   readonly createAttempted = signal(false);
   readonly saveViewOpen = signal(false);
   readonly selectedViewId = signal('');
+  readonly loadedCount = computed(() => this.store.companies().length);
+  readonly activeCount = computed(
+    () => this.store.companies().filter((company) => company.status === 'active').length,
+  );
+  readonly withDomainCount = computed(
+    () => this.store.companies().filter((company) => Boolean(company.domain)).length,
+  );
+  readonly withIndustryCount = computed(
+    () => this.store.companies().filter((company) => Boolean(company.industry)).length,
+  );
+  readonly previewCompany = computed(() =>
+    this.store.mode() === 'companies' ? (this.store.companies()[0] ?? null) : null,
+  );
   readonly model = signal({ name: '', domain: '', industry: '' });
   readonly companyForm = form(this.model, (schema) => {
     required(schema.name);
