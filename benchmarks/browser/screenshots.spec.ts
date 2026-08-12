@@ -18,7 +18,7 @@ test("captures real application portfolio views", async ({
 
   await capture(page, testInfo, "dashboard", "/dashboard", async () => {
     await expect(
-      page.getByRole("heading", { name: "Dashboard", level: 1 }),
+      page.getByRole("heading", { name: /^Welcome,/, level: 1 }),
     ).toBeVisible();
     await expect(page.locator(".kpi-grid")).toBeVisible();
   });

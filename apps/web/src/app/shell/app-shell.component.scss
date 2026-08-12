@@ -10,6 +10,63 @@
   background: var(--surface-canvas);
 }
 
+.shell.dashboard-route {
+  --brand: #5b7cff;
+  --on-brand: #ffffff;
+  --brand-soft: #17274f;
+  --signal: #6f8cff;
+  --on-signal: #ffffff;
+  --signal-soft: #1b2950;
+  --surface-canvas: #070c12;
+  --surface-raised: #0b121b;
+  --surface-subtle: #111a26;
+  --surface-selected: #17233a;
+  --text: #f2f5f9;
+  --text-muted: #9ba6b7;
+  --text-faint: #8996a9;
+  --border: #1d2837;
+  --border-strong: #2b384b;
+  --focus: rgb(111 140 255 / 58%);
+  color-scheme: dark;
+}
+
+.dashboard-route .sidebar {
+  background: radial-gradient(circle at 15% 0%, rgb(38 83 170 / 10%), transparent 16rem), #080e16;
+}
+
+.dashboard-route .topbar {
+  background: rgb(7 12 18 / 88%);
+}
+
+.dashboard-route .account-button,
+.dashboard-route .account-name {
+  color: #dce4ef !important;
+}
+
+.dashboard-route .avatar {
+  border-color: #485b9f;
+  color: #c0cbff;
+  background: #17274f;
+}
+
+.dashboard-route main {
+  background: radial-gradient(circle at 48% -14%, rgb(43 96 205 / 8%), transparent 34rem), #070c12;
+}
+
+.dashboard-route .sidebar nav a.active {
+  color: #eef3ff;
+  background: linear-gradient(90deg, #173c91, #1d4cbb);
+  box-shadow: 0 0.45rem 1.4rem rgb(17 67 167 / 18%);
+}
+
+.dashboard-route .sidebar nav a.active::before {
+  background: #80a0ff;
+}
+
+.dashboard-route .sidebar nav a.active app-icon {
+  color: #b7c7ff;
+}
+
 .topbar {
   position: sticky;
   z-index: 30;
@@ -247,6 +304,10 @@
 main {
   min-width: 0;
   padding: clamp(1.25rem, 2.5vw, 2.5rem);
+}
+
+main:focus {
+  outline: none;
 }
 
 .offline-indicator {

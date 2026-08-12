@@ -60,6 +60,19 @@ Create hierarchy in this order:
 
 Do not wrap every section in an outlined card. Related content should usually be grouped by proximity and section headings.
 
+### Dashboard analytics workspace
+
+The dashboard is a focused dark analytics workspace even when the operational routes use the light theme. This deliberate route-scoped presentation uses near-black navy surfaces, cobalt as its single interactive accent, restrained violet data-series colors, and compact panels that support fast scanning.
+
+- The header greets the signed-in user and pairs the active period with a real navigation action.
+- Four KPI cards use only current API values; growth percentages, revenue history, and comparisons must not be shown until the backend supplies measured time-series data.
+- The primary chart visualizes the current pipeline value by stage. It must not be labeled as revenue over time.
+- The lower panels show real deal-count distribution and the activity-type mix from the loaded page.
+- The insight rail contains open tasks ordered by due date and recent activity.
+- Long currency values use tabular numbers and must remain fully visible at the supported desktop widths.
+- At tablet widths the insight rail moves below the primary analytics; at mobile widths every region becomes a single column and wide charts gain a deliberate horizontal viewport.
+- Route-scoped shell colors must preserve WCAG 2.2 AA contrast for search chrome, account controls, navigation, and all chart labels.
+
 ## 3. Design tokens
 
 All values must be exposed through semantic CSS variables. Feature styles must not use raw brand colors.

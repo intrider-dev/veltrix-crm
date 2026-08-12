@@ -68,7 +68,12 @@ interface NavItem {
   ],
   template: `
     <a class="skip-link" href="#main-content">{{ i18n.t('common.app.skipToContent') }}</a>
-    <div class="shell" [class.nav-collapsed]="collapsed()" [class.mobile-open]="mobileOpen()">
+    <div
+      class="shell"
+      [class.nav-collapsed]="collapsed()"
+      [class.mobile-open]="mobileOpen()"
+      [class.dashboard-route]="dashboardRoute()"
+    >
       <header class="topbar">
         <button
           #mobileMenu
@@ -283,6 +288,7 @@ export class AppShellComponent {
   readonly mobileOpen = signal(false);
   readonly mobileViewport = signal(false);
   readonly commandOpen = signal(false);
+  readonly dashboardRoute = signal(false);
   readonly searchPending = signal(false);
   readonly searchQuery = signal('');
   readonly searchResults = signal<readonly SearchResult[]>([]);
@@ -322,6 +328,7 @@ export class AppShellComponent {
   private readonly searchTerms = new Subject<string>();
 
   constructor() {
+    this.dashboardRoute.set(this.router.url.startsWith('/dashboard'));
     if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
       const mobileQuery = window.matchMedia('(max-width: 820px)');
       const syncMobileViewport = (matches: boolean) => {
@@ -339,6 +346,7 @@ export class AppShellComponent {
         takeUntilDestroyed(),
       )
       .subscribe(() => {
+        this.dashboardRoute.set(this.router.url.startsWith('/dashboard'));
         this.mobileOpen.set(false);
         // The shell main element is stable across child-route navigation, so
         // it does not need an Angular after-render registration per route.
