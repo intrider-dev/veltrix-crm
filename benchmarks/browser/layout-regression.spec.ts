@@ -108,7 +108,10 @@ for (const route of ["/contacts", "/companies"] as const) {
     expect(selectStyle.backgroundPosition).toContain("calc(100% -");
     expect(selectStyle.paddingRight).toBeGreaterThanOrEqual(32);
 
-    const segmented = toolbar.locator(".segmented-control");
+    const segmented =
+      route === "/contacts"
+        ? page.locator(".contacts-content .segmented-control")
+        : toolbar.locator(".segmented-control");
     const radius = await segmented.evaluate((element) =>
       Number.parseFloat(getComputedStyle(element).borderRadius),
     );

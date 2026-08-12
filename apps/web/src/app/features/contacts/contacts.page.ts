@@ -82,11 +82,37 @@ const CONTACTS_GRID_THEME = themeQuartz.withParams({
   template: `
     <div class="page">
       <header class="page-header">
-        <div>
-          <h1>{{ i18n.t('contacts.contacts.title') }}</h1>
-          <p>{{ i18n.plural('common.resultCount', resultCount()) }}</p>
+        <div class="title-block">
+          <div class="title-line">
+            <h1>{{ i18n.t('contacts.contacts.title') }}</h1>
+            <span>{{ resultCount() }}</span>
+          </div>
+          <p>{{ i18n.t('contacts.contacts.subtitle') }}</p>
         </div>
+        @if (store.mode() === 'contacts') {
+          <form class="contact-search" role="search" (submit)="search($event)">
+            <app-icon name="search" />
+            <label class="visually-hidden" for="contact-quick-search">{{
+              i18n.t('contacts.contacts.quickSearch')
+            }}</label>
+            <input
+              id="contact-quick-search"
+              type="search"
+              [placeholder]="i18n.t('contacts.contacts.search')"
+              [value]="store.query()"
+              (input)="setQuery($event)"
+            />
+            <button type="submit" [attr.aria-label]="i18n.t('contacts.contacts.quickSearch')">
+              <app-icon name="chevron" />
+            </button>
+          </form>
+        }
         <div class="header-actions">
+          @if (permissions.allows('records.create')) {
+            <button mat-stroked-button type="button" (click)="openImport()">
+              {{ i18n.t('contacts.import.action') }}
+            </button>
+          }
           @if (permissions.allows('data.export') && store.mode() === 'contacts') {
             <button
               mat-stroked-button
@@ -98,9 +124,6 @@ const CONTACTS_GRID_THEME = themeQuartz.withParams({
             </button>
           }
           @if (permissions.allows('records.create')) {
-            <button mat-stroked-button type="button" (click)="openImport()">
-              {{ i18n.t('contacts.import.action') }}
-            </button>
             <button #addContactButton mat-flat-button type="button" (click)="openCreate()">
               <app-icon name="add" />{{ i18n.t('contacts.contacts.add') }}
             </button>
@@ -108,36 +131,38 @@ const CONTACTS_GRID_THEME = themeQuartz.withParams({
         </div>
       </header>
 
-      <form
-        class="panel filter-toolbar contacts-filter-toolbar"
-        (submit)="search($event)"
-        role="search"
-        [attr.aria-label]="i18n.t('contacts.filter.toolbarLabel')"
-      >
-        <div
-          class="view-switcher segmented-control"
-          role="group"
-          [attr.aria-label]="i18n.t('contacts.view.label')"
-        >
-          <button
-            type="button"
-            [class.active]="store.mode() === 'contacts'"
-            [attr.aria-pressed]="store.mode() === 'contacts'"
-            (click)="setMode('contacts')"
-          >
-            {{ i18n.t('contacts.contacts.view.all') }}
-          </button>
-          <button
-            type="button"
-            [class.active]="store.mode() === 'trash'"
-            [attr.aria-pressed]="store.mode() === 'trash'"
-            (click)="setMode('trash')"
-          >
-            {{ i18n.t('contacts.trash.title') }}
-          </button>
-        </div>
+      @if (store.mode() === 'contacts') {
+        <section class="contact-summary" [attr.aria-label]="i18n.t('contacts.summary.title')">
+          <article>
+            <span>{{ i18n.t('contacts.summary.loaded') }}</span>
+            <strong>{{ loadedCount() }}</strong>
+          </article>
+          <article>
+            <span>{{ i18n.t('common.status.active') }}</span>
+            <strong>{{ activeCount() }}</strong>
+          </article>
+          <article>
+            <span>{{ i18n.t('contacts.summary.withCompany') }}</span>
+            <strong>{{ withCompanyCount() }}</strong>
+          </article>
+          <article>
+            <span>{{ i18n.t('contacts.summary.withEmail') }}</span>
+            <strong>{{ withEmailCount() }}</strong>
+          </article>
+        </section>
+      }
 
-        @if (store.mode() === 'contacts') {
+      <div class="contacts-workspace">
+        <form
+          class="panel filter-toolbar contacts-filter-toolbar"
+          (submit)="search($event)"
+          role="search"
+          [attr.aria-label]="i18n.t('contacts.filter.toolbarLabel')"
+        >
+          <header>
+            <h2>{{ i18n.t('contacts.filter.title') }}</h2>
+            <span>{{ i18n.t('contacts.filter.serverBacked') }}</span>
+          </header>
           <label class="filter-field filter-search">
             <span class="visually-hidden">{{ i18n.t('contacts.contacts.search') }}</span>
             <span class="filter-search-control">
@@ -188,248 +213,291 @@ const CONTACTS_GRID_THEME = themeQuartz.withParams({
               </button>
             }
           }
-        }
-      </form>
+        </form>
 
-      @if (store.mode() === 'contacts' && savedViewEditorOpen()) {
-        <section class="saved-views panel" [attr.aria-label]="i18n.t('contacts.savedViews.title')">
-          <form class="saved-view-form" (submit)="saveCurrentView($event)">
-            <label>
-              <span>{{ i18n.t('contacts.savedViews.name') }}</span>
-              <input
-                #savedViewNameInput
-                type="text"
-                maxlength="120"
-                [value]="savedViewName()"
-                (input)="setSavedViewName($event)"
-              />
-            </label>
-            <button mat-flat-button type="submit" [disabled]="store.operationPending()">
-              {{ i18n.t('contacts.savedViews.save') }}
-            </button>
-            <button mat-button type="button" (click)="closeSavedViewEditor()">
-              {{ i18n.t('common.action.cancel') }}
-            </button>
-            @if (savedViewError()) {
-              <span class="inline-error" role="alert">{{ savedViewError() }}</span>
-            }
-          </form>
-        </section>
-      }
-
-      @if (store.operationError()) {
-        <section class="persistent-message error-message" role="alert">
-          <span>{{ operationErrorMessage() }}</span>
-          <button mat-button type="button" (click)="store.clearOperationResult()">
-            {{ i18n.t('common.action.close') }}
-          </button>
-        </section>
-      }
-      @if (store.operationResult(); as result) {
-        <section class="persistent-message success-message" role="status">
-          <span>{{ i18n.t('contacts.bulk.completed', { count: result.updated }) }}</span>
-          <button mat-button type="button" (click)="store.clearOperationResult()">
-            {{ i18n.t('common.action.close') }}
-          </button>
-        </section>
-      }
-
-      @if (store.mode() === 'contacts' && selectedRows().length > 0) {
-        <section class="bulk-bar panel" [attr.aria-label]="i18n.t('contacts.bulk.title')">
-          <strong>{{ i18n.t('contacts.bulk.selected', { count: selectedRows().length }) }}</strong>
-          @if (permissions.allows('records.update')) {
-            @if (store.members().length > 0) {
-              <label class="compact-field">
-                <span>{{ i18n.t('contacts.bulk.assign') }}</span>
-                <select [value]="selectedOwnerId()" (change)="setSelectedOwner($event)">
-                  <option value="">{{ i18n.t('contacts.bulk.unassigned') }}</option>
-                  @for (member of store.members(); track member.id) {
-                    <option [value]="member.userId">{{ member.displayName }}</option>
-                  }
-                </select>
-              </label>
+        <section class="contacts-content">
+          <header class="list-toolbar">
+            <div
+              class="view-switcher segmented-control"
+              role="group"
+              [attr.aria-label]="i18n.t('contacts.view.label')"
+            >
               <button
-                mat-button
                 type="button"
-                [disabled]="store.operationPending()"
-                (click)="bulkAssign()"
+                [class.active]="store.mode() === 'contacts'"
+                [attr.aria-pressed]="store.mode() === 'contacts'"
+                (click)="setMode('contacts')"
               >
-                {{ i18n.t('contacts.bulk.applyOwner') }}
-              </button>
-            }
-            @if (store.tags().length > 0) {
-              <label class="compact-field">
-                <span>{{ i18n.t('contacts.bulk.tag') }}</span>
-                <select [value]="selectedTagId()" (change)="setSelectedTag($event)">
-                  <option value="">{{ i18n.t('contacts.bulk.chooseTag') }}</option>
-                  @for (tag of store.tags(); track tag.id) {
-                    <option [value]="tag.id">{{ tag.name }}</option>
-                  }
-                </select>
-              </label>
-              <label class="compact-field">
-                <span>{{ i18n.t('contacts.bulk.tagMode') }}</span>
-                <select [value]="tagMode()" (change)="setTagMode($event)">
-                  <option value="add">{{ i18n.t('contacts.bulk.tagAdd') }}</option>
-                  <option value="remove">{{ i18n.t('contacts.bulk.tagRemove') }}</option>
-                  <option value="replace">{{ i18n.t('contacts.bulk.tagReplace') }}</option>
-                </select>
-              </label>
-              <button
-                mat-button
-                type="button"
-                [disabled]="!selectedTagId() || store.operationPending()"
-                (click)="bulkTag()"
-              >
-                {{ i18n.t('contacts.bulk.applyTag') }}
-              </button>
-            }
-          }
-          @if (permissions.allows('records.delete')) {
-            @if (bulkDeleteConfirm()) {
-              <span class="delete-confirm" role="alert">
-                {{ i18n.t('contacts.bulk.deleteConfirm', { count: selectedRows().length }) }}
-              </span>
-              <button mat-button type="button" (click)="bulkDeleteConfirm.set(false)">
-                {{ i18n.t('common.action.cancel') }}
+                {{ i18n.t('contacts.contacts.view.all') }}
               </button>
               <button
-                #bulkDeleteConfirmButton
-                mat-flat-button
                 type="button"
-                class="danger-button"
-                [disabled]="store.operationPending()"
-                (click)="bulkDelete()"
+                [class.active]="store.mode() === 'trash'"
+                [attr.aria-pressed]="store.mode() === 'trash'"
+                (click)="setMode('trash')"
               >
-                {{ i18n.t('contacts.bulk.confirmDelete') }}
+                {{ i18n.t('contacts.trash.title') }}
               </button>
-            } @else {
-              <button mat-button type="button" class="danger-action" (click)="confirmBulkDelete()">
-                {{ i18n.t('contacts.bulk.delete') }}
-              </button>
-            }
-          }
-        </section>
-      }
-
-      @if (store.error()) {
-        <app-error-panel [error]="store.error()" (retry)="store.load()" />
-      }
-
-      @if (store.mode() === 'contacts') {
-        <section class="grid-panel panel" [attr.aria-busy]="store.loading()">
-          @if (store.loading() && store.contacts().length === 0) {
-            <div class="grid-skeleton">
-              <div class="skeleton"></div>
-              <div class="skeleton"></div>
-              <div class="skeleton"></div>
-              <div class="skeleton"></div>
             </div>
-          } @else if (store.contacts().length === 0) {
-            <div class="empty-state">{{ i18n.t('contacts.contacts.empty') }}</div>
-          } @else {
-            <ag-grid-angular
-              [theme]="gridTheme"
-              [modules]="gridModules"
-              [rowData]="gridRows()"
-              [columnDefs]="columns"
-              [defaultColDef]="defaultColumn"
-              [getRowId]="getRowId"
-              [rowSelection]="rowSelection()"
-              [animateRows]="false"
-              [rowHeight]="44"
-              [headerHeight]="42"
-              [ariaLabel]="
-                i18n.t(
-                  permissions.allows('records.update') || permissions.allows('records.delete')
-                    ? 'contacts.grid.label'
-                    : 'contacts.grid.readonlyLabel'
-                )
-              "
-              (gridReady)="onGridReady($event)"
-              (selectionChanged)="selectionChanged($event)"
-              (rowClicked)="openRow($event)"
-              (cellKeyDown)="openRowFromKeyboard($event)"
-            />
-          }
-        </section>
-        @if (store.nextCursor()) {
-          <button
-            mat-stroked-button
-            type="button"
-            class="load-more"
-            [disabled]="store.loading()"
-            (click)="store.load(false)"
-          >
-            {{ i18n.t('web.contact.loadMore') }}
-          </button>
-        }
-      } @else {
-        <section class="trash-panel panel" [attr.aria-busy]="store.loading()">
-          <header>
-            <div>
-              <h2>{{ i18n.t('contacts.trash.title') }}</h2>
-              <p>{{ i18n.t('contacts.trash.description') }}</p>
-            </div>
+            <span>{{ i18n.t('contacts.summary.loadedCount', { count: resultCount() }) }}</span>
           </header>
-          @if (store.loading() && store.trash().length === 0) {
-            <div class="skeleton trash-skeleton"></div>
-          } @else if (store.trash().length === 0) {
-            <div class="empty-state">{{ i18n.t('contacts.trash.empty') }}</div>
+
+          @if (store.mode() === 'contacts' && savedViewEditorOpen()) {
+            <section
+              class="saved-views panel"
+              [attr.aria-label]="i18n.t('contacts.savedViews.title')"
+            >
+              <form class="saved-view-form" (submit)="saveCurrentView($event)">
+                <label>
+                  <span>{{ i18n.t('contacts.savedViews.name') }}</span>
+                  <input
+                    #savedViewNameInput
+                    type="text"
+                    maxlength="120"
+                    [value]="savedViewName()"
+                    (input)="setSavedViewName($event)"
+                  />
+                </label>
+                <button mat-flat-button type="submit" [disabled]="store.operationPending()">
+                  {{ i18n.t('contacts.savedViews.save') }}
+                </button>
+                <button mat-button type="button" (click)="closeSavedViewEditor()">
+                  {{ i18n.t('common.action.cancel') }}
+                </button>
+                @if (savedViewError()) {
+                  <span class="inline-error" role="alert">{{ savedViewError() }}</span>
+                }
+              </form>
+            </section>
+          }
+
+          @if (store.operationError()) {
+            <section class="persistent-message error-message" role="alert">
+              <span>{{ operationErrorMessage() }}</span>
+              <button mat-button type="button" (click)="store.clearOperationResult()">
+                {{ i18n.t('common.action.close') }}
+              </button>
+            </section>
+          }
+          @if (store.operationResult(); as result) {
+            <section class="persistent-message success-message" role="status">
+              <span>{{ i18n.t('contacts.bulk.completed', { count: result.updated }) }}</span>
+              <button mat-button type="button" (click)="store.clearOperationResult()">
+                {{ i18n.t('common.action.close') }}
+              </button>
+            </section>
+          }
+
+          @if (store.mode() === 'contacts' && selectedRows().length > 0) {
+            <section class="bulk-bar panel" [attr.aria-label]="i18n.t('contacts.bulk.title')">
+              <strong>{{
+                i18n.t('contacts.bulk.selected', { count: selectedRows().length })
+              }}</strong>
+              @if (permissions.allows('records.update')) {
+                @if (store.members().length > 0) {
+                  <label class="compact-field">
+                    <span>{{ i18n.t('contacts.bulk.assign') }}</span>
+                    <select [value]="selectedOwnerId()" (change)="setSelectedOwner($event)">
+                      <option value="">{{ i18n.t('contacts.bulk.unassigned') }}</option>
+                      @for (member of store.members(); track member.id) {
+                        <option [value]="member.userId">{{ member.displayName }}</option>
+                      }
+                    </select>
+                  </label>
+                  <button
+                    mat-button
+                    type="button"
+                    [disabled]="store.operationPending()"
+                    (click)="bulkAssign()"
+                  >
+                    {{ i18n.t('contacts.bulk.applyOwner') }}
+                  </button>
+                }
+                @if (store.tags().length > 0) {
+                  <label class="compact-field">
+                    <span>{{ i18n.t('contacts.bulk.tag') }}</span>
+                    <select [value]="selectedTagId()" (change)="setSelectedTag($event)">
+                      <option value="">{{ i18n.t('contacts.bulk.chooseTag') }}</option>
+                      @for (tag of store.tags(); track tag.id) {
+                        <option [value]="tag.id">{{ tag.name }}</option>
+                      }
+                    </select>
+                  </label>
+                  <label class="compact-field">
+                    <span>{{ i18n.t('contacts.bulk.tagMode') }}</span>
+                    <select [value]="tagMode()" (change)="setTagMode($event)">
+                      <option value="add">{{ i18n.t('contacts.bulk.tagAdd') }}</option>
+                      <option value="remove">{{ i18n.t('contacts.bulk.tagRemove') }}</option>
+                      <option value="replace">{{ i18n.t('contacts.bulk.tagReplace') }}</option>
+                    </select>
+                  </label>
+                  <button
+                    mat-button
+                    type="button"
+                    [disabled]="!selectedTagId() || store.operationPending()"
+                    (click)="bulkTag()"
+                  >
+                    {{ i18n.t('contacts.bulk.applyTag') }}
+                  </button>
+                }
+              }
+              @if (permissions.allows('records.delete')) {
+                @if (bulkDeleteConfirm()) {
+                  <span class="delete-confirm" role="alert">
+                    {{ i18n.t('contacts.bulk.deleteConfirm', { count: selectedRows().length }) }}
+                  </span>
+                  <button mat-button type="button" (click)="bulkDeleteConfirm.set(false)">
+                    {{ i18n.t('common.action.cancel') }}
+                  </button>
+                  <button
+                    #bulkDeleteConfirmButton
+                    mat-flat-button
+                    type="button"
+                    class="danger-button"
+                    [disabled]="store.operationPending()"
+                    (click)="bulkDelete()"
+                  >
+                    {{ i18n.t('contacts.bulk.confirmDelete') }}
+                  </button>
+                } @else {
+                  <button
+                    mat-button
+                    type="button"
+                    class="danger-action"
+                    (click)="confirmBulkDelete()"
+                  >
+                    {{ i18n.t('contacts.bulk.delete') }}
+                  </button>
+                }
+              }
+            </section>
+          }
+
+          @if (store.error()) {
+            <app-error-panel [error]="store.error()" (retry)="store.load()" />
+          }
+
+          @if (store.mode() === 'contacts') {
+            <section class="grid-panel panel" [attr.aria-busy]="store.loading()">
+              @if (store.loading() && store.contacts().length === 0) {
+                <div class="grid-skeleton">
+                  <div class="skeleton"></div>
+                  <div class="skeleton"></div>
+                  <div class="skeleton"></div>
+                  <div class="skeleton"></div>
+                </div>
+              } @else if (store.contacts().length === 0) {
+                <div class="empty-state">{{ i18n.t('contacts.contacts.empty') }}</div>
+              } @else {
+                <ag-grid-angular
+                  [theme]="gridTheme"
+                  [modules]="gridModules"
+                  [rowData]="gridRows()"
+                  [columnDefs]="columns"
+                  [defaultColDef]="defaultColumn"
+                  [getRowId]="getRowId"
+                  [rowSelection]="rowSelection()"
+                  [animateRows]="false"
+                  [rowHeight]="44"
+                  [headerHeight]="42"
+                  [ariaLabel]="
+                    i18n.t(
+                      permissions.allows('records.update') || permissions.allows('records.delete')
+                        ? 'contacts.grid.label'
+                        : 'contacts.grid.readonlyLabel'
+                    )
+                  "
+                  (gridReady)="onGridReady($event)"
+                  (selectionChanged)="selectionChanged($event)"
+                  (rowClicked)="openRow($event)"
+                  (cellKeyDown)="openRowFromKeyboard($event)"
+                />
+              }
+            </section>
+            @if (store.nextCursor()) {
+              <button
+                mat-stroked-button
+                type="button"
+                class="load-more"
+                [disabled]="store.loading()"
+                (click)="store.load(false)"
+              >
+                {{ i18n.t('web.contact.loadMore') }}
+              </button>
+            }
           } @else {
-            <div class="table-scroll">
-              <table>
-                <thead>
-                  <tr>
-                    <th scope="col">{{ i18n.t('common.field.name') }}</th>
-                    <th scope="col">{{ i18n.t('common.field.email') }}</th>
-                    <th scope="col">{{ i18n.t('contacts.trash.deletedAt') }}</th>
-                    <th scope="col">
-                      <span class="visually-hidden">{{ i18n.t('contacts.trash.actions') }}</span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (record of store.trash(); track record.id) {
-                    <tr>
-                      <td>{{ record.displayName }}</td>
-                      <td>{{ record.email ?? '—' }}</td>
-                      <td>
-                        {{
-                          i18n.date(record.deletedAt, { dateStyle: 'medium', timeStyle: 'short' })
-                        }}
-                      </td>
-                      <td>
-                        @if (permissions.allows('records.delete')) {
-                          <button
-                            mat-button
-                            type="button"
-                            [disabled]="store.operationPending()"
-                            (click)="restoreContact(record)"
-                          >
-                            {{ i18n.t('contacts.trash.restore') }}
-                          </button>
-                        }
-                      </td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
+            <section class="trash-panel panel" [attr.aria-busy]="store.loading()">
+              <header>
+                <div>
+                  <h2>{{ i18n.t('contacts.trash.title') }}</h2>
+                  <p>{{ i18n.t('contacts.trash.description') }}</p>
+                </div>
+              </header>
+              @if (store.loading() && store.trash().length === 0) {
+                <div class="skeleton trash-skeleton"></div>
+              } @else if (store.trash().length === 0) {
+                <div class="empty-state">{{ i18n.t('contacts.trash.empty') }}</div>
+              } @else {
+                <div class="table-scroll">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">{{ i18n.t('common.field.name') }}</th>
+                        <th scope="col">{{ i18n.t('common.field.email') }}</th>
+                        <th scope="col">{{ i18n.t('contacts.trash.deletedAt') }}</th>
+                        <th scope="col">
+                          <span class="visually-hidden">{{
+                            i18n.t('contacts.trash.actions')
+                          }}</span>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (record of store.trash(); track record.id) {
+                        <tr>
+                          <td>{{ record.displayName }}</td>
+                          <td>{{ record.email ?? '—' }}</td>
+                          <td>
+                            {{
+                              i18n.date(record.deletedAt, {
+                                dateStyle: 'medium',
+                                timeStyle: 'short',
+                              })
+                            }}
+                          </td>
+                          <td>
+                            @if (permissions.allows('records.delete')) {
+                              <button
+                                mat-button
+                                type="button"
+                                [disabled]="store.operationPending()"
+                                (click)="restoreContact(record)"
+                              >
+                                {{ i18n.t('contacts.trash.restore') }}
+                              </button>
+                            }
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+            </section>
+            @if (store.trashNextCursor()) {
+              <button
+                mat-stroked-button
+                type="button"
+                class="load-more"
+                [disabled]="store.loading()"
+                (click)="store.load(false)"
+              >
+                {{ i18n.t('contacts.trash.loadMore') }}
+              </button>
+            }
           }
         </section>
-        @if (store.trashNextCursor()) {
-          <button
-            mat-stroked-button
-            type="button"
-            class="load-more"
-            [disabled]="store.loading()"
-            (click)="store.load(false)"
-          >
-            {{ i18n.t('contacts.trash.loadMore') }}
-          </button>
-        }
-      }
+      </div>
     </div>
 
     @if (importOpen()) {
@@ -733,16 +801,43 @@ export class ContactsPage implements OnInit, OnDestroy {
       minWidth: 190,
       headerValueGetter: () => this.i18n.t('common.field.name'),
     },
-    { field: 'email', headerValueGetter: () => this.i18n.t('common.field.email') },
-    { field: 'companyName', headerValueGetter: () => this.i18n.t('contacts.contacts.company') },
+    {
+      field: 'companyName',
+      minWidth: 160,
+      headerValueGetter: () => this.i18n.t('contacts.contacts.company'),
+    },
+    {
+      field: 'phone',
+      minWidth: 150,
+      headerValueGetter: () => this.i18n.t('common.field.phone'),
+    },
+    {
+      field: 'email',
+      minWidth: 190,
+      headerValueGetter: () => this.i18n.t('common.field.email'),
+    },
+    {
+      colId: 'owner',
+      minWidth: 150,
+      headerValueGetter: () => this.i18n.t('common.field.owner'),
+      valueGetter: ({ data }) => this.ownerName(data?.ownerId),
+    },
     {
       field: 'status',
+      minWidth: 110,
       maxWidth: 130,
       headerValueGetter: () => this.i18n.t('common.field.status'),
       valueFormatter: ({ value }) =>
         value === 'active'
           ? this.i18n.t('common.status.active')
           : this.i18n.t('common.status.inactive'),
+    },
+    {
+      field: 'createdAt',
+      minWidth: 140,
+      headerValueGetter: () => this.i18n.t('contacts.contacts.created'),
+      valueFormatter: ({ value }) =>
+        typeof value === 'string' ? this.i18n.date(value, { dateStyle: 'medium' }) : '',
     },
   ];
   readonly rowSelection = computed<RowSelectionOptions<Contact>>(() => ({
@@ -758,6 +853,16 @@ export class ContactsPage implements OnInit, OnDestroy {
   }));
   readonly getRowId = ({ data }: { data: Contact }) => data.id;
   readonly gridRows = computed(() => [...this.store.contacts()]);
+  readonly loadedCount = computed(() => this.store.contacts().length);
+  readonly activeCount = computed(
+    () => this.store.contacts().filter((contact) => contact.status === 'active').length,
+  );
+  readonly withCompanyCount = computed(
+    () => this.store.contacts().filter((contact) => Boolean(contact.companyId)).length,
+  );
+  readonly withEmailCount = computed(
+    () => this.store.contacts().filter((contact) => Boolean(contact.email)).length,
+  );
   readonly resultCount = computed(() =>
     this.store.mode() === 'contacts' ? this.store.contacts().length : this.store.trash().length,
   );
@@ -783,6 +888,11 @@ export class ContactsPage implements OnInit, OnDestroy {
   private readonly injector = inject(Injector);
   private draftTimer: ReturnType<typeof setTimeout> | null = null;
   private gridApi: GridApi<Contact> | null = null;
+
+  ownerName(ownerId: string | null | undefined): string {
+    if (!ownerId) return '—';
+    return this.store.members().find((member) => member.userId === ownerId)?.displayName ?? '—';
+  }
 
   ngOnInit(): void {
     void Promise.all([

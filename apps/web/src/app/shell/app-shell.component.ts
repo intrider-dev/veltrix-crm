@@ -377,7 +377,10 @@ export class AppShellComponent {
     const url = this.router.url;
     const path = url.split(/[?#]/, 1)[0] ?? url;
     this.darkWorkspaceRoute.set(
-      path.startsWith('/dashboard') || path.startsWith('/leads') || path === '/deals',
+      path.startsWith('/dashboard') ||
+        path.startsWith('/leads') ||
+        path === '/deals' ||
+        path === '/contacts',
     );
   }
 

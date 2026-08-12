@@ -394,6 +394,12 @@ Kanban columns use restrained stage tinting, compact monetary cards, keyboard-ac
 
 Never total unlike currencies into a fictional number. When a loaded result contains multiple currencies, show the localized mixed-currency label and preserve the individual amounts. Loaded counts and conversion values must be labeled as current-view summaries rather than workspace-wide analytics.
 
+### Contact workspace
+
+The contacts route uses the same dark, high-density workspace grammar while remaining a server-driven data surface. Page identity, quick search, import/export, and the primary create action form the first row. A restrained summary strip reports only the currently loaded contact page: loaded, active, linked to a company, and carrying an email address. It must never imply workspace totals when the cursor API does not return them.
+
+AG Grid Community remains the accessible list engine and stays lazy with the route. The main table exposes contact, company, phone, email, owner, status, and creation date; selection continues into the existing bulk-action surface. The right rail contains only working server-backed search/status filters and saved views. On compact layouts the filter rail moves below the list rather than compressing the table into unusable columns, while horizontal table overflow remains contained within the grid.
+
 - Short successful operations may use toasts.
 - Critical failures, validation, permissions, conflicts, and unsaved state stay near the affected content.
 - Optimistic updates require rollback and a visible conflict path.
