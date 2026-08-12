@@ -16,6 +16,7 @@ export class LeadsStore {
   readonly stages = signal<readonly LeadStage[]>([]);
   readonly query = signal('');
   readonly status = signal<LeadStatus | ''>('');
+  readonly stageId = signal('');
   readonly nextCursor = signal<string | null>(null);
   readonly nextCursorByStage = signal<Readonly<Record<string, string | null>>>({});
   readonly loading = signal(false);
@@ -73,6 +74,7 @@ export class LeadsStore {
       const page = await this.api.listLeads(workspaceId, {
         query: this.query() || undefined,
         status: this.status() || undefined,
+        stageId: this.stageId() || undefined,
         cursor: reset ? undefined : (this.nextCursor() ?? undefined),
         limit: 50,
       });

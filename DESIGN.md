@@ -73,6 +73,19 @@ The dashboard is a focused dark analytics workspace even when the operational ro
 - At tablet widths the insight rail moves below the primary analytics; at mobile widths every region becomes a single column and wide charts gain a deliberate horizontal viewport.
 - Route-scoped shell colors must preserve WCAG 2.2 AA contrast for search chrome, account controls, navigation, and all chart labels.
 
+### Leads operations workspace
+
+The leads route shares the dashboard's dark navy shell but prioritizes rapid qualification over analytics decoration.
+
+- The header contains the page identity, loaded-record count, server search, and one primary create action.
+- Stage summaries use counts and proportions from the currently loaded server result only. They are interactive stage filters, never fabricated trend cards.
+- List, Kanban, and Gantt remain adjacent modes of the same dataset; changing a mode must not replace working stage, conversion, assignment, or details actions.
+- The desktop list uses a dense semantic table with lead identity, editable stage, source, contact, creation date, next meaningful date, and row actions. Columns without API data are not rendered as placeholders for hypothetical features.
+- The filter rail exposes only server-backed criteria. Status and stage changes are applied through the collection API and remain usable with large tenant datasets.
+- At tablet width the filter rail moves below the table. At mobile width stage cards scroll horizontally and the table intentionally reduces to lead, stage, and details navigation; the document itself must never gain horizontal overflow.
+- Search inputs expose a single clear affordance, selects use the shared inset arrow treatment, and all stage changes retain optimistic progress and error handling.
+- English and Russian labels share the generated localization catalog; user-defined stage names continue through the workspace translation center.
+
 ## 3. Design tokens
 
 All values must be exposed through semantic CSS variables. Feature styles must not use raw brand colors.

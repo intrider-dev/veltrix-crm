@@ -10,7 +10,7 @@
   background: var(--surface-canvas);
 }
 
-.shell.dashboard-route {
+.shell.dark-workspace-route {
   --brand: #5b7cff;
   --on-brand: #ffffff;
   --brand-soft: #17274f;
@@ -30,40 +30,40 @@
   color-scheme: dark;
 }
 
-.dashboard-route .sidebar {
+.dark-workspace-route .sidebar {
   background: radial-gradient(circle at 15% 0%, rgb(38 83 170 / 10%), transparent 16rem), #080e16;
 }
 
-.dashboard-route .topbar {
+.dark-workspace-route .topbar {
   background: rgb(7 12 18 / 88%);
 }
 
-.dashboard-route .account-button,
-.dashboard-route .account-name {
+.dark-workspace-route .account-button,
+.dark-workspace-route .account-name {
   color: #dce4ef !important;
 }
 
-.dashboard-route .avatar {
+.dark-workspace-route .avatar {
   border-color: #485b9f;
   color: #c0cbff;
   background: #17274f;
 }
 
-.dashboard-route main {
+.dark-workspace-route main {
   background: radial-gradient(circle at 48% -14%, rgb(43 96 205 / 8%), transparent 34rem), #070c12;
 }
 
-.dashboard-route .sidebar nav a.active {
+.dark-workspace-route .sidebar nav a.active {
   color: #eef3ff;
   background: linear-gradient(90deg, #173c91, #1d4cbb);
   box-shadow: 0 0.45rem 1.4rem rgb(17 67 167 / 18%);
 }
 
-.dashboard-route .sidebar nav a.active::before {
+.dark-workspace-route .sidebar nav a.active::before {
   background: #80a0ff;
 }
 
-.dashboard-route .sidebar nav a.active app-icon {
+.dark-workspace-route .sidebar nav a.active app-icon {
   color: #b7c7ff;
 }
 

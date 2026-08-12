@@ -55,63 +55,48 @@ import { LeadsStore } from './leads.store';
     <div class="page">
       <header class="page-header">
         <div>
-          <h1>{{ i18n.t('common.nav.leads') }}</h1>
+          <div class="title-line">
+            <h1>{{ i18n.t('common.nav.leads') }}</h1>
+            <span class="loaded-count">{{ store.leads().length }}</span>
+          </div>
           <p>{{ i18n.t('leads.subtitle') }}</p>
         </div>
-        @if (permissions.allows('leads.create')) {
-          <button mat-flat-button type="button" (click)="openCreate()">
-            <app-icon name="add" />{{ i18n.t('leads.add') }}
-          </button>
-        }
-      </header>
-
-      <section class="workspace-controls">
-        <nav
-          class="view-switcher segmented-control"
-          [attr.aria-label]="i18n.t('leads.view.switcher')"
-        >
-          @for (mode of viewModes; track mode) {
-            <button
-              mat-button
-              type="button"
-              [class.active]="store.viewMode() === mode"
-              [attr.aria-pressed]="store.viewMode() === mode"
-              (click)="store.setViewMode(mode)"
-            >
-              {{
-                i18n.t(
-                  mode === 'list'
-                    ? 'leads.view.list'
-                    : mode === 'gantt'
-                      ? 'leads.view.gantt'
-                      : 'leads.view.kanban'
-                )
-              }}
+        <form class="header-search" (submit)="filter($event)" role="search">
+          <app-icon name="search" />
+          <label class="visually-hidden" for="lead-search">{{ i18n.t('leads.search') }}</label>
+          <input
+            id="lead-search"
+            type="search"
+            [placeholder]="i18n.t('leads.search')"
+            [value]="store.query()"
+            (input)="store.query.set(inputValue($event))"
+          />
+          <kbd>/</kbd>
+        </form>
+        <div class="header-actions">
+          @if (permissions.allows('leads.create')) {
+            <button mat-flat-button type="button" (click)="openCreate()">
+              <app-icon name="add" />{{ i18n.t('leads.add') }}
             </button>
           }
-        </nav>
+        </div>
+      </header>
 
-        <form class="feature-toolbar" (submit)="filter($event)" role="search">
-          <label class="native-field grow">
-            <span>{{ i18n.t('leads.search') }}</span>
-            <input
-              type="search"
-              [value]="store.query()"
-              (input)="store.query.set(inputValue($event))"
-            />
-          </label>
-          <label class="native-field">
-            <span>{{ i18n.t('common.field.status') }}</span>
-            <select [value]="store.status()" (change)="setFilterStatus($event)">
-              <option value="">{{ i18n.t('leads.status.all') }}</option>
-              @for (status of statuses; track status) {
-                <option [value]="status">{{ i18n.t(statusKey(status)) }}</option>
-              }
-              <option value="converted">{{ i18n.t('leads.status.converted') }}</option>
-            </select>
-          </label>
-          <button mat-stroked-button type="submit">{{ i18n.t('common.action.search') }}</button>
-        </form>
+      <section class="stage-overview" [attr.aria-label]="i18n.t('leads.overviewLoaded')">
+        @for (stage of store.stages(); track stage.id; let index = $index) {
+          <button
+            type="button"
+            class="stage-summary"
+            [class.active]="store.stageId() === stage.id"
+            [style.--stage-index]="index"
+            (click)="selectStage(stage.id)"
+          >
+            <span>{{ stageLabel(stage) }}</span>
+            <strong>{{ store.leadsFor(stage.id).length }}</strong>
+            <small>{{ stageShare(stage.id) }}%</small>
+            <i aria-hidden="true"><b [style.width.%]="stageShare(stage.id)"></b></i>
+          </button>
+        }
       </section>
 
       @if (store.loadError()) {
@@ -188,62 +173,192 @@ import { LeadsStore } from './leads.store';
       }
 
       @if (store.viewMode() === 'list') {
-        <section class="panel record-list" [attr.aria-busy]="store.loading()">
-          @if (store.loading() && store.leads().length === 0) {
-            <div class="list-skeleton" [attr.aria-label]="i18n.t('common.result.loading')">
-              <div class="skeleton"></div>
-              <div class="skeleton"></div>
-              <div class="skeleton"></div>
-            </div>
-          } @else if (store.leads().length === 0) {
-            <div class="empty-state">{{ i18n.t('leads.empty') }}</div>
-          } @else {
-            @for (lead of store.leads(); track lead.id) {
-              <article>
-                <div class="record-main">
-                  <div class="record-avatar" aria-hidden="true">{{ lead.name.charAt(0) }}</div>
-                  <div>
-                    <h2>
-                      <a [routerLink]="['/leads', lead.id]">{{ lead.name }}</a>
-                    </h2>
-                    <p>{{ lead.companyName || lead.email || i18n.t('leads.noDetails') }}</p>
-                  </div>
-                </div>
-                <div class="record-meta">
-                  @if (permissions.allows('leads.update') && lead.status !== 'converted') {
-                    <label class="visually-hidden" [for]="'lead-status-' + lead.id">{{
-                      i18n.t('leads.stage')
-                    }}</label>
-                    <select
-                      [id]="'lead-status-' + lead.id"
-                      [value]="lead.stageId"
-                      [disabled]="store.isMoving(lead.id)"
-                      (change)="changeStage(lead, $event)"
-                    >
-                      @for (stage of editableStages(); track stage.id) {
-                        <option [value]="stage.id">{{ stageLabel(stage) }}</option>
-                      }
-                    </select>
-                    <button
-                      mat-stroked-button
-                      type="button"
-                      [disabled]="store.saving()"
-                      (click)="store.convert(lead)"
-                    >
-                      {{ i18n.t('leads.markWon') }}
-                    </button>
-                  } @else {
-                    <span class="status-pill">{{ leadStageLabel(lead) }}</span>
-                  }
-                  <button mat-button type="button" (click)="selectedLead.set(lead)">
-                    {{ i18n.t('assignments.manage') }}
+        <div class="leads-workspace">
+          <section class="panel record-list" [attr.aria-busy]="store.loading()">
+            <header class="list-toolbar">
+              <nav
+                class="view-switcher segmented-control"
+                [attr.aria-label]="i18n.t('leads.view.switcher')"
+              >
+                @for (mode of viewModes; track mode) {
+                  <button
+                    mat-button
+                    type="button"
+                    [class.active]="store.viewMode() === mode"
+                    [attr.aria-pressed]="store.viewMode() === mode"
+                    (click)="store.setViewMode(mode)"
+                  >
+                    {{ viewModeLabel(mode) }}
                   </button>
-                </div>
-              </article>
+                }
+              </nav>
+              <span>{{ i18n.t('leads.loadedCount', { count: store.leads().length }) }}</span>
+            </header>
+            @if (store.loading() && store.leads().length === 0) {
+              <div class="list-skeleton" [attr.aria-label]="i18n.t('common.result.loading')">
+                <div class="skeleton"></div>
+                <div class="skeleton"></div>
+                <div class="skeleton"></div>
+              </div>
+            } @else if (store.leads().length === 0) {
+              <div class="empty-state">{{ i18n.t('leads.empty') }}</div>
+            } @else {
+              <div class="lead-table-wrap">
+                <table class="lead-table">
+                  <thead>
+                    <tr>
+                      <th>{{ i18n.t('leads.table.lead') }}</th>
+                      <th>{{ i18n.t('leads.stage') }}</th>
+                      <th>{{ i18n.t('leads.source') }}</th>
+                      <th>{{ i18n.t('leads.table.contact') }}</th>
+                      <th>{{ i18n.t('leads.table.created') }}</th>
+                      <th>{{ i18n.t('leads.table.nextDate') }}</th>
+                      <th>
+                        <span class="visually-hidden">{{ i18n.t('leads.table.actions') }}</span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (lead of store.leads(); track lead.id) {
+                      <tr>
+                        <td>
+                          <a
+                            class="lead-identity"
+                            [routerLink]="['/leads', lead.id]"
+                            [attr.aria-label]="lead.name"
+                          >
+                            <span class="record-avatar" aria-hidden="true">{{
+                              lead.name.charAt(0)
+                            }}</span>
+                            <span
+                              ><strong>{{ lead.name }}</strong
+                              ><small>{{
+                                lead.companyName || lead.jobTitle || i18n.t('leads.noDetails')
+                              }}</small></span
+                            >
+                          </a>
+                        </td>
+                        <td>
+                          @if (permissions.allows('leads.update') && lead.status !== 'converted') {
+                            <label class="visually-hidden" [for]="'lead-status-' + lead.id">{{
+                              i18n.t('leads.stage')
+                            }}</label>
+                            <select
+                              class="stage-select"
+                              [id]="'lead-status-' + lead.id"
+                              [ngModel]="lead.stageId"
+                              [disabled]="store.isMoving(lead.id)"
+                              (ngModelChange)="moveFromSelect(lead, $event)"
+                            >
+                              @for (stage of editableStages(); track stage.id) {
+                                <option [value]="stage.id">{{ stageLabel(stage) }}</option>
+                              }
+                            </select>
+                          } @else {
+                            <span class="status-pill">{{ leadStageLabel(lead) }}</span>
+                          }
+                        </td>
+                        <td>
+                          <span class="source-cell">{{ lead.source || '—' }}</span>
+                        </td>
+                        <td>
+                          <span class="contact-cell">{{ lead.email || lead.phone || '—' }}</span>
+                        </td>
+                        <td>
+                          <time [attr.datetime]="lead.createdAt">{{
+                            i18n.date(lead.createdAt)
+                          }}</time>
+                        </td>
+                        <td>
+                          @if (lead.expectedCloseDate || lead.plannedStartDate) {
+                            <time
+                              [attr.datetime]="lead.expectedCloseDate || lead.plannedStartDate"
+                              >{{
+                                i18n.date(lead.expectedCloseDate ?? lead.plannedStartDate ?? '')
+                              }}</time
+                            >
+                          } @else {
+                            —
+                          }
+                        </td>
+                        <td class="row-actions">
+                          <a mat-button [routerLink]="['/leads', lead.id]">{{
+                            i18n.t('leads.table.open')
+                          }}</a>
+                          <button mat-button type="button" (click)="selectedLead.set(lead)">
+                            {{ i18n.t('leads.table.assign') }}
+                          </button>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
             }
-          }
-        </section>
+          </section>
+
+          <aside class="filter-panel" [attr.aria-label]="i18n.t('leads.filters.title')">
+            <header>
+              <h2>{{ i18n.t('leads.filters.title') }}</h2>
+              <button mat-button type="button" (click)="clearFilters()">
+                {{ i18n.t('leads.filters.reset') }}
+              </button>
+            </header>
+            <div class="quick-filters">
+              <span>{{ i18n.t('leads.filters.quick') }}</span>
+              @for (status of filterStatuses; track status) {
+                <button
+                  type="button"
+                  [class.active]="store.status() === status"
+                  (click)="toggleStatus(status)"
+                >
+                  <span class="status-dot" [attr.data-status]="status"></span>
+                  {{ i18n.t(statusKey(status)) }}
+                  <b>{{ statusCount(status) }}</b>
+                </button>
+              }
+            </div>
+            <label class="native-field">
+              <span>{{ i18n.t('common.field.status') }}</span>
+              <select [value]="store.status()" (change)="setFilterStatus($event)">
+                <option value="">{{ i18n.t('leads.status.all') }}</option>
+                @for (status of filterStatuses; track status) {
+                  <option [value]="status">{{ i18n.t(statusKey(status)) }}</option>
+                }
+              </select>
+            </label>
+            <label class="native-field">
+              <span>{{ i18n.t('leads.stage') }}</span>
+              <select [value]="store.stageId()" (change)="setFilterStage($event)">
+                <option value="">{{ i18n.t('leads.filters.allStages') }}</option>
+                @for (stage of store.stages(); track stage.id) {
+                  <option [value]="stage.id">{{ stageLabel(stage) }}</option>
+                }
+              </select>
+            </label>
+            <p>{{ i18n.t('leads.filters.serverHint') }}</p>
+            <button class="apply-filters" mat-flat-button type="button" (click)="applyFilters()">
+              {{ i18n.t('leads.filters.apply') }}
+            </button>
+          </aside>
+        </div>
       } @else if (store.viewMode() === 'kanban') {
+        <nav
+          class="view-switcher floating-view-switcher segmented-control"
+          [attr.aria-label]="i18n.t('leads.view.switcher')"
+        >
+          @for (mode of viewModes; track mode) {
+            <button
+              mat-button
+              type="button"
+              [class.active]="store.viewMode() === mode"
+              [attr.aria-pressed]="store.viewMode() === mode"
+              (click)="store.setViewMode(mode)"
+            >
+              {{ viewModeLabel(mode) }}
+            </button>
+          }
+        </nav>
         <section class="lead-kanban" cdkDropListGroup [attr.aria-busy]="store.loading()">
           @for (stage of store.boardStages(); track stage.id) {
             <article class="lead-stage">
@@ -324,6 +439,22 @@ import { LeadsStore } from './leads.store';
           }
         </section>
       } @else {
+        <nav
+          class="view-switcher floating-view-switcher segmented-control"
+          [attr.aria-label]="i18n.t('leads.view.switcher')"
+        >
+          @for (mode of viewModes; track mode) {
+            <button
+              mat-button
+              type="button"
+              [class.active]="store.viewMode() === mode"
+              [attr.aria-pressed]="store.viewMode() === mode"
+              (click)="store.setViewMode(mode)"
+            >
+              {{ viewModeLabel(mode) }}
+            </button>
+          }
+        </nav>
         <section class="panel lead-gantt" [attr.aria-busy]="store.loading()">
           <header class="gantt-range">
             <time>{{ i18n.date(timelineBounds().start) }}</time
@@ -609,6 +740,7 @@ export class LeadsPage implements OnInit {
   readonly createOpen = signal(false);
   readonly selectedLead = signal<Lead | null>(null);
   readonly statuses = ['new', 'qualified', 'disqualified'] as const;
+  readonly filterStatuses = ['new', 'qualified', 'disqualified', 'converted'] as const;
   readonly viewModes = ['list', 'kanban', 'gantt'] as const;
   readonly model = signal({
     name: '',
@@ -653,6 +785,50 @@ export class LeadsPage implements OnInit {
 
   setFilterStatus(event: Event): void {
     this.store.status.set((event.target as HTMLSelectElement).value as LeadStatus | '');
+  }
+
+  setFilterStage(event: Event): void {
+    this.store.stageId.set((event.target as HTMLSelectElement).value);
+  }
+
+  applyFilters(): void {
+    void this.store.load(true);
+  }
+
+  clearFilters(): void {
+    this.store.query.set('');
+    this.store.status.set('');
+    this.store.stageId.set('');
+    void this.store.load(true);
+  }
+
+  toggleStatus(status: LeadStatus): void {
+    this.store.status.update((current) => (current === status ? '' : status));
+    void this.store.load(true);
+  }
+
+  selectStage(stageId: string): void {
+    this.store.stageId.update((current) => (current === stageId ? '' : stageId));
+    void this.store.load(true);
+  }
+
+  statusCount(status: LeadStatus): number {
+    return this.store.leads().filter((lead) => lead.status === status).length;
+  }
+
+  stageShare(stageId: string): number {
+    const total = this.store.leads().length;
+    return total ? Math.round((this.store.leadsFor(stageId).length / total) * 100) : 0;
+  }
+
+  viewModeLabel(mode: (typeof this.viewModes)[number]): string {
+    return this.i18n.t(
+      mode === 'list'
+        ? 'leads.view.list'
+        : mode === 'gantt'
+          ? 'leads.view.gantt'
+          : 'leads.view.kanban',
+    );
   }
 
   changeStage(lead: Lead, event: Event): void {

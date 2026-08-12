@@ -72,7 +72,7 @@ interface NavItem {
       class="shell"
       [class.nav-collapsed]="collapsed()"
       [class.mobile-open]="mobileOpen()"
-      [class.dashboard-route]="dashboardRoute()"
+      [class.dark-workspace-route]="darkWorkspaceRoute()"
     >
       <header class="topbar">
         <button
@@ -288,7 +288,7 @@ export class AppShellComponent {
   readonly mobileOpen = signal(false);
   readonly mobileViewport = signal(false);
   readonly commandOpen = signal(false);
-  readonly dashboardRoute = signal(false);
+  readonly darkWorkspaceRoute = signal(false);
   readonly searchPending = signal(false);
   readonly searchQuery = signal('');
   readonly searchResults = signal<readonly SearchResult[]>([]);
@@ -328,7 +328,7 @@ export class AppShellComponent {
   private readonly searchTerms = new Subject<string>();
 
   constructor() {
-    this.dashboardRoute.set(this.router.url.startsWith('/dashboard'));
+    this.syncWorkspaceAppearance();
     if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
       const mobileQuery = window.matchMedia('(max-width: 820px)');
       const syncMobileViewport = (matches: boolean) => {
@@ -346,7 +346,7 @@ export class AppShellComponent {
         takeUntilDestroyed(),
       )
       .subscribe(() => {
-        this.dashboardRoute.set(this.router.url.startsWith('/dashboard'));
+        this.syncWorkspaceAppearance();
         this.mobileOpen.set(false);
         // The shell main element is stable across child-route navigation, so
         // it does not need an Angular after-render registration per route.
@@ -371,6 +371,11 @@ export class AppShellComponent {
         this.searchResults.set(results);
         this.searchPending.set(false);
       });
+  }
+
+  private syncWorkspaceAppearance(): void {
+    const url = this.router.url;
+    this.darkWorkspaceRoute.set(url.startsWith('/dashboard') || url.startsWith('/leads'));
   }
 
   readonly initials = () => {

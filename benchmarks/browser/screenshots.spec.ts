@@ -25,6 +25,10 @@ test("captures real application portfolio views", async ({
   await capture(page, testInfo, "contacts-grid", "/contacts", async () => {
     await expect(firstGridDataRow(page)).toBeVisible();
   });
+  await capture(page, testInfo, "leads-workspace", "/leads", async () => {
+    await expect(page.locator(".stage-overview")).toBeVisible();
+    await expect(page.locator(".filter-panel")).toBeVisible();
+  });
   await capture(page, testInfo, "deal-pipeline", "/deals", async () => {
     await expect(page.locator(".deal-card").first()).toBeVisible();
   });
