@@ -58,6 +58,7 @@ func run(logger *slog.Logger) error {
 		Logger:         logger,
 		Concurrency:    cfg.WorkerConcurrency,
 		Handlers:       handlers,
+		BrokerJobKinds: cfg.BrokerJobKinds(),
 	}); err != nil {
 		return err
 	}

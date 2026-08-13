@@ -20,6 +20,7 @@
 ## Next — performance and reliability evidence
 
 - Run and publish the 100-VU stretch profile with the bottleneck and resource limits documented.
+- Compare PostgreSQL-only, Kafka, RabbitMQ, and combined async profiles under identical load before recommending broker adoption.
 - Add long-session browser memory scenarios for tables, boards, chat, mail, and calendar.
 - Verify optional call behavior with two real browsers, denied permissions, reconnects, and cleanup.
 - Repeat bundle, Lighthouse, k6, CPU, RSS, and PostgreSQL query measurements after material changes.

@@ -71,10 +71,25 @@ func (runtime *runtime) fanoutEvent(ctx context.Context, queries *dbgen.Queries,
 	if err != nil {
 		return failure, fmt.Errorf("encode outbox pointer: %w", err)
 	}
-	for _, kind := range fanoutKinds(event.EventType, event.AggregateType, event.Payload) {
+	for _, kind := range append(fanoutKinds(event.EventType, event.AggregateType, event.Payload), runtime.config.BrokerJobKinds...) {
 		jobID, err := ids.NewV7()
 		if err != nil {
 			return failure, fmt.Errorf("generate fanout job ID: %w", err)
+		}
+		jobPayload := pointer
+		if strings.HasPrefix(kind, "broker.") {
+			jobPayload, err = json.Marshal(struct {
+				EventID       string `json:"eventId"`
+				WorkspaceID   string `json:"workspaceId"`
+				EventType     string `json:"eventType"`
+				SchemaVersion int32  `json:"schemaVersion"`
+				AggregateType string `json:"aggregateType"`
+				AggregateID   string `json:"aggregateId"`
+				CorrelationID string `json:"correlationId"`
+			}{eventID.String(), workspaceID.String(), event.EventType, event.SchemaVersion, event.AggregateType, aggregateID.String(), correlationID.String()})
+			if err != nil {
+				return failure, fmt.Errorf("encode broker event pointer: %w", err)
+			}
 		}
 		if err := queries.InsertFanoutJob(ctx, dbgen.InsertFanoutJobParams{
 			WorkspaceID:    event.WorkspaceID,
@@ -82,7 +97,7 @@ func (runtime *runtime) fanoutEvent(ctx context.Context, queries *dbgen.Queries,
 			Kind:           kind,
 			SchemaVersion:  1,
 			IdempotencyKey: eventID.String(),
-			Payload:        pointer,
+			Payload:        jobPayload,
 			MaxAttempts:    runtime.config.MaxAttempts,
 		}); err != nil {
 			return failure, fmt.Errorf("insert %s fanout job: %w", kind, err)

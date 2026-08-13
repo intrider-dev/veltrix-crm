@@ -24,6 +24,8 @@ flowchart TB
   M[SMTP / Mailpit\nопционально]
   S[S3-compatible storage / MinIO\nопционально]
   AI[Ollama- или OpenAI-compatible API\nопционально, выключено]
+  K[Kafka\nопциональный high-throughput профиль]
+  Q[RabbitMQ\nопциональный high-throughput профиль]
   W[Webhook consumers\nявные subscriptions]
 
   U --> C
@@ -32,6 +34,8 @@ flowchart TB
   A -. configured adapter .-> M
   A -. configured adapter .-> S
   A -. provider + явное согласие .-> AI
+  A -. подтверждённые указатели событий .-> K
+  A -. подтверждённые указатели команд .-> Q
   A -->|HMAC-signed delivery| W
 ```
 
@@ -143,6 +147,8 @@ Negative integration tests должны доказывать изоляцию re
 ## Outbox, jobs и real-time
 
 Domain state и outbox event коммитятся одной транзакцией. Dispatcher переводит outbox в durable idempotent jobs для search, notifications, automation и webhooks. Worker использует `FOR UPDATE SKIP LOCKED`, lease, bounded batch/concurrency, handler deadline, exponential backoff, maximum attempts и dead state.
+
+Опциональная high-throughput основа сейчас публикует строгие PII-free указатели outbox после database commit и проверяет подтверждение брокера. PostgreSQL остаётся источником истины, retry scheduler, idempotency ledger и хранилищем SSE replay; доставка выполняется как минимум один раз. Kafka consumers для проекций и RabbitMQ consumers для рабочих задач являются следующим этапом и не выдаются за уже работающий offload. Базовый профиль не запускает брокеры. Решение описано в [ADR 0021](adr/0021-optional-high-throughput-brokers.md), методика измерений — в [BROKER_BENCHMARK.md](BROKER_BENCHMARK.md).
 
 ```mermaid
 flowchart LR

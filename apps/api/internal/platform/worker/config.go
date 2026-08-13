@@ -28,6 +28,7 @@ type Config struct {
 	BackoffMaximum   time.Duration
 	OutboxBatchSize  int32
 	MaxAttempts      int32
+	BrokerJobKinds   []string
 }
 
 func (config Config) normalized() (Config, error) {
@@ -100,6 +101,11 @@ func (config Config) normalized() (Config, error) {
 	}
 	if config.Handlers == nil {
 		config.Handlers = map[string]Handler{}
+	}
+	for _, kind := range config.BrokerJobKinds {
+		if kind != "broker.kafka.publish" && kind != "broker.rabbitmq.publish" {
+			return Config{}, fmt.Errorf("unsupported broker job kind %q", kind)
+		}
 	}
 	return config, nil
 }

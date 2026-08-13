@@ -17,6 +17,7 @@ import (
 	"github.com/veltrixcrm/veltrix-crm/apps/api/internal/app"
 	"github.com/veltrixcrm/veltrix-crm/apps/api/internal/automation"
 	"github.com/veltrixcrm/veltrix-crm/apps/api/internal/identity"
+	"github.com/veltrixcrm/veltrix-crm/apps/api/internal/platform/broker"
 	"github.com/veltrixcrm/veltrix-crm/apps/api/internal/platform/config"
 	"github.com/veltrixcrm/veltrix-crm/apps/api/internal/platform/database"
 	"github.com/veltrixcrm/veltrix-crm/apps/api/internal/platform/webui"
@@ -88,9 +89,36 @@ func run(arguments []string, logger *slog.Logger) error {
 			return fmt.Errorf("worker does not accept arguments")
 		}
 		return runWorker(ctx, cfg, logger)
+	case "broker-smoke":
+		if len(arguments) != 0 {
+			return fmt.Errorf("broker-smoke does not accept arguments")
+		}
+		return runBrokerSmoke(ctx, cfg)
 	default:
-		return fmt.Errorf("unknown command %q; expected serve, bootstrap, migrate, seed, or worker", command)
+		return fmt.Errorf("unknown command %q; expected serve, bootstrap, migrate, seed, worker, or broker-smoke", command)
 	}
+}
+
+func runBrokerSmoke(ctx context.Context, cfg config.Config) error {
+	publishers, err := broker.BuildPublishers(cfg)
+	if err != nil {
+		return err
+	}
+	defer broker.ClosePublishers(publishers)
+	envelope := broker.Envelope{
+		EventID: "018f47d2-2044-7f25-89b0-85bd4c8ad8b4", WorkspaceID: "018f47d2-2044-7f25-89b0-85bd4c8ad8b5",
+		EventType: "platform.broker.smoke", SchemaVersion: broker.SchemaVersion, AggregateType: "workspace",
+		AggregateID: "018f47d2-2044-7f25-89b0-85bd4c8ad8b5", CorrelationID: "018f47d2-2044-7f25-89b0-85bd4c8ad8b4",
+	}
+	if len(publishers) == 0 {
+		return errors.New("broker smoke requires an enabled broker mode")
+	}
+	for destination, publisher := range publishers {
+		if err := publisher.Publish(ctx, envelope); err != nil {
+			return fmt.Errorf("%s smoke publish: %w", destination, err)
+		}
+	}
+	return nil
 }
 
 func serve(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
@@ -150,6 +178,7 @@ func serve(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
 			Logger:         logger,
 			Concurrency:    cfg.WorkerConcurrency,
 			Handlers:       application.WorkerHandlers(),
+			BrokerJobKinds: cfg.BrokerJobKinds(),
 		})
 	}()
 	go automation.RunTriggerProducer(ctx, dispatcherPool, logger, time.Minute)
@@ -233,5 +262,6 @@ func runWorker(ctx context.Context, cfg config.Config, logger *slog.Logger) erro
 		Logger:         logger,
 		Concurrency:    cfg.WorkerConcurrency,
 		Handlers:       handlers,
+		BrokerJobKinds: cfg.BrokerJobKinds(),
 	})
 }

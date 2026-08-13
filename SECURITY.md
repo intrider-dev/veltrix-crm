@@ -38,6 +38,7 @@ The base deployment uses a same-origin Angular SPA, one Go application, and Post
 - Argon2id password hashing and hash-only storage for session, recovery, and API secrets;
 - HttpOnly cookies, CSRF protection, request limits, secure headers, and same-origin operation by default;
 - scoped API keys, signed webhooks, upload validation, encrypted mailbox credentials, and short-lived call grants;
+- authenticated, TLS-verified Kafka/RabbitMQ connections in production, strict PII-free broker envelopes, static operator-owned routing, bounded producers, and at-least-once consumer idempotency;
 - append-oriented audit records that omit passwords, tokens, and secrets.
 
 Security controls and checks continue to evolve before 1.0. Consult [docs/STATE.md](docs/STATE.md), [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md), and [.github/SECURITY_REVIEW_CHECKLIST.md](.github/SECURITY_REVIEW_CHECKLIST.md) for current evidence and open limitations. A clean scanner result alone is not proof of security.

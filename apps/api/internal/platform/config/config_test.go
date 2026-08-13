@@ -214,6 +214,91 @@ func TestCallsLoadAcceptsDevelopmentLiveKit(t *testing.T) {
 	}
 }
 
+func TestBrokerLoadDefaultsToPostgres(t *testing.T) {
+	setMinimumEnvironment(t)
+	cfg, err := Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.BrokerMode != "postgres" || len(cfg.BrokerJobKinds()) != 0 {
+		t.Fatalf("unexpected broker defaults: mode=%q jobs=%v", cfg.BrokerMode, cfg.BrokerJobKinds())
+	}
+}
+
+func TestBrokerLoadRequiresTLSInProduction(t *testing.T) {
+	setMinimumEnvironment(t)
+	t.Setenv("APP_ENV", "production")
+	t.Setenv("SESSION_COOKIE_SECURE", "true")
+	t.Setenv("IDENTITY_ENCRYPTION_KEY_BASE64", "configured")
+	t.Setenv("IDENTITY_ENCRYPTION_KEY_ID", "production-v1")
+	t.Setenv("BROKER_MODE", "combined")
+	t.Setenv("KAFKA_BROKERS", "kafka.internal:9092")
+	t.Setenv("KAFKA_USERNAME", "publisher")
+	t.Setenv("KAFKA_PASSWORD", "secret")
+	t.Setenv("KAFKA_TLS", "false")
+	t.Setenv("RABBITMQ_HOST", "rabbit.internal")
+	t.Setenv("RABBITMQ_USERNAME", "publisher")
+	t.Setenv("RABBITMQ_PASSWORD", "secret")
+	t.Setenv("RABBITMQ_TLS", "true")
+	if _, err := Load(); err == nil || !strings.Contains(err.Error(), "KAFKA_TLS") {
+		t.Fatalf("error = %v, want Kafka TLS rejection", err)
+	}
+
+	t.Setenv("KAFKA_TLS", "true")
+	t.Setenv("RABBITMQ_TLS", "false")
+	if _, err := Load(); err == nil || !strings.Contains(err.Error(), "RABBITMQ_TLS") {
+		t.Fatalf("error = %v, want RabbitMQ TLS rejection", err)
+	}
+}
+
+func TestBrokerLoadRequiresKafkaAuthenticationInProduction(t *testing.T) {
+	setMinimumEnvironment(t)
+	t.Setenv("APP_ENV", "production")
+	t.Setenv("SESSION_COOKIE_SECURE", "true")
+	t.Setenv("IDENTITY_ENCRYPTION_KEY_BASE64", "configured")
+	t.Setenv("IDENTITY_ENCRYPTION_KEY_ID", "production-v1")
+	t.Setenv("BROKER_MODE", "kafka")
+	t.Setenv("KAFKA_BROKERS", "kafka.internal:9093")
+	t.Setenv("KAFKA_TLS", "true")
+	if _, err := Load(); err == nil || !strings.Contains(err.Error(), "KAFKA_USERNAME") {
+		t.Fatalf("error = %v, want Kafka authentication rejection", err)
+	}
+}
+
+func TestBrokerLoadAcceptsBoundedDevelopmentProfile(t *testing.T) {
+	setMinimumEnvironment(t)
+	t.Setenv("BROKER_MODE", "combined")
+	t.Setenv("KAFKA_BROKERS", "kafka:9092")
+	t.Setenv("RABBITMQ_HOST", "rabbitmq")
+	t.Setenv("RABBITMQ_USERNAME", "publisher")
+	t.Setenv("RABBITMQ_PASSWORD", "secret")
+	cfg, err := Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Join(cfg.BrokerJobKinds(), ","); got != "broker.kafka.publish,broker.rabbitmq.publish" {
+		t.Fatalf("broker jobs = %q", got)
+	}
+}
+
+func TestBrokerLoadRejectsCredentialsInEndpoints(t *testing.T) {
+	setMinimumEnvironment(t)
+	t.Setenv("BROKER_MODE", "kafka")
+	t.Setenv("KAFKA_BROKERS", "sasl://user:secret@kafka:9092")
+	if _, err := Load(); err == nil || !strings.Contains(err.Error(), "host:port") {
+		t.Fatalf("error = %v, want credential-bearing Kafka address rejection", err)
+	}
+
+	setMinimumEnvironment(t)
+	t.Setenv("BROKER_MODE", "rabbitmq")
+	t.Setenv("RABBITMQ_HOST", "user:secret@rabbitmq")
+	t.Setenv("RABBITMQ_USERNAME", "publisher")
+	t.Setenv("RABBITMQ_PASSWORD", "secret")
+	if _, err := Load(); err == nil || !strings.Contains(err.Error(), "RABBITMQ_HOST") {
+		t.Fatalf("error = %v, want RabbitMQ URL syntax rejection", err)
+	}
+}
+
 func setMinimumEnvironment(t *testing.T) {
 	t.Helper()
 	t.Setenv("APP_ENV", "development")
@@ -243,4 +328,14 @@ func setMinimumEnvironment(t *testing.T) {
 	t.Setenv("LIVEKIT_API_KEY", "")
 	t.Setenv("LIVEKIT_API_SECRET", "")
 	t.Setenv("LIVEKIT_TOKEN_TTL", "")
+	t.Setenv("BROKER_MODE", "")
+	t.Setenv("KAFKA_BROKERS", "")
+	t.Setenv("KAFKA_USERNAME", "")
+	t.Setenv("KAFKA_PASSWORD", "")
+	t.Setenv("KAFKA_TLS", "")
+	t.Setenv("KAFKA_AUTO_CREATE_TOPICS", "")
+	t.Setenv("RABBITMQ_HOST", "")
+	t.Setenv("RABBITMQ_USERNAME", "")
+	t.Setenv("RABBITMQ_PASSWORD", "")
+	t.Setenv("RABBITMQ_TLS", "")
 }

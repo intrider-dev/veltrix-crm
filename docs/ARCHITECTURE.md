@@ -26,6 +26,8 @@ flowchart TB
   LK[LiveKit\noptional, disabled]
   S[S3-compatible storage / MinIO\noptional]
   AI[Ollama- or OpenAI-compatible API\noptional, disabled]
+  K[Kafka\noptional high-throughput profile]
+  Q[RabbitMQ\noptional high-throughput profile]
   W[Webhook consumers\nexplicit subscriptions]
 
   U --> C
@@ -36,6 +38,8 @@ flowchart TB
   A -. room-scoped token .-> LK
   A -. configured adapter .-> S
   A -. explicit provider + consent .-> AI
+  A -. confirmed event pointers .-> K
+  A -. confirmed command pointers .-> Q
   A -->|HMAC-signed delivery| W
 ```
 
@@ -43,10 +47,11 @@ The base runtime contains only `app` and `postgres`. Dotted integrations are opt
 
 ## Production runtime
 
-One statically compiled Go binary supports four command families:
+One statically compiled Go binary supports five command families:
 
 - `serve`: REST, SSE, embedded SPA, and bounded background work in the default single-node profile;
 - `worker`: the same job/outbox machinery as a separately scalable process;
+- `broker-smoke`: a bounded integration check that requires Kafka and RabbitMQ publisher confirmations;
 - `bootstrap`: a finite deployment step that uses migration credentials, validates migration checksums, applies migrations, and optionally creates the local development seed;
 - other operator commands such as deterministic bulk seeding.
 
@@ -148,6 +153,8 @@ PostgreSQL extensions are limited to `pg_trgm` and built-in full-text capabiliti
 ## Outbox, jobs, and real-time delivery
 
 Domain state and an outbox event commit atomically. The dispatcher claims outbox records and fans them into durable, idempotent jobs for search, notifications, automations, and webhook delivery. Workers use `FOR UPDATE SKIP LOCKED`, leases, bounded batches/concurrency, handler deadlines, exponential backoff, maximum attempts, and a dead state.
+
+The optional high-throughput foundation currently publishes strict, PII-free outbox pointers after the database transaction commits and verifies broker acknowledgements. PostgreSQL remains authoritative for CRM state, retries, idempotency, and SSE replay; broker delivery is at least once. Kafka projection consumers and RabbitMQ workload consumers are the next gated increment and are not presented as implemented offloading. The base profile starts neither broker. See [ADR 0021](adr/0021-optional-high-throughput-brokers.md) and the [broker benchmark protocol](BROKER_BENCHMARK.md).
 
 ```mermaid
 flowchart LR

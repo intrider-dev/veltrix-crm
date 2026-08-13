@@ -23,6 +23,7 @@ VeltrixCRM is in active development. Until the first tagged release, changes are
 
 ### Platform
 
+- Added an optional high-throughput profile with bounded Kafka domain-event publication and RabbitMQ command routing, strict pointer envelopes, publisher confirmations, a local dual-broker smoke scenario, and an explicit comparative benchmark gate. The PostgreSQL-only base profile remains unchanged.
 - Added the Angular SPA, Go modular monolith, OpenAPI contract, PostgreSQL migrations, deterministic seeds, and a two-container production profile.
 - Embedded precompressed SPA assets into a non-root Go runtime image without Node.js.
 - Added PostgreSQL-backed jobs, transactional outbox processing, retry and dead-letter states, and tenant-scoped SSE replay.

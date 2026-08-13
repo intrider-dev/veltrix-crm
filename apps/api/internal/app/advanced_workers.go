@@ -14,6 +14,7 @@ import (
 	"github.com/veltrixcrm/veltrix-crm/apps/api/internal/mailbox"
 	"github.com/veltrixcrm/veltrix-crm/apps/api/internal/notifications"
 	"github.com/veltrixcrm/veltrix-crm/apps/api/internal/platform/brand"
+	"github.com/veltrixcrm/veltrix-crm/apps/api/internal/platform/broker"
 	"github.com/veltrixcrm/veltrix-crm/apps/api/internal/platform/config"
 	"github.com/veltrixcrm/veltrix-crm/apps/api/internal/platform/worker"
 	"github.com/veltrixcrm/veltrix-crm/apps/api/internal/search"
@@ -113,6 +114,13 @@ func BuildWorkerHandlers(
 		}); err != nil {
 			return nil, err
 		}
+	}
+	publishers, publisherErr := broker.BuildPublishers(cfg)
+	if publisherErr != nil {
+		return nil, publisherErr
+	}
+	for destination, publisher := range publishers {
+		workerHandlers["broker."+destination+".publish"] = broker.NewPublishHandler(publisher)
 	}
 	return workerHandlers, nil
 }

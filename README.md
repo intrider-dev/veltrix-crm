@@ -64,6 +64,12 @@ The base profile contains two containers:
 
 Redis, a message broker, a separate search service, and Node.js at runtime are not required.
 
+For workloads where measured asynchronous fan-out begins to contend with request traffic, the optional `high-throughput` foundation provides confirmed Kafka and RabbitMQ publishers for strict post-commit event pointers. PostgreSQL remains the transaction boundary and source of truth. The current local profile verifies both broker deliveries; broker consumers and workload offloading remain planned and no throughput improvement is claimed yet.
+
+```bash
+docker compose --profile high-throughput up --build kafka rabbitmq broker-smoke
+```
+
 ## Measured profile
 
 The following results come from the documented local benchmark profile. They are not hosting guarantees. Hardware, limits, raw results, and known misses are listed in [docs/PERFORMANCE.md](docs/PERFORMANCE.md).
@@ -80,6 +86,7 @@ The following results come from the documented local benchmark profile. They are
 | 50-VU throughput                         | 222.61 operations/s |
 | 50-VU error rate                         |                  0% |
 | App / PostgreSQL median peak memory      |  72.14 / 306.10 MiB |
+| Kafka/RabbitMQ comparative throughput    |        Not measured |
 
 Targets missed in that profile:
 

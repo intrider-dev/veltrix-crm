@@ -41,6 +41,24 @@ type Config struct {
 	MailboxAllowPrivate      bool
 	MaxDBConnections         int32
 	WorkerConcurrency        int
+	BrokerMode               string
+	BrokerPublishTimeout     time.Duration
+	KafkaBrokers             []string
+	KafkaTopic               string
+	KafkaUsername            string
+	KafkaPassword            string
+	KafkaTLS                 bool
+	KafkaMaxBufferedRecords  int
+	KafkaBatchMaxBytes       int32
+	KafkaAutoCreateTopics    bool
+	RabbitMQHost             string
+	RabbitMQPort             int
+	RabbitMQVHost            string
+	RabbitMQUsername         string
+	RabbitMQPassword         string
+	RabbitMQExchange         string
+	RabbitMQRoutingKey       string
+	RabbitMQTLS              bool
 	DemoSeed                 bool
 	DemoEmail                string
 	DemoPassword             string
@@ -129,6 +147,16 @@ func Load() (Config, error) {
 		AIModel:               strings.TrimSpace(os.Getenv("AI_MODEL")),
 		AIAPIKey:              os.Getenv("AI_API_KEY"),
 		CallsProvider:         strings.ToLower(value("CALLS_PROVIDER", "disabled")),
+		BrokerMode:            strings.ToLower(value("BROKER_MODE", "postgres")),
+		KafkaTopic:            value("KAFKA_TOPIC", "veltrix.domain-events.v1"),
+		KafkaUsername:         strings.TrimSpace(os.Getenv("KAFKA_USERNAME")),
+		KafkaPassword:         os.Getenv("KAFKA_PASSWORD"),
+		RabbitMQHost:          strings.TrimSpace(os.Getenv("RABBITMQ_HOST")),
+		RabbitMQVHost:         value("RABBITMQ_VHOST", "veltrix"),
+		RabbitMQUsername:      strings.TrimSpace(os.Getenv("RABBITMQ_USERNAME")),
+		RabbitMQPassword:      os.Getenv("RABBITMQ_PASSWORD"),
+		RabbitMQExchange:      value("RABBITMQ_EXCHANGE", "veltrix.commands.v1"),
+		RabbitMQRoutingKey:    value("RABBITMQ_ROUTING_KEY", "domain.event"),
 		LiveKitPublicURL:      strings.TrimRight(strings.TrimSpace(os.Getenv("LIVEKIT_PUBLIC_URL")), "/"),
 		LiveKitAPIKey:         strings.TrimSpace(os.Getenv("LIVEKIT_API_KEY")),
 		LiveKitAPISecret:      os.Getenv("LIVEKIT_API_SECRET"),
@@ -192,6 +220,36 @@ func Load() (Config, error) {
 	if cfg.LiveKitTokenTTL, err = durationValue("LIVEKIT_TOKEN_TTL", 5*time.Minute); err != nil {
 		return Config{}, err
 	}
+	if cfg.BrokerPublishTimeout, err = durationValue("BROKER_PUBLISH_TIMEOUT", 10*time.Second); err != nil {
+		return Config{}, err
+	}
+	if cfg.KafkaTLS, err = boolValue("KAFKA_TLS", cfg.Environment == "production"); err != nil {
+		return Config{}, err
+	}
+	if cfg.KafkaAutoCreateTopics, err = boolValue("KAFKA_AUTO_CREATE_TOPICS", cfg.Environment != "production"); err != nil {
+		return Config{}, err
+	}
+	if cfg.RabbitMQTLS, err = boolValue("RABBITMQ_TLS", cfg.Environment == "production"); err != nil {
+		return Config{}, err
+	}
+	for _, broker := range strings.Split(os.Getenv("KAFKA_BROKERS"), ",") {
+		if broker = strings.TrimSpace(broker); broker != "" {
+			cfg.KafkaBrokers = append(cfg.KafkaBrokers, broker)
+		}
+	}
+	maxBufferedRecords, err := int32Value("KAFKA_MAX_BUFFERED_RECORDS", 1000, 1, 100000)
+	if err != nil {
+		return Config{}, err
+	}
+	cfg.KafkaMaxBufferedRecords = int(maxBufferedRecords)
+	if cfg.KafkaBatchMaxBytes, err = int32Value("KAFKA_BATCH_MAX_BYTES", 1048576, 1024, 1048576); err != nil {
+		return Config{}, err
+	}
+	rabbitPort, err := int32Value("RABBITMQ_PORT", 5672, 1, 65535)
+	if err != nil {
+		return Config{}, err
+	}
+	cfg.RabbitMQPort = int(rabbitPort)
 	if cfg.AITimeout > time.Minute {
 		return Config{}, errors.New("AI_TIMEOUT must not exceed 1m")
 	}
@@ -259,6 +317,9 @@ func Load() (Config, error) {
 	if err := validateCallsConfig(cfg); err != nil {
 		return Config{}, err
 	}
+	if err := validateBrokerConfig(cfg); err != nil {
+		return Config{}, err
+	}
 	if cfg.Environment == "production" {
 		if cfg.DemoSeed {
 			return Config{}, errors.New("DEMO_SEED must be false in production")
@@ -277,6 +338,78 @@ func Load() (Config, error) {
 		cfg.DatabaseDispatcherURL = cfg.DatabaseURL
 	}
 	return cfg, nil
+}
+
+func validateBrokerConfig(cfg Config) error {
+	switch cfg.BrokerMode {
+	case "postgres":
+		return nil
+	case "kafka", "rabbitmq", "combined":
+	default:
+		return errors.New("BROKER_MODE must be postgres, kafka, rabbitmq, or combined")
+	}
+	if cfg.BrokerPublishTimeout <= 0 || cfg.BrokerPublishTimeout > time.Minute {
+		return errors.New("BROKER_PUBLISH_TIMEOUT must be between 1ns and 1m")
+	}
+	usesKafka := cfg.BrokerMode == "kafka" || cfg.BrokerMode == "combined"
+	usesRabbitMQ := cfg.BrokerMode == "rabbitmq" || cfg.BrokerMode == "combined"
+	if usesKafka {
+		if len(cfg.KafkaBrokers) == 0 {
+			return errors.New("KAFKA_BROKERS is required when Kafka is enabled")
+		}
+		if (cfg.KafkaUsername == "") != (cfg.KafkaPassword == "") {
+			return errors.New("KAFKA_USERNAME and KAFKA_PASSWORD must be configured together")
+		}
+		if cfg.Environment == "production" && !cfg.KafkaTLS {
+			return errors.New("KAFKA_TLS must be true in production")
+		}
+		if cfg.Environment == "production" && (cfg.KafkaUsername == "" || cfg.KafkaPassword == "") {
+			return errors.New("KAFKA_USERNAME and KAFKA_PASSWORD are required in production")
+		}
+		for _, broker := range cfg.KafkaBrokers {
+			if err := validateBrokerAddress(broker); err != nil {
+				return fmt.Errorf("KAFKA_BROKERS contains an invalid address: %w", err)
+			}
+		}
+	}
+	if usesRabbitMQ {
+		if cfg.RabbitMQHost == "" || cfg.RabbitMQUsername == "" || cfg.RabbitMQPassword == "" {
+			return errors.New("RABBITMQ_HOST, RABBITMQ_USERNAME, and RABBITMQ_PASSWORD are required when RabbitMQ is enabled")
+		}
+		if cfg.Environment == "production" && !cfg.RabbitMQTLS {
+			return errors.New("RABBITMQ_TLS must be true in production")
+		}
+		if strings.ContainsAny(cfg.RabbitMQHost, "/@?#") || strings.IndexFunc(cfg.RabbitMQHost, unicode.IsControl) >= 0 {
+			return errors.New("RABBITMQ_HOST must be a hostname without URL syntax")
+		}
+	}
+	return nil
+}
+
+func validateBrokerAddress(address string) error {
+	if strings.Contains(address, "://") || strings.ContainsAny(address, "/@?#") || strings.IndexFunc(address, unicode.IsControl) >= 0 {
+		return errors.New("broker address must use host:port syntax without credentials")
+	}
+	host, port, err := net.SplitHostPort(address)
+	if err != nil || host == "" || port == "" {
+		return errors.New("broker address must use host:port syntax")
+	}
+	parsedPort, err := strconv.Atoi(port)
+	if err != nil || parsedPort < 1 || parsedPort > 65535 {
+		return errors.New("broker port is invalid")
+	}
+	return nil
+}
+
+func (cfg Config) BrokerJobKinds() []string {
+	kinds := make([]string, 0, 2)
+	if cfg.BrokerMode == "kafka" || cfg.BrokerMode == "combined" {
+		kinds = append(kinds, "broker.kafka.publish")
+	}
+	if cfg.BrokerMode == "rabbitmq" || cfg.BrokerMode == "combined" {
+		kinds = append(kinds, "broker.rabbitmq.publish")
+	}
+	return kinds
 }
 
 func validateCallsConfig(cfg Config) error {

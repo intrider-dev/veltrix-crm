@@ -1,5 +1,7 @@
 # Performance report
 
+> Kafka/RabbitMQ comparative throughput: **Not measured**. Dual-broker confirmed-delivery smoke passed on 2026-08-13, but no throughput benefit is claimed until the matrix in [BROKER_BENCHMARK.md](BROKER_BENCHMARK.md) is complete.
+
 Last updated: 2026-07-31
 Evidence status: bundle, Lighthouse, browser interaction, DOM, scrolling, heap, screenshots, E2E, and runtime snapshots were regenerated from the final redesign working tree. The retained serving-performance scenario remains historical evidence for application commit `3b26934ba388b7289c400733a46001d6acae6108`; the clean three-run k6 baseline was executed from documentation-only descendant `feaffdda59244d950578c452beb2a835534e2a68`. Results are not presented as a tagged release.
 
@@ -12,15 +14,15 @@ Evidence status: bundle, Lighthouse, browser interaction, DOM, scrolling, heap, 
 
 ## Measurement environment
 
-| Field | Value |
-| --- | --- |
-| Date | Server baseline: 2026-07-22; redesign browser/bundle: 2026-07-31 |
-| Host | Windows `10.0.26200`, AMD Ryzen 7 9800X3D, 16 logical CPUs, 63.6 GiB usable RAM |
-| Docker | Engine 29.5.3; Compose 5.1.4 |
-| Browser | Headless Chromium 149.0.7827.55 / Chrome 149 for Lighthouse |
-| Database | PostgreSQL 18.4, deterministic synthetic `benchmark` profile |
-| Baseline limits | app: 0.5 CPU / 128 MiB; PostgreSQL: 0.5 CPU / 384 MiB |
-| Load | 50 VUs; 1 minute warm-up plus 5 measured minutes; 3 clean runs |
+| Field           | Value                                                                           |
+| --------------- | ------------------------------------------------------------------------------- |
+| Date            | Server baseline: 2026-07-22; redesign browser/bundle: 2026-07-31                |
+| Host            | Windows `10.0.26200`, AMD Ryzen 7 9800X3D, 16 logical CPUs, 63.6 GiB usable RAM |
+| Docker          | Engine 29.5.3; Compose 5.1.4                                                    |
+| Browser         | Headless Chromium 149.0.7827.55 / Chrome 149 for Lighthouse                     |
+| Database        | PostgreSQL 18.4, deterministic synthetic `benchmark` profile                    |
+| Baseline limits | app: 0.5 CPU / 128 MiB; PostgreSQL: 0.5 CPU / 384 MiB                           |
+| Load            | 50 VUs; 1 minute warm-up plus 5 measured minutes; 3 clean runs                  |
 
 Raw local artifacts are written under `benchmarks/results/` by the documented scripts and are ignored by Git. Portfolio screenshots copied from a successful real-browser run are retained under `docs/screenshots/`.
 
@@ -28,14 +30,14 @@ Raw local artifacts are written under `benchmarks/results/` by the documented sc
 
 Production output was compressed with Node zlib gzip level 9 and Brotli quality 11. Evidence: `benchmarks/results/bundle-report.json`, generated `2026-07-31T18:50:56.374Z`.
 
-| Metric | Measured | Target | Status |
-| --- | ---: | ---: | --- |
-| Initial JS + CSS, Brotli | 90,978 B / 88.8 KiB | ≤350 KiB | Pass |
-| Largest ordinary lazy app chunk, Brotli | 20,397 B / 19.9 KiB | ≤200 KiB | Pass |
-| Lazy AG Grid Community chunk, Brotli | 171,215 B / 167.2 KiB | lazy and documented | Pass |
-| Optional lazy LiveKit client, Brotli | 116,990 B / 114.2 KiB | optional and lazy | Pass |
-| External font references | 0 | 0 | Pass |
-| Inline event handlers | 0 | 0 | Pass |
+| Metric                                  |              Measured |              Target | Status |
+| --------------------------------------- | --------------------: | ------------------: | ------ |
+| Initial JS + CSS, Brotli                |   90,978 B / 88.8 KiB |            ≤350 KiB | Pass   |
+| Largest ordinary lazy app chunk, Brotli |   20,397 B / 19.9 KiB |            ≤200 KiB | Pass   |
+| Lazy AG Grid Community chunk, Brotli    | 171,215 B / 167.2 KiB | lazy and documented | Pass   |
+| Optional lazy LiveKit client, Brotli    | 116,990 B / 114.2 KiB |   optional and lazy | Pass   |
+| External font references                |                     0 |                   0 | Pass   |
+| Inline event handlers                   |                     0 |                   0 | Pass   |
 
 AG Grid and LiveKit are not part of the initial route. The report also verifies that no ordinary lazy chunk exceeds its budget.
 
@@ -43,26 +45,26 @@ AG Grid and LiveKit are not part of the initial route. The report also verifies 
 
 Lighthouse 13.4.1 measured the production-like `/login` route. The official simulated mobile LCP is used for the budget decision; the faster observed trace value is not substituted.
 
-| Metric | Desktop | Mobile | Target | Status |
-| --- | ---: | ---: | ---: | --- |
-| Performance | 100 | 94 | ≥95 / ≥90 | Pass |
-| Accessibility | 100 | 100 | ≥95 | Pass |
-| LCP | 665.55 ms | 2,768.44 ms | mobile ≤2,000 ms | **Miss** |
-| CLS | 0 | 0 | ≤0.05 | Pass |
-| Total blocking time | 0 ms | 13 ms | recorded | Recorded |
+| Metric              |   Desktop |      Mobile |           Target | Status   |
+| ------------------- | --------: | ----------: | ---------------: | -------- |
+| Performance         |       100 |          94 |        ≥95 / ≥90 | Pass     |
+| Accessibility       |       100 |         100 |              ≥95 | Pass     |
+| LCP                 | 665.55 ms | 2,768.44 ms | mobile ≤2,000 ms | **Miss** |
+| CLS                 |         0 |           0 |            ≤0.05 | Pass     |
+| Total blocking time |      0 ms |       13 ms |         recorded | Recorded |
 
 Three browser-performance runs used a fresh authenticated context, warm HTTP cache, blocked service workers for deterministic network accounting, ten warm-up cycles, then twenty list → detail → list cycles. Medians:
 
-| Metric | Median | Target | Status |
-| --- | ---: | ---: | --- |
-| Controlled contact-search interaction | 48.4 ms | ≤150 ms | Pass |
-| Active DOM | 714 nodes | preferably ≤1,500 | Pass |
-| Virtualized grid scrolling | 60 FPS approximate | ≥55 FPS | Pass |
-| Forced-GC JS heap after scenario | 13.48 MiB | preferably ≤200 MiB | Pass |
-| Retained heap growth after 20 cycles | 8.31% | ≤15% | Pass |
-| Dashboard warm navigation | 574.70 ms; 59,514 B transferred | recorded | Recorded |
-| Contacts warm navigation | 619.80 ms; 216,223 B transferred | recorded | Recorded |
-| Browser errors across measured runs | 0 | 0 | Pass |
+| Metric                                |                           Median |              Target | Status   |
+| ------------------------------------- | -------------------------------: | ------------------: | -------- |
+| Controlled contact-search interaction |                          48.4 ms |             ≤150 ms | Pass     |
+| Active DOM                            |                        714 nodes |   preferably ≤1,500 | Pass     |
+| Virtualized grid scrolling            |               60 FPS approximate |             ≥55 FPS | Pass     |
+| Forced-GC JS heap after scenario      |                        13.48 MiB | preferably ≤200 MiB | Pass     |
+| Retained heap growth after 20 cycles  |                            8.31% |                ≤15% | Pass     |
+| Dashboard warm navigation             |  574.70 ms; 59,514 B transferred |            recorded | Recorded |
+| Contacts warm navigation              | 619.80 ms; 216,223 B transferred |            recorded | Recorded |
+| Browser errors across measured runs   |                                0 |                   0 | Pass     |
 
 The FPS value is requestAnimationFrame sampling in headless Chromium, not compositor telemetry. Heap is forced-GC `Runtime.getHeapUsage`, not a dominator-tree snapshot.
 
@@ -70,18 +72,18 @@ The FPS value is requestAnimationFrame sampling in headless Chromium, not compos
 
 `pnpm benchmark` completed three isolated runs and generated `benchmarks/results/k6-baseline-summary.json`. The wrapper exited with status 1 because the read and write thresholds missed; the complete summaries and resource samples were still retained. No run had request errors or interrupted iterations.
 
-| Metric | Run 1 | Run 2 | Run 3 | Reported median | Target | Status |
-| --- | ---: | ---: | ---: | ---: | ---: | --- |
-| Throughput, operations/s | 222.61 | 214.24 | 227.69 | 222.61 | record | Recorded |
-| Error rate | 0% | 0% | 0% | 0% | <0.5% | Pass |
-| Read p95 | 189.09 ms | 194.45 ms | 186.31 ms | 189.09 ms | <150 ms | **Miss** |
-| Read p99 | 201.09 ms | 201.23 ms | 199.86 ms | 201.09 ms | record | Recorded |
-| Write p95 | 283.19 ms | 202.00 ms | 284.10 ms | 283.19 ms | <250 ms | **Miss** |
-| Write p99 | 312.94 ms | 295.61 ms | 339.00 ms | 312.94 ms | record | Recorded |
-| Search p95 | 176.65 ms | 186.94 ms | 100.67 ms | 176.65 ms | <250 ms | Pass |
-| Search p99 | 192.48 ms | 195.15 ms | 190.84 ms | 192.48 ms | record | Recorded |
-| Overall p95 / p99 | 191.59 / 207.09 ms | 194.31 / 201.46 ms | 190.89 / 206.95 ms | 191.59 / 206.95 ms | record | Recorded |
-| Transferred bytes | 704.6 MB | 683.8 MB | 724.5 MB | 704.6 MB | record | Recorded |
+| Metric                   |              Run 1 |              Run 2 |              Run 3 |    Reported median |  Target | Status   |
+| ------------------------ | -----------------: | -----------------: | -----------------: | -----------------: | ------: | -------- |
+| Throughput, operations/s |             222.61 |             214.24 |             227.69 |             222.61 |  record | Recorded |
+| Error rate               |                 0% |                 0% |                 0% |                 0% |   <0.5% | Pass     |
+| Read p95                 |          189.09 ms |          194.45 ms |          186.31 ms |          189.09 ms | <150 ms | **Miss** |
+| Read p99                 |          201.09 ms |          201.23 ms |          199.86 ms |          201.09 ms |  record | Recorded |
+| Write p95                |          283.19 ms |          202.00 ms |          284.10 ms |          283.19 ms | <250 ms | **Miss** |
+| Write p99                |          312.94 ms |          295.61 ms |          339.00 ms |          312.94 ms |  record | Recorded |
+| Search p95               |          176.65 ms |          186.94 ms |          100.67 ms |          176.65 ms | <250 ms | Pass     |
+| Search p99               |          192.48 ms |          195.15 ms |          190.84 ms |          192.48 ms |  record | Recorded |
+| Overall p95 / p99        | 191.59 / 207.09 ms | 194.31 / 201.46 ms | 190.89 / 206.95 ms | 191.59 / 206.95 ms |  record | Recorded |
+| Transferred bytes        |           704.6 MB |           683.8 MB |           724.5 MB |           704.6 MB |  record | Recorded |
 
 One isolated maximum duration reached approximately 64 seconds in each long Docker Desktop run. The same session produced an impossible BuildKit 63.7-second internal step inside a 25.2-second host-wall build, so a Docker Desktop/VM clock discontinuity is suspected, but not proven. The samples remain in the raw artifacts, no percentile was edited, and they did not change p99 or error rate. The 100-VU stretch scenario is **Not measured**.
 
@@ -89,11 +91,11 @@ One isolated maximum duration reached approximately 64 seconds in each long Dock
 
 Median peak values across the three baseline runs:
 
-| Resource | App | PostgreSQL | Status |
-| --- | ---: | ---: | --- |
-| Memory | 72.14 MiB | 306.10 MiB | combined 378.24 MiB; pass the ≤512 MiB aspiration |
-| CPU | 38.09% | 53.78% | recorded under 0.5-CPU limits |
-| PIDs | 9 | 28 | bounded |
+| Resource |       App | PostgreSQL | Status                                            |
+| -------- | --------: | ---------: | ------------------------------------------------- |
+| Memory   | 72.14 MiB | 306.10 MiB | combined 378.24 MiB; pass the ≤512 MiB aspiration |
+| CPU      |    38.09% |     53.78% | recorded under 0.5-CPU limits                     |
+| PIDs     |         9 |         28 | bounded                                           |
 
 A separate post-E2E idle snapshot after 36 minutes of final-image uptime recorded app 12.61 MiB and PostgreSQL 59.74 MiB at 0.19% CPU each; app passed the ≤96 MiB idle target. Readiness log delta was approximately 221 ms, passing the ≤1 second target. These values are single observations, not three-run medians.
 

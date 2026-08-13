@@ -8,23 +8,23 @@ Licenses below describe the upstream projects at the recorded versions and must 
 
 Frontend dependencies are compiled into static assets; Node.js is not present in the production runtime image.
 
-| Dependency                     |   Version | Purpose                                                   | License     |
-| ------------------------------ | --------: | --------------------------------------------------------- | ----------- |
-| `@angular/core`                |    22.0.7 | Standalone components, zoneless runtime, signals, DI      | MIT         |
-| `@angular/common`              |    22.0.7 | HTTP/common directives and platform utilities             | MIT         |
-| `@angular/compiler`            |    22.0.7 | Angular template compilation/runtime metadata             | MIT         |
-| `@angular/forms`               |    22.0.7 | Typed/reactive and signal-form integration                | MIT         |
-| `@angular/platform-browser`    |    22.0.7 | Browser bootstrap/rendering                               | MIT         |
-| `@angular/router`              |    22.0.7 | Route guards and lazy feature boundaries                  | MIT         |
-| `@angular/service-worker`      |    22.0.7 | PWA app shell/update support                              | MIT         |
-| `@angular/material`            |    22.0.5 | Material 3 UI components/tokens                           | MIT         |
-| `@angular/cdk`                 |    22.0.5 | Overlay, drag/drop, a11y, virtualization behavior         | MIT         |
-| `@angular/aria`                |    22.0.5 | Accessible headless interaction primitives                | MIT         |
-| `ag-grid-angular`              |    36.0.1 | Angular adapter for complex lazy lists                    | MIT         |
-| `ag-grid-community`            |    36.0.1 | Community-only grid, selectively registered               | MIT         |
-| `livekit-client`               |    2.20.2 | Lazy-loaded optional WebRTC calls inside authorized chats | Apache-2.0  |
-| `rxjs`                         |     7.8.2 | Cancellable async composition and SSE/Angular integration | Apache-2.0  |
-| `tslib`                        |     2.8.1 | TypeScript runtime helpers                                | Apache-2.0  |
+| Dependency                    |   Version | Purpose                                                   | License     |
+| ----------------------------- | --------: | --------------------------------------------------------- | ----------- |
+| `@angular/core`               |    22.0.7 | Standalone components, zoneless runtime, signals, DI      | MIT         |
+| `@angular/common`             |    22.0.7 | HTTP/common directives and platform utilities             | MIT         |
+| `@angular/compiler`           |    22.0.7 | Angular template compilation/runtime metadata             | MIT         |
+| `@angular/forms`              |    22.0.7 | Typed/reactive and signal-form integration                | MIT         |
+| `@angular/platform-browser`   |    22.0.7 | Browser bootstrap/rendering                               | MIT         |
+| `@angular/router`             |    22.0.7 | Route guards and lazy feature boundaries                  | MIT         |
+| `@angular/service-worker`     |    22.0.7 | PWA app shell/update support                              | MIT         |
+| `@angular/material`           |    22.0.5 | Material 3 UI components/tokens                           | MIT         |
+| `@angular/cdk`                |    22.0.5 | Overlay, drag/drop, a11y, virtualization behavior         | MIT         |
+| `@angular/aria`               |    22.0.5 | Accessible headless interaction primitives                | MIT         |
+| `ag-grid-angular`             |    36.0.1 | Angular adapter for complex lazy lists                    | MIT         |
+| `ag-grid-community`           |    36.0.1 | Community-only grid, selectively registered               | MIT         |
+| `livekit-client`              |    2.20.2 | Lazy-loaded optional WebRTC calls inside authorized chats | Apache-2.0  |
+| `rxjs`                        |     7.8.2 | Cancellable async composition and SSE/Angular integration | Apache-2.0  |
+| `tslib`                       |     2.8.1 | TypeScript runtime helpers                                | Apache-2.0  |
 | `@veltrix-crm/contracts`      | workspace | Generated internal OpenAPI types; not third-party         | Project MIT |
 | `@veltrix-crm/product-config` | workspace | Generated central brand/runtime config                    | Project MIT |
 
@@ -32,19 +32,21 @@ Frontend dependencies are compiled into static assets; Node.js is not present in
 
 ## Production Go dependencies
 
-| Dependency                        |           Version | Purpose                                                     | License      |
-| --------------------------------- | ----------------: | ----------------------------------------------------------- | ------------ |
-| Go standard library               | Go 1.26 toolchain | HTTP, crypto, JSON, logging, embed, streaming, concurrency  | BSD-3-Clause |
-| `github.com/go-chi/chi/v5`        |             5.3.1 | Small HTTP router/middleware composition                    | MIT          |
-| `github.com/emersion/go-imap`     |             1.2.1 | Bounded IMAP mailbox synchronization transport              | MIT          |
-| `github.com/emersion/go-message`  |            0.18.2 | MIME parsing with plain-text-only extraction                | MIT          |
-| `github.com/emersion/go-sasl`     | v0.0.0-20241020182733-b788ff22d5a6 | SMTP authentication mechanism implementation | MIT          |
-| `github.com/emersion/go-smtp`     |            0.24.0 | Bounded TLS/STARTTLS message submission                     | MIT          |
-| `github.com/golang-jwt/jwt/v5`    |             5.3.1 | Short-lived, room-scoped LiveKit participant token signing  | MIT          |
-| `github.com/google/uuid`          |             1.6.0 | UUID parsing/interop; project generation uses UUIDv7 policy | BSD-3-Clause |
-| `github.com/jackc/pgx/v5`         |            5.10.0 | PostgreSQL driver, pool, transactions, typed values         | MIT          |
-| `github.com/oapi-codegen/runtime` |             1.6.0 | OpenAPI parameter/runtime helpers                           | Apache-2.0   |
-| `golang.org/x/crypto`             |            0.54.0 | Argon2id and security primitives not in core stdlib         | BSD-3-Clause |
+| Dependency                        |                            Version | Purpose                                                     | License      |
+| --------------------------------- | ---------------------------------: | ----------------------------------------------------------- | ------------ |
+| Go standard library               |                  Go 1.26 toolchain | HTTP, crypto, JSON, logging, embed, streaming, concurrency  | BSD-3-Clause |
+| `github.com/go-chi/chi/v5`        |                              5.3.1 | Small HTTP router/middleware composition                    | MIT          |
+| `github.com/emersion/go-imap`     |                              1.2.1 | Bounded IMAP mailbox synchronization transport              | MIT          |
+| `github.com/emersion/go-message`  |                             0.18.2 | MIME parsing with plain-text-only extraction                | MIT          |
+| `github.com/emersion/go-sasl`     | v0.0.0-20241020182733-b788ff22d5a6 | SMTP authentication mechanism implementation                | MIT          |
+| `github.com/emersion/go-smtp`     |                             0.24.0 | Bounded TLS/STARTTLS message submission                     | MIT          |
+| `github.com/golang-jwt/jwt/v5`    |                              5.3.1 | Short-lived, room-scoped LiveKit participant token signing  | MIT          |
+| `github.com/google/uuid`          |                              1.6.0 | UUID parsing/interop; project generation uses UUIDv7 policy | BSD-3-Clause |
+| `github.com/jackc/pgx/v5`         |                             5.10.0 | PostgreSQL driver, pool, transactions, typed values         | MIT          |
+| `github.com/oapi-codegen/runtime` |                              1.6.0 | OpenAPI parameter/runtime helpers                           | Apache-2.0   |
+| `golang.org/x/crypto`             |                             0.54.0 | Argon2id and security primitives not in core stdlib         | BSD-3-Clause |
+| `github.com/twmb/franz-go`        |                             1.21.6 | Optional bounded Kafka domain-event publisher               | BSD-3-Clause |
+| `github.com/rabbitmq/amqp091-go`  |                             1.13.0 | Optional AMQP publisher with mandatory confirms             | BSD-2-Clause |
 
 Direct code intentionally avoids an ORM, cache client, broker client, search client, metrics framework, and S3 SDK. The S3-compatible adapter uses bounded standard-library HTTP/SigV4 behavior.
 
@@ -66,7 +68,7 @@ These components are not required for base readiness and have different operatio
 | Mailpit           | `axllent/mailpit:v1.30.4`                          | Local SMTP capture/UI                     | MIT                                    |
 | MinIO             | `quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z` | Optional S3-compatible local object store | AGPL-3.0                               |
 | Ollama            | `ollama/ollama:0.32.1`                             | Optional local AI-compatible endpoint     | MIT (review model licenses separately) |
-| LiveKit           | `livekit/livekit-server:v1.12.0`                   | Optional self-hosted audio/video rooms    | Apache-2.0                              |
+| LiveKit           | `livekit/livekit-server:v1.12.0`                   | Optional self-hosted audio/video rooms    | Apache-2.0                             |
 | Grafana k6        | `grafana/k6:2.1.0`                                 | Benchmark runner, not production          | AGPL-3.0                               |
 
 AI model weights have independent licenses and are not distributed by this repository. OpenAI-compatible endpoints are configuration targets, not bundled dependencies.
