@@ -1,29 +1,54 @@
-# Contributing
+# Contributing to VeltrixCRM
 
-Thank you for helping build a resource-conscious, multi-tenant Sales CRM. Contributions should be focused, testable, accessible, and explicit about security and performance trade-offs.
+VeltrixCRM is in active development. Focused bug fixes, tests, documentation improvements, and complete feature slices are welcome. Large changes should begin with a design discussion so that database, API, interface, localization, security, and performance work stay aligned.
 
-## Before starting
+## Before you start
 
-For a small bug, open or reference an issue and keep the patch narrow. For a schema, API, architecture, dependency, or user-flow change, start a discussion or design issue before investing in a large implementation. Security vulnerabilities follow `SECURITY.md`, not the public issue tracker.
-
-Read `docs/STATE.md`, `docs/ARCHITECTURE.md`, and the relevant ADRs before changing architecture or behavior. Existing files and unrelated work must be preserved.
+- Read [docs/STATE.md](docs/STATE.md), [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [DESIGN.md](DESIGN.md), and the relevant ADRs.
+- Use the public issue tracker for defects and proposals. Report security problems privately as described in [SECURITY.md](SECURITY.md).
+- Keep a change narrow. Preserve unrelated files and existing user work.
+- Do not include real customer data, credentials, or private logs.
 
 ## Local setup
 
-Requirements are a recent Docker/Compose installation for the production-like path, or the exact Node.js, pnpm, Go, and PostgreSQL versions pinned by the repository for native development.
+For the production-like path, install Docker with Compose v2:
 
 ```sh
 cp .env.example .env
-corepack pnpm install --frozen-lockfile
-corepack pnpm generate:contracts
 docker compose up --build
 ```
 
-Use synthetic data only. The documented demo credentials are for local development and must never be enabled in production.
+For native development, use the Node.js, pnpm, Go, and PostgreSQL versions pinned in the repository:
 
-## Canonical checks
+```sh
+corepack pnpm install --frozen-lockfile
+corepack pnpm generate:contracts
+```
 
-Run the smallest relevant checks while iterating, then the complete applicable gate before requesting review:
+The documented demo credentials are for local development only. Never enable the demo seed in production.
+
+## Development rules
+
+### Backend and data
+
+- Keep the Go backend a modular monolith. Modules communicate through explicit interfaces.
+- Every tenant-owned access path needs an application guard and a forced-RLS path with transaction-local workspace context.
+- Start workspace indexes with `workspace_id`; use parameterized SQL and cursor pagination for large collections.
+- Generate shared types from OpenAPI. Do not maintain a second handwritten contract.
+- Use idempotency keys for duplicate-prone mutations and versions or ETags for concurrent edits.
+- Bound request bodies, uploads, queues, caches, connections, worker concurrency, and SSE replay.
+
+### Frontend and content
+
+- Use standalone zoneless Angular, strict TypeScript, signals, OnPush change detection, and lazy routes.
+- Use the shared Material/CDK/Aria component layer and the rules in [DESIGN.md](DESIGN.md).
+- Keep authentication tokens out of browser storage. Do not add external fonts, Tailwind, a second general UI kit, `ag-grid-enterprise`, Moment.js, or full Lodash.
+- Put every visible string in the typed localization catalog. English is the source locale; Russian must remain complete.
+- Preserve placeholders and plural forms. User-authored CRM content is translated only through the explicit workspace translation flow.
+
+## Tests
+
+Run the smallest relevant checks while working, then the complete applicable gate before requesting review:
 
 ```sh
 corepack pnpm lint
@@ -34,29 +59,20 @@ corepack pnpm test:e2e
 corepack pnpm build
 ```
 
-Database, E2E, Docker, Lighthouse, security, and benchmark checks require their documented services and tools. If a check cannot run, state the exact command, failure reason, and remaining uncertainty in the pull request; never report it as passed.
+Add regression coverage where practical. Authorization, tenant isolation, idempotency, retries, uploads, and webhook signatures require negative cases. Interface changes should cover keyboard use, focus, localization, error states, and narrow viewports.
 
-## Architecture boundaries
+If a check cannot run, record the exact command, failure reason, and remaining uncertainty. Do not describe an unexecuted check as successful.
 
-- Keep the Go backend a modular monolith; modules communicate through explicit interfaces rather than reaching into each other’s internal tables.
-- Every tenant-owned table and index follows the workspace-first/RLS rules. Add negative cross-tenant tests for every new access path.
-- API contracts originate in OpenAPI. Run contract generation and commit deterministic generated output.
-- Large lists use cursor pagination; mutations that can duplicate use idempotency keys; concurrent edits use versions or ETags.
-- Keep runtime queues, caches, connections, uploads, request bodies, SSE replay, and worker concurrency bounded.
-- Do not add Redis, a broker, or a search cluster to the required base profile.
+## Performance evidence
 
-## Frontend and localization
-
-Use standalone zoneless Angular, signals, OnPush change detection, route-level lazy loading, Material/CDK/Aria, and accessible keyboard/focus behavior. Do not add Tailwind, an external font, a second UI kit, `ag-grid-enterprise`, Moment.js, full Lodash, or browser-stored auth tokens.
-
-English is the source locale and Russian must remain complete. Every user-visible string uses a typed catalog key. Add or change messages in the source catalogs, update all required locales, preserve placeholders, regenerate catalogs, and run `corepack pnpm check:i18n`. User-authored CRM content is not silently translated.
-
-## Tests and evidence
-
-Tests should fail for the regression before the fix where practical. Include unit tests plus integration/E2E coverage proportional to risk. Tenant isolation, authorization, idempotency, retries, and webhook signatures require negative cases.
-
-Performance changes need comparable methodology, raw artifacts, multiple runs, and median/p95/p99 where applicable. Do not publish a best single run or compare named competitors without authorized, reproducible measurements.
+Performance changes need comparable inputs, fixed limits, raw artifacts, multiple runs, and median/p95/p99 where applicable. Do not publish a best single run. Do not claim comparisons with another product without authorized measurements under the same documented protocol.
 
 ## Pull requests
 
-Use a Conventional Commit-style title, keep generated and unrelated formatting changes out of the patch, complete the pull request template, and make reviewable commits. By contributing, you agree that your contribution is licensed under the repository’s MIT license.
+- Use a short Conventional Commit-style title that describes the change.
+- Keep generated files deterministic and commit them with the source change.
+- Separate unrelated changes into reviewable commits.
+- Complete the pull request template and list every check actually run.
+- Update documentation and `docs/STATE.md` when behavior, limitations, or measured results change.
+
+Contributions are accepted under the repository's [MIT license](LICENSE).

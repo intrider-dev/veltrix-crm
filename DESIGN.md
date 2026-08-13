@@ -1,11 +1,12 @@
-# VeltrixCRM product design system
+# VeltrixCRM design system
 
-Status: approved direction for the next interface revision
+**Status: implemented and evolving during active development.**
 
-Direction name: **Veltrix Signal**
-Last updated: 2026-07-31
+Direction: **Veltrix Signal**
 
-This document is the source of truth for product interface decisions. It translates the visual energy of the public FluxCRM dashboard concept into an original, accessible, high-density sales workspace. It is not a license to copy FluxCRM assets, layouts, brand marks, or distinctive decorative shapes.
+Last updated: 2026-08-13
+
+This document defines the interface rules for VeltrixCRM. New screens should reuse these tokens, components, layouts, and interaction patterns. Visual references inform the product direction but never authorize copying another product's assets, brand marks, or distinctive artwork.
 
 ## 1. Product experience
 
@@ -28,7 +29,7 @@ Use progressive disclosure. A seller should be able to scan and act without open
 
 ### Character
 
-The interface should feel optimistic, crisp, calm, and purposeful. It uses the following FluxCRM-inspired ideas:
+The interface should feel focused, crisp, calm, and purposeful. Its foundation is:
 
 - a light neutral canvas rather than a blue-gray admin template;
 - strong black or deep-green typography;
@@ -39,7 +40,7 @@ The interface should feel optimistic, crisp, calm, and purposeful. It uses the f
 - clean tables and compact contextual toolbars;
 - responsive layouts designed as real mobile workspaces.
 
-Do not copy the following traits from the visual reference:
+Avoid:
 
 - its logo, font, icon artwork, card cut-outs, diagonal card patterns, or exact palette;
 - oversized pill navigation for the whole product;
@@ -94,39 +95,39 @@ All values must be exposed through semantic CSS variables. Feature styles must n
 
 Light theme:
 
-| Token | Value | Use |
-| --- | --- | --- |
-| `--color-canvas` | `#f4f6f3` | Application background |
-| `--color-surface` | `#ffffff` | Primary work surface |
-| `--color-surface-subtle` | `#edf1ed` | Side navigation, grouped controls |
-| `--color-surface-hover` | `#e7ece8` | Hover and passive selection |
-| `--color-text` | `#17211e` | Primary text |
-| `--color-text-muted` | `#5f6d67` | Secondary text |
-| `--color-border` | `#d8dfda` | Dividers and control borders |
-| `--color-anchor` | `#174b40` | Primary action and selected navigation |
-| `--color-anchor-hover` | `#0f3d34` | Primary action hover |
-| `--color-signal` | `#9bea69` | Attention accent with dark text |
-| `--color-signal-soft` | `#e7fbd9` | Selected and positive tonal surface |
-| `--color-danger` | `#b4232f` | Destructive actions and errors |
-| `--color-warning` | `#9a5b00` | Risk and overdue state |
-| `--color-success` | `#197448` | Confirmed positive state |
-| `--color-info` | `#2866b1` | Neutral information |
+| Token                    | Value     | Use                                    |
+| ------------------------ | --------- | -------------------------------------- |
+| `--color-canvas`         | `#f4f6f3` | Application background                 |
+| `--color-surface`        | `#ffffff` | Primary work surface                   |
+| `--color-surface-subtle` | `#edf1ed` | Side navigation, grouped controls      |
+| `--color-surface-hover`  | `#e7ece8` | Hover and passive selection            |
+| `--color-text`           | `#17211e` | Primary text                           |
+| `--color-text-muted`     | `#5f6d67` | Secondary text                         |
+| `--color-border`         | `#d8dfda` | Dividers and control borders           |
+| `--color-anchor`         | `#174b40` | Primary action and selected navigation |
+| `--color-anchor-hover`   | `#0f3d34` | Primary action hover                   |
+| `--color-signal`         | `#9bea69` | Attention accent with dark text        |
+| `--color-signal-soft`    | `#e7fbd9` | Selected and positive tonal surface    |
+| `--color-danger`         | `#b4232f` | Destructive actions and errors         |
+| `--color-warning`        | `#9a5b00` | Risk and overdue state                 |
+| `--color-success`        | `#197448` | Confirmed positive state               |
+| `--color-info`           | `#2866b1` | Neutral information                    |
 
 Dark theme:
 
-| Token | Value | Use |
-| --- | --- | --- |
-| `--color-canvas` | `#0e1512` | Application background |
-| `--color-surface` | `#161f1b` | Primary work surface |
-| `--color-surface-subtle` | `#1d2924` | Side navigation, grouped controls |
-| `--color-surface-hover` | `#26342e` | Hover and passive selection |
-| `--color-text` | `#f2f6f3` | Primary text |
-| `--color-text-muted` | `#a9b6b0` | Secondary text |
-| `--color-border` | `#2d3b35` | Dividers and control borders |
-| `--color-anchor` | `#9bea69` | Primary action with dark text |
-| `--color-anchor-hover` | `#b0f284` | Primary action hover |
-| `--color-signal` | `#9bea69` | Attention accent |
-| `--color-signal-soft` | `#213b2a` | Selected and positive tonal surface |
+| Token                    | Value     | Use                                 |
+| ------------------------ | --------- | ----------------------------------- |
+| `--color-canvas`         | `#0e1512` | Application background              |
+| `--color-surface`        | `#161f1b` | Primary work surface                |
+| `--color-surface-subtle` | `#1d2924` | Side navigation, grouped controls   |
+| `--color-surface-hover`  | `#26342e` | Hover and passive selection         |
+| `--color-text`           | `#f2f6f3` | Primary text                        |
+| `--color-text-muted`     | `#a9b6b0` | Secondary text                      |
+| `--color-border`         | `#2d3b35` | Dividers and control borders        |
+| `--color-anchor`         | `#9bea69` | Primary action with dark text       |
+| `--color-anchor-hover`   | `#b0f284` | Primary action hover                |
+| `--color-signal`         | `#9bea69` | Attention accent                    |
+| `--color-signal-soft`    | `#213b2a` | Selected and positive tonal surface |
 
 Semantic colors must be tested in context. Normal text must reach 4.5:1 contrast; large text, icons, focus indicators, and meaningful control boundaries must reach at least 3:1.
 
@@ -135,19 +136,25 @@ Semantic colors must be tested in context. Normal text must reach 4.5:1 contrast
 No remote fonts. Use:
 
 ```css
-font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+font-family:
+  ui-sans-serif,
+  system-ui,
+  -apple-system,
+  BlinkMacSystemFont,
+  "Segoe UI",
+  sans-serif;
 ```
 
-| Token | Size / line-height | Weight | Use |
-| --- | --- | --- | --- |
-| Display | `32px / 38px` | 650 | Dashboard or major workspace heading |
-| Page title | `28px / 34px` | 650 | Route title |
-| Section title | `18px / 24px` | 650 | Major section |
-| Card title | `15px / 20px` | 600 | Card or panel heading |
-| Body | `14px / 20px` | 400 | Default UI text |
-| Body strong | `14px / 20px` | 600 | Names and key values |
-| Meta | `12px / 16px` | 400 | Dates, counts, supporting text |
-| Control | `14px / 18px` | 600 | Buttons and selected tabs |
+| Token         | Size / line-height | Weight | Use                                  |
+| ------------- | ------------------ | ------ | ------------------------------------ |
+| Display       | `32px / 38px`      | 650    | Dashboard or major workspace heading |
+| Page title    | `28px / 34px`      | 650    | Route title                          |
+| Section title | `18px / 24px`      | 650    | Major section                        |
+| Card title    | `15px / 20px`      | 600    | Card or panel heading                |
+| Body          | `14px / 20px`      | 400    | Default UI text                      |
+| Body strong   | `14px / 20px`      | 600    | Names and key values                 |
+| Meta          | `12px / 16px`      | 400    | Dates, counts, supporting text       |
+| Control       | `14px / 18px`      | 600    | Buttons and selected tabs            |
 
 Use sentence case. Avoid all-caps navigation and excessive bold text. Russian text must remain readable without reducing the font size.
 
@@ -167,12 +174,12 @@ Base unit: 4px.
 
 ### Shape and depth
 
-| Token | Value | Use |
-| --- | --- | --- |
-| `--radius-control` | `10px` | Buttons, inputs, selects |
-| `--radius-panel` | `14px` | Cards and drawers |
-| `--radius-overlay` | `16px` | Dialogs and floating menus |
-| `--radius-pill` | `999px` | Tags, badges, segmented selection only |
+| Token              | Value   | Use                                    |
+| ------------------ | ------- | -------------------------------------- |
+| `--radius-control` | `10px`  | Buttons, inputs, selects               |
+| `--radius-panel`   | `14px`  | Cards and drawers                      |
+| `--radius-overlay` | `16px`  | Dialogs and floating menus             |
+| `--radius-pill`    | `999px` | Tags, badges, segmented selection only |
 
 Circles are reserved for avatars and icon-only controls. Standard buttons, selects, inputs, cards, and containers must not become pills by accident.
 
@@ -216,15 +223,15 @@ Toolbars must use stable zones and must not form broken multi-line rows. At narr
 
 ### Semantic view matrix
 
-| Entity | Default | Additional views | Explicit exclusion |
-| --- | --- | --- | --- |
-| Contacts | Table + preview | Saved filtered lists | Kanban and Gantt |
-| Companies | Table + preview | Saved filtered lists | Kanban and Gantt |
-| Leads | Table + preview | Stage board | Decorative Gantt without meaningful dates |
-| Deals | Pipeline board | Table, forecast timeline | Project-style dependency Gantt |
-| Projects | List | Board, calendar, dependency Gantt | Sales pipeline semantics |
-| Tasks | My work list | Board, calendar, dependency Gantt when scheduled | Revenue forecast semantics |
-| Activities | Agenda | Calendar, timeline | Generic Kanban |
+| Entity     | Default         | Additional views                                 | Explicit exclusion                        |
+| ---------- | --------------- | ------------------------------------------------ | ----------------------------------------- |
+| Contacts   | Table + preview | Saved filtered lists                             | Kanban and Gantt                          |
+| Companies  | Table + preview | Saved filtered lists                             | Kanban and Gantt                          |
+| Leads      | Table + preview | Stage board                                      | Decorative Gantt without meaningful dates |
+| Deals      | Pipeline board  | Table, forecast timeline                         | Project-style dependency Gantt            |
+| Projects   | List            | Board, calendar, dependency Gantt                | Sales pipeline semantics                  |
+| Tasks      | My work list    | Board, calendar, dependency Gantt when scheduled | Revenue forecast semantics                |
+| Activities | Agenda          | Calendar, timeline                               | Generic Kanban                            |
 
 View, filters, sorting, saved view, density, and selected record must be reflected in URL or persisted view state so switching views does not reset the user's work.
 

@@ -1,36 +1,36 @@
-# Roadmap
+# VeltrixCRM roadmap
 
-The roadmap describes intended outcomes, not promises or completed functionality. Verified status belongs in `docs/STATE.md`; measured performance belongs in `docs/PERFORMANCE.md`.
+**Status: active development.** This roadmap describes intended outcomes, not delivery dates or completed work. The verified implementation state is maintained in [docs/STATE.md](docs/STATE.md); measured results belong in [docs/PERFORMANCE.md](docs/PERFORMANCE.md).
 
-## 0.1 — complete production vertical slice
+## Current focus — pre-1.0 stabilization
 
-- Login/session security, workspace selection, RBAC, application guards, and forced PostgreSQL RLS.
-- Dashboard, contacts, companies, deals/pipeline, activities, audit trail, real migrations, deterministic demo/small seeds, and an end-to-end user path.
-- English/Russian UI and system messages, user/workspace locale settings, typed catalogs, and translator checks.
-- Two-container production-like Compose path with embedded, precompressed SPA assets and no Node.js in runtime.
-- Unit, PostgreSQL integration, Playwright smoke, accessibility, bundle, and security gates.
+- Resolve critical and high findings from hosted security, container, dependency, and race checks.
+- Finish server-backed message delivery/read receipts and improve long-conversation navigation.
+- Replace wide assignment selectors with a searchable, accessible user-and-department combobox.
+- Exercise upgrade, backup, restore, and rollback procedures against clean and populated databases.
+- Keep English and Russian catalogs complete as workflows and validation messages change.
 
-## 0.2 — core Sales CRM workflows
+## Next — operational completeness
 
-- Complete contacts/companies/leads/deals/pipelines with custom fields, saved views, bulk actions, duplicate merge, CSV import/export, and cursor-driven lists.
-- Tasks, meetings, calls, notes, comments, reminders, calendar/ICS, notifications over SSE, global PostgreSQL search, dashboards, reports, and forecast views.
-- Translation workflow documentation and additional locale proof-of-process without machine-translating user content.
+- Complete edge cases for duplicate merging, CSV error recovery, bulk operations, recurring tasks, and saved views.
+- Expand calendar scheduling, reminders, mailbox failure recovery, webhook rotation, and automation diagnostics.
+- Improve pipeline forecasting and reporting without introducing unverified or cross-currency aggregates.
+- Add documented administrator workflows for roles, stage permissions, departments, and content translation.
 
-## 0.3 — bounded advanced capabilities
+## Next — performance and reliability evidence
 
-- Idempotent automation engine, PostgreSQL jobs/outbox, retries/dead letters, execution previews, and recursion/rate safeguards.
-- Scoped hash-only API keys, signed/replay-resistant webhooks, streaming attachments, optional SMTP/S3 adapters, invitations, password reset, and TOTP MFA.
-- Optional, disabled-by-default AI provider interface with explicit external-PII consent.
-- PWA app shell and explicitly bounded offline drafts.
+- Run and publish the 100-VU stretch profile with the bottleneck and resource limits documented.
+- Add long-session browser memory scenarios for tables, boards, chat, mail, and calendar.
+- Verify optional call behavior with two real browsers, denied permissions, reconnects, and cleanup.
+- Repeat bundle, Lighthouse, k6, CPU, RSS, and PostgreSQL query measurements after material changes.
 
-## 0.4 — hardening and reproducible evidence
+## Version 1.0 criteria
 
-- Independent tenant/security/maintainability reviews and fixes for critical/high findings.
-- SQL/bundle/CPU/RSS/browser-heap profiling, memory-leak scenarios, Lighthouse/accessibility checks, baseline and stretch k6 runs, and documented missed budgets.
-- Backup/restore exercises, container hardening, SBOM/vulnerability evidence, and failure/recovery tests.
+- A clean clone builds and starts through the documented two-container path.
+- Supported migrations, upgrades, backup, and restore procedures have reproducible evidence.
+- Core sales, collaboration, administration, localization, and tenant-isolation paths pass the required test matrix.
+- Security and performance reports describe both passing targets and known misses.
+- Public documentation matches the shipped behavior and contains no placeholder results.
+- A support and compatibility policy is based on actual release capacity.
 
-## 1.0 — documented stable release candidate
-
-- Clean-clone verification, production-like migration/seed/user flow, screenshots from the running product, bilingual README/case study, threat model, benchmark methodology/results, and release notes.
-- No undocumented core TODOs, fake metrics, fabricated screenshots, or unverified competitor claims.
-- A support policy based on actual maintainer capacity and release history.
+Priorities may change when a security issue, data-integrity defect, or reproducible performance regression is found.

@@ -1,24 +1,27 @@
 # VeltrixCRM
 
-Self-hosted sales CRM for teams that want one application, one PostgreSQL database, and full control over their data.
+Self-hosted sales CRM for teams that want to keep customer data and day-to-day sales work in one system.
 
-VeltrixCRM covers contacts, companies, leads, deals, tasks, projects, calendars, team chat, reporting, automations, mail, and workspace administration. The default deployment runs as two containers: the application and PostgreSQL.
+> **Status: active development.** The product is usable for local evaluation, but interfaces, migrations, and deployment behavior may change before version 1.0. Review the current limitations before using it with production data.
 
-[Русская версия](README.ru.md)
+[Русская версия](README.ru.md) · [Current state](docs/STATE.md) · [Roadmap](ROADMAP.md)
 
 ![VeltrixCRM dashboard](docs/screenshots/dashboard-dark-1440x900.png)
 
-## What is included
+## Scope
 
-- Workspaces, invitations, departments, custom roles, resource permissions, and TOTP MFA.
-- Contacts and companies with custom fields, tags, saved views, bulk actions, duplicate handling, CSV import/export, trash, and restore.
-- Leads and deals with configurable pipelines, stage permissions, assignments, conversion, and list, Kanban, and Gantt views.
-- Tasks and projects with deadlines, responsible users or departments, watchers, files, and discussions.
-- Month, week, and day calendars with workspace, department, and personal events plus ICS export.
-- Team and record chats with files, reactions, pins, voice/video messages, delivery state, and optional LiveKit calls.
-- Personal mailbox connections through IMAP/SMTP with encrypted credentials.
-- Dashboard, reports, PostgreSQL full-text/trigram search, notifications over SSE, audit log, automations, API keys, and signed webhooks.
-- English and Russian interface catalogs plus workspace content translation.
+VeltrixCRM currently brings together:
+
+- contacts, companies, leads, deals, pipelines, tasks, projects, and calendars;
+- workspace membership, departments, configurable roles, stage permissions, and TOTP MFA;
+- custom fields, tags, saved views, bulk actions, duplicate handling, and CSV import/export;
+- list, Kanban, and timeline views for sales work;
+- record discussions and team chat with files, reactions, pins, and recorded media;
+- optional LiveKit calls and personal IMAP/SMTP mailboxes;
+- dashboards, reports, PostgreSQL search, SSE notifications, audit history, automations, API keys, and signed webhooks;
+- complete English and Russian interface catalogs and workspace content translations.
+
+The implementation and verification status of each area is recorded in [docs/STATE.md](docs/STATE.md).
 
 ## Quick start
 
@@ -36,33 +39,34 @@ Copy-Item .env.example .env
 docker compose up --build
 ```
 
-Open <http://127.0.0.1:8080>.
-
-Development credentials:
+Open <http://127.0.0.1:8080> and sign in with the local demo account:
 
 ```text
 Email: admin@demo.local
 Password: Demo123!
 ```
 
-The demo account is created only when `DEMO_SEED` is enabled. Disable it and replace all example secrets outside local development.
+The account is created only when `DEMO_SEED` is enabled. Disable it and replace every example secret outside local development.
 
-## Deployment
+## Deployment model
 
 ```mermaid
 flowchart LR
   Browser[Angular SPA] -->|REST and SSE| App[Go application]
   App --> PostgreSQL[(PostgreSQL 18)]
-  App -. optional .-> Services[SMTP / S3 / LiveKit / external providers]
+  App -. optional .-> Services[SMTP / S3 / LiveKit]
 ```
 
-The application binary serves the API, SSE connections, background workers, and precompressed SPA assets. PostgreSQL stores CRM data, row-level security policies, search documents, outbox events, and background jobs. Redis, a message broker, and a separate search service are not required.
+The base profile contains two containers:
 
-The runtime image is based on `scratch`, runs as a non-root user, contains no Node.js, and uses a read-only filesystem apart from configured upload and temporary mounts.
+1. a non-root Go application serving the API, SSE, workers, and embedded precompressed SPA assets;
+2. PostgreSQL for CRM data, row-level security, search, the outbox, and background jobs.
+
+Redis, a message broker, a separate search service, and Node.js at runtime are not required.
 
 ## Measured profile
 
-These figures come from the documented local test profile, not from a hosted production deployment. Hardware, container limits, raw methodology, misses, and caveats are in [docs/PERFORMANCE.md](docs/PERFORMANCE.md).
+The following results come from the documented local benchmark profile. They are not hosting guarantees. Hardware, limits, raw results, and known misses are listed in [docs/PERFORMANCE.md](docs/PERFORMANCE.md).
 
 | Metric                                   |              Result |
 | ---------------------------------------- | ------------------: |
@@ -77,13 +81,13 @@ These figures come from the documented local test profile, not from a hosted pro
 | 50-VU error rate                         |                  0% |
 | App / PostgreSQL median peak memory      |  72.14 / 306.10 MiB |
 
-Known misses in that profile:
+Targets missed in that profile:
 
-- Simulated mobile LCP: 2.77 s against a 2.0 s target.
-- Read p95: 189.09 ms against a 150 ms target.
-- Write p95: 283.19 ms against a 250 ms target.
+- simulated mobile LCP: 2.77 s against a 2.0 s target;
+- read p95: 189.09 ms against a 150 ms target;
+- write p95: 283.19 ms against a 250 ms target.
 
-No competitor results are claimed. A repeatable comparison procedure is available in [docs/COMPETITOR_BENCHMARK_PROTOCOL.md](docs/COMPETITOR_BENCHMARK_PROTOCOL.md).
+No competitor results are claimed. The repository contains a [manual comparison protocol](docs/COMPETITOR_BENCHMARK_PROTOCOL.md) for authorized measurements.
 
 ## Commands
 
@@ -92,7 +96,7 @@ No competitor results are claimed. A repeatable comparison procedure is availabl
 | `pnpm bootstrap`        | Install pinned dependencies and generate contracts             |
 | `pnpm dev`              | Start the frontend development server                          |
 | `pnpm build`            | Build the SPA, bundle report, compressed assets, and Go server |
-| `pnpm lint`             | Run frontend, Go, localization, and forbidden-import checks    |
+| `pnpm lint`             | Check frontend, Go, localization, and forbidden imports        |
 | `pnpm typecheck`        | Run strict Angular compilation                                 |
 | `pnpm test`             | Run Go and Angular unit tests                                  |
 | `pnpm test:integration` | Run tests against PostgreSQL                                   |
@@ -102,35 +106,35 @@ No competitor results are claimed. A repeatable comparison procedure is availabl
 | `pnpm benchmark`        | Run the three-pass baseline benchmark                          |
 | `pnpm check`            | Run the main local quality gate                                |
 
-## Repository layout
+## Repository map
 
 ```text
 apps/web/                  Angular SPA
 apps/api/                  Go server, SQL, migrations, OpenAPI
-packages/contracts/        TypeScript API contracts
+packages/contracts/        Generated TypeScript API contracts
 packages/i18n/             English source and translated catalogs
-packages/product-config/   Central product configuration
-benchmarks/                k6 and browser scenarios
+packages/product-config/   Central product and brand configuration
+benchmarks/                Load and browser scenarios
 infra/                     Container build and runtime files
 scripts/                   Build, database, and benchmark commands
 docs/                      Architecture, operations, security, and evidence
 ```
 
-## Security model
+## Security
 
-Every tenant-owned operation is checked by application authorization and PostgreSQL forced RLS. Tenant context is transaction-local. Passwords use Argon2id; session, API, and recovery secrets are stored as hashes. Browser authentication uses HttpOnly cookies and CSRF protection. Uploads, webhooks, mailbox connections, and call tokens have separate validation and authorization boundaries.
+Tenant-owned operations are checked by application authorization and PostgreSQL forced RLS with transaction-local workspace context. Passwords use Argon2id. Session, recovery, and API secrets are stored as hashes. Browser authentication uses HttpOnly cookies and CSRF protection.
 
-Read [SECURITY.md](SECURITY.md) before deployment and report vulnerabilities through its private disclosure process. The current trust boundaries are documented in [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md).
+Read [SECURITY.md](SECURITY.md) before deployment. The trust boundaries and known risks are documented in [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md).
 
 ## Documentation
 
 - [Architecture](docs/ARCHITECTURE.md)
+- [Design system](DESIGN.md)
 - [Case study](docs/CASE_STUDY.md)
 - [Performance report](docs/PERFORMANCE.md)
 - [Benchmark methodology](docs/BENCHMARK_METHODOLOGY.md)
 - [Localization guide](docs/LOCALIZATION.md)
-- [Current project state](docs/STATE.md)
-- [Roadmap](ROADMAP.md)
+- [Contribution guide](CONTRIBUTING.md)
 
 ## License
 

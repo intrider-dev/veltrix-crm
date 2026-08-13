@@ -1,71 +1,44 @@
-# Contributor Covenant Code of Conduct
+# Code of conduct
 
-## Our pledge
+## Our commitment
 
-We as members, contributors, and leaders pledge to make participation in our community a harassment-free experience for everyone, regardless of age, body size, visible or invisible disability, ethnicity, sex characteristics, gender identity and expression, level of experience, education, socio-economic status, nationality, personal appearance, race, caste, color, religion, or sexual identity and orientation.
+We are committed to a professional, welcoming, and harassment-free community for everyone, regardless of age, body size, disability, ethnicity, sex characteristics, gender identity or expression, experience, education, socioeconomic status, nationality, appearance, race, caste, color, religion, or sexual identity and orientation.
 
-We pledge to act and interact in ways that contribute to an open, welcoming, diverse, inclusive, and healthy community.
+## Expected behavior
 
-## Our standards
+- Treat people with respect and empathy.
+- Discuss ideas and code without attacking the person behind them.
+- Give specific, constructive feedback and accept it in good faith.
+- Acknowledge mistakes, repair their impact where possible, and learn from them.
+- Respect privacy, consent, and the security boundaries of other people and systems.
+- Keep public discussions useful to the project and its community.
 
-Examples of behavior that contributes to a positive environment include:
+## Unacceptable behavior
 
-- demonstrating empathy and kindness toward other people;
-- respecting differing opinions, viewpoints, and experiences;
-- giving and gracefully accepting constructive feedback;
-- accepting responsibility and apologizing to those affected by our mistakes;
-- focusing on what is best for the overall community.
-
-Examples of unacceptable behavior include:
-
-- sexualized language or imagery, and sexual attention or advances of any kind;
-- trolling, insulting or derogatory comments, and personal or political attacks;
-- public or private harassment;
-- publishing others’ private information without explicit permission;
-- other conduct that could reasonably be considered inappropriate in a professional setting.
-
-## Enforcement responsibilities
-
-Community leaders are responsible for clarifying and enforcing acceptable behavior and may remove, edit, or reject comments, commits, code, issues, and other contributions that do not align with this Code of Conduct. They will communicate moderation reasons when appropriate and respect the privacy and security of reporters.
+- Harassment, threats, intimidation, stalking, or sustained disruption.
+- Sexualized language, imagery, attention, or advances.
+- Insults, derogatory comments, trolling, or personal and political attacks.
+- Publishing private information without explicit permission.
+- Retaliation against someone who reports a concern.
+- Conduct that would reasonably be considered inappropriate in a professional setting.
 
 ## Scope
 
-This Code of Conduct applies within all community spaces and when an individual officially represents the community in public spaces.
+This code applies in repository discussions, issues, pull requests, reviews, community channels, and public situations where someone represents the project.
 
-## Enforcement
+## Reporting and enforcement
 
-Report abusive, harassing, or otherwise unacceptable behavior privately to a maintainer using the contact method on the repository owner’s GitHub profile. If no private maintainer channel is available, use GitHub’s Report Abuse flow. Do not post sensitive reports publicly. Security vulnerabilities follow `SECURITY.md`.
+Report conduct concerns privately to a maintainer using the contact method on the repository owner's GitHub profile. If no private maintainer channel is available, use GitHub's Report Abuse flow. Security vulnerabilities follow [SECURITY.md](SECURITY.md).
 
-All reports will be reviewed and investigated fairly and in context. Community leaders must protect the reporter’s privacy and avoid conflicts of interest. No fixed response SLA is claimed while the project is maintained by volunteers.
+Reports will be reviewed fairly and in context. Maintainers will protect the reporter's privacy, avoid conflicts of interest, and may remove content or restrict participation when necessary. No fixed response SLA is promised while the project is maintained by volunteers.
 
-## Enforcement guidelines
+Possible consequences, depending on impact and recurrence, include:
 
-Community leaders will follow these Community Impact Guidelines when determining consequences:
-
-### 1. Correction
-
-**Community impact:** Use of inappropriate language or other behavior deemed unprofessional or unwelcome.
-
-**Consequence:** A private, written warning explaining the violation and expected behavior; a public apology may be requested.
-
-### 2. Warning
-
-**Community impact:** A violation through a single incident or series of actions.
-
-**Consequence:** A warning with consequences for continued behavior and no interaction with involved people for a specified period.
-
-### 3. Temporary ban
-
-**Community impact:** A serious violation or sustained inappropriate behavior.
-
-**Consequence:** A temporary ban from community interaction and public communication for a specified period.
-
-### 4. Permanent ban
-
-**Community impact:** A pattern of violations, harassment, aggression toward individuals, or disparagement of protected groups.
-
-**Consequence:** A permanent ban from public interaction within the community.
+1. a private correction and explanation of the expected behavior;
+2. a formal warning and temporary limits on interaction;
+3. a temporary ban from project spaces;
+4. a permanent ban for severe or repeated violations.
 
 ## Attribution
 
-This Code of Conduct is adapted from the [Contributor Covenant, version 2.1](https://www.contributor-covenant.org/version/2/1/code_of_conduct.html). Community Impact Guidelines were inspired by [Mozilla’s code of conduct enforcement ladder](https://github.com/mozilla/diversity).
+This policy is based on the [Contributor Covenant 2.1](https://www.contributor-covenant.org/version/2/1/code_of_conduct.html) and its Community Impact Guidelines.

@@ -61,10 +61,11 @@ Last updated: 2026-08-13
 - Hardened the redesigned interaction layer after independent review: mobile navigation and modal drawers trap and restore focus; Escape closes the active layer; chat media responses are generation-guarded; message regions and upload controls have assistive semantics; responsive call controls wrap; and the visible own-message check is explicitly labeled as accepted by the CRM rather than delivered/read.
 - Renewed real application screenshots and the final working-tree browser evidence. The complete Playwright matrix now reports 110 passed and 4 viewport-specific skips, with no asserted browser/page errors and no WCAG 2.2 A/AA violations on the covered routes.
 - Rebuilt login, development registration, and password recovery around one responsive dark authentication shell with centralized EN/RU copy, accessible language selection, a 2026 footer, CSS-only artwork, and no unsupported provider, trust-logo, or testimonial claims. The authenticated shell now applies the same purple-accented dark surface system to every feature route.
+- Reworked every root Markdown document into one consistent project set and made the active-development status explicit in both README versions, the roadmap, the security policy, and the changelog.
 
 ## Current phase
 
-Phase 5 - redesign implemented and locally verified; ready for repository publication.
+Active development - the redesigned product is locally verified, while pre-1.0 stabilization and hosted checks continue.
 
 ## Next actions
 

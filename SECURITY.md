@@ -1,37 +1,43 @@
 # Security policy
 
-Security defects, especially tenant-isolation or authentication failures, should be reported privately. Do not open a public issue before maintainers have had a reasonable opportunity to investigate and release a fix.
+VeltrixCRM is in active pre-1.0 development. Only the latest commit on `main` is currently eligible for security fixes. This policy does not certify an unpublished build for production use.
 
-## Supported versions
+## Report a vulnerability
 
-The project is currently in pre-release development. Until the first tagged stable release, only the latest commit on `main` is eligible for security fixes. A version support table will be added when releases exist; this file does not imply that an unpublished build is production-certified.
+Use **Report a vulnerability** on the repository's Security tab. If private vulnerability reporting is unavailable, contact the repository owner privately through the address shown on their GitHub profile.
 
-## Private reporting
+Do not open a public issue for an unpatched vulnerability. Do not include credentials, secrets, or real CRM records in the initial report.
 
-Use GitHub’s **Report a vulnerability** form under the repository Security tab (private vulnerability reporting). If that feature is unavailable, contact the repository owner privately through the contact method shown on their GitHub profile. Do not send secrets or real CRM records in the initial report.
+Include, with synthetic data where possible:
 
-Include, using synthetic data where possible:
-
-- affected commit or release;
-- impact and attacker prerequisites;
+- the affected commit or release;
+- the impact and attacker prerequisites;
 - minimal reproduction steps;
-- whether tenant boundaries, authentication, authorization, uploads, webhooks, or data integrity are involved;
+- the affected boundary, such as authentication, authorization, tenant isolation, uploads, webhooks, or data integrity;
 - sanitized logs and request IDs;
-- a proposed mitigation, if known.
+- a suggested mitigation, if known.
 
-Maintainers will acknowledge receipt, assess severity and affected versions, coordinate a fix and disclosure, and credit the reporter if requested. Exact response or release timing depends on impact and maintainer availability, so no fixed SLA is claimed.
+Receipt will be acknowledged, severity and affected versions will be assessed, and disclosure will be coordinated with the reporter. Timing depends on impact and maintainer availability; no fixed response SLA is promised.
 
-## Disclosure expectations
+## Research boundaries
 
-- Keep reports and proof-of-concept details private until a coordinated disclosure date is agreed.
-- Test only systems and workspaces you own or are explicitly authorized to assess.
-- Avoid persistence, denial of service, social engineering, automated third-party CRM access, and access to other users’ data.
-- Stop after demonstrating the minimum impact and delete any accidentally obtained data.
+- Test only systems and workspaces you own or have explicit permission to assess.
+- Stop after demonstrating the minimum necessary impact.
+- Do not use persistence, denial of service, social engineering, or automated access to third-party CRM systems.
+- Do not access another person's data. Delete any data obtained accidentally.
+- Keep reproduction details private until a disclosure date is agreed.
 
-Good-faith research that follows these constraints will not be treated as malicious by project maintainers. This statement is not a substitute for authorization from a deployment owner and does not waive applicable law.
+Good-faith research within these boundaries will not be treated as malicious by the maintainers. This statement does not replace authorization from a deployment owner or waive applicable law.
 
-## Project security model
+## Security model
 
-The base deployment uses a same-origin Angular SPA, one Go application binary, and PostgreSQL. Tenant isolation is enforced by application authorization and forced PostgreSQL RLS with transaction-local context. Sensitive tokens are stored as hashes, production sessions use secure cookies, and the default deployment does not require Redis, a broker, or an external search service.
+The base deployment uses a same-origin Angular SPA, one Go application, and PostgreSQL. Important boundaries include:
 
-The implementation and CI are still subject to verification. See `docs/STATE.md`, `docs/THREAT_MODEL.md`, and `.github/SECURITY_REVIEW_CHECKLIST.md` for current evidence and open limits; absence of a scanner finding is not proof of security.
+- application authorization plus forced PostgreSQL RLS for tenant-owned data;
+- transaction-local workspace context on pooled database connections;
+- Argon2id password hashing and hash-only storage for session, recovery, and API secrets;
+- HttpOnly cookies, CSRF protection, request limits, secure headers, and same-origin operation by default;
+- scoped API keys, signed webhooks, upload validation, encrypted mailbox credentials, and short-lived call grants;
+- append-oriented audit records that omit passwords, tokens, and secrets.
+
+Security controls and checks continue to evolve before 1.0. Consult [docs/STATE.md](docs/STATE.md), [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md), and [.github/SECURITY_REVIEW_CHECKLIST.md](.github/SECURITY_REVIEW_CHECKLIST.md) for current evidence and open limitations. A clean scanner result alone is not proof of security.
