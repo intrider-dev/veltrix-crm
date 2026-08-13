@@ -1,0 +1,18 @@
+{
+  "addParticipant": "Add participant",
+  "chooseSubject": "Choose a user or department",
+  "department": "Department",
+  "empty": "No responsible users or watchers yet.",
+  "kind": "Role",
+  "kind.responsible": "Responsible",
+  "kind.watcher": "Watcher",
+  "makePrimary": "Primary responsible",
+  "manage": "Assignments",
+  "primary": "Primary",
+  "removeLabel": "Remove {name}",
+  "saved": "Assignments updated.",
+  "subject": "User or department",
+  "subtitle": "Responsible users can act on the record; watchers follow its collaboration.",
+  "title": "Responsible and watchers",
+  "user": "User"
+}

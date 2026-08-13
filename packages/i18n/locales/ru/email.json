@@ -1,0 +1,4 @@
+{
+  "passwordReset.body": "Мы получили запрос на сброс пароля {productName}. Откройте ссылку, чтобы продолжить:\n\n{resetUrl}\n\nСсылка действует {expiresMinutes} минут. Если вы не отправляли запрос, просто проигнорируйте это письмо.",
+  "passwordReset.subject": "Сброс пароля {productName}"
+}

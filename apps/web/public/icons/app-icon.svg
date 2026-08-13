@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="VeltrixCRM">
+  <defs>
+    <linearGradient id="surface" x1="8" y1="56" x2="56" y2="8" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#123d33"/>
+      <stop offset="1" stop-color="#267764"/>
+    </linearGradient>
+    <linearGradient id="spark" x1="40" y1="13" x2="54" y2="27" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#d7ffad"/>
+      <stop offset="1" stop-color="#8eea5a"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#surface)"/>
+  <path d="M13.5 17h9.2l9.5 24.5L42.1 17h9.1L36.4 50h-8.8L13.5 17Z" fill="#fff"/>
+  <path d="m41.7 12.9 11.4 11.4m0-11.4L41.7 24.3" fill="none" stroke="url(#spark)" stroke-width="4" stroke-linecap="round"/>
+</svg>

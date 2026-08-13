@@ -1,0 +1,41 @@
+name: Performance regression
+description: Report a reproducible latency, memory, CPU, bundle, or browser regression.
+title: "perf: "
+labels: [performance, needs-triage]
+body:
+  - type: markdown
+    attributes:
+      value: Measurements need comparable conditions. Do not submit a best single run.
+  - type: textarea
+    id: scenario
+    attributes:
+      label: Scenario and dataset
+      description: Include the exact script, route/action, seed profile, warm/cold state, and number of runs.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment and limits
+      description: Commit, OS, CPU, RAM, Docker/browser versions, container limits, locale, and network conditions.
+    validations:
+      required: true
+  - type: textarea
+    id: measurements
+    attributes:
+      label: Measurements
+      description: Report median, p95, p99, throughput/error rate, RSS/CPU, bytes, or bundle size as applicable.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Raw evidence
+      description: Link or attach sanitized k6 summaries, traces, HAR, profiles, and Docker stats.
+    validations:
+      required: true
+  - type: textarea
+    id: baseline
+    attributes:
+      label: Comparable baseline
+      description: Give the earlier commit and results measured with the same methodology.

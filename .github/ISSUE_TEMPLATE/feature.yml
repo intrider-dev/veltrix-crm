@@ -1,0 +1,44 @@
+name: Feature request
+description: Propose a focused Sales CRM capability or improvement.
+title: "feat: "
+labels: [enhancement, needs-triage]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: User problem
+      description: Who has the problem, in which workflow, and what outcome is blocked?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed outcome
+      description: Describe behavior and acceptance criteria, not only an implementation.
+    validations:
+      required: true
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Primary scope
+      options:
+        - Identity or tenancy
+        - Contacts or companies
+        - Leads, deals, or pipelines
+        - Activities or collaboration
+        - Automation or integrations
+        - Reporting or search
+        - Localization or accessibility
+        - Performance or operations
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Security, performance, and localization considerations
+      description: Note tenant boundaries, permissions, dataset size, translated content, and resource impact.
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Include simpler workflows or standard APIs that could solve the same problem.

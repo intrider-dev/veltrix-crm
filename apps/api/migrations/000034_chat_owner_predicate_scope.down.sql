@@ -1,0 +1,1 @@
+-- No-op: rollback is consolidated in 000027_chat_calls_rls_hardening.down.sql.

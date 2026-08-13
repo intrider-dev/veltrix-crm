@@ -1,0 +1,200 @@
+:host {
+  --workspace-surface: var(--color-surface, var(--surface-raised));
+  --workspace-subtle: var(--color-surface-subtle, var(--surface-subtle));
+  --workspace-hover: var(--color-surface-hover, var(--surface-selected));
+  --workspace-border: var(--color-border, var(--border));
+  --workspace-anchor: var(--color-anchor, var(--brand));
+}
+
+.projects-page {
+  max-width: none;
+}
+
+.page-header {
+  align-items: flex-end;
+  margin-bottom: 0.25rem;
+}
+
+.page-header p {
+  max-width: 48rem;
+}
+
+.project-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(20rem, 100%), 1fr));
+  gap: 0.75rem;
+}
+
+.project-card {
+  display: grid;
+  gap: 0.75rem;
+  min-height: 12.5rem;
+  padding: 1rem;
+  border-color: var(--workspace-border);
+  border-radius: var(--radius-panel, 0.875rem);
+  color: inherit;
+  background: var(--workspace-surface);
+  text-decoration: none;
+  transition: border-color 140ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.project-card:focus-visible {
+  outline: 2px solid var(--workspace-anchor);
+  outline-offset: 2px;
+}
+
+.project-card header,
+.project-card footer,
+.create-drawer > header,
+.drawer-actions,
+.date-grid {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.project-mark {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  place-items: center;
+  border-radius: var(--radius-control, 0.625rem);
+  color: var(--workspace-anchor);
+  background: var(--color-signal-soft, var(--brand-soft));
+}
+
+.project-card h2 {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.project-card p {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.project-card footer {
+  margin-top: auto;
+  padding-top: 0.75rem;
+  border-top: 1px solid color-mix(in srgb, var(--workspace-border) 72%, transparent);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.status-pill {
+  border-color: var(--workspace-border);
+  background: var(--workspace-subtle);
+}
+
+.drawer-scrim {
+  position: fixed;
+  z-index: 70;
+  inset: 0;
+  border: 0;
+  background: rgb(4 9 20 / 38%);
+}
+
+.create-drawer {
+  position: fixed;
+  z-index: 80;
+  inset: 0 0 0 auto;
+  width: min(34rem, 100%);
+  overflow: auto;
+  padding: 1.25rem;
+  border-left: 1px solid var(--workspace-border);
+  background: var(--workspace-surface);
+  box-shadow: var(--shadow-xl);
+}
+
+.create-drawer h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.create-drawer form {
+  display: grid;
+  margin-top: 1rem;
+}
+
+.date-grid > * {
+  flex: 1;
+  min-width: 0;
+}
+
+.native-field select {
+  min-height: var(--control-height, 2.5rem);
+  border-radius: var(--radius-control, 0.625rem);
+}
+
+.drawer-actions {
+  justify-content: flex-end;
+}
+
+.form-error {
+  margin-bottom: 1rem;
+  padding: 0.75rem 0.85rem;
+  border-left: 3px solid var(--danger);
+  border-radius: var(--radius-control, 0.625rem);
+  color: var(--danger);
+  background: var(--danger-surface);
+}
+
+.field-error {
+  margin: -0.5rem 0 0.85rem 1rem;
+  color: var(--danger);
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .project-card:hover {
+    border-color: color-mix(in srgb, var(--workspace-anchor) 38%, var(--workspace-border));
+    background: color-mix(in srgb, var(--workspace-hover) 50%, var(--workspace-surface));
+  }
+}
+
+@media (max-width: 640px) {
+  .page-header {
+    align-items: stretch;
+  }
+
+  .page-header > button {
+    width: 100%;
+  }
+
+  .project-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .date-grid {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .project-card footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .project-card {
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .project-card,
+  .status-pill {
+    border: 1px solid CanvasText;
+  }
+}

@@ -1,0 +1,299 @@
+<div class="page settings-feature">
+  <header class="page-header">
+    <div>
+      <h1>{{ i18n.t('integrations.webhooks.title') }}</h1>
+      <p>{{ i18n.t('integrations.webhooks.subtitle') }}</p>
+    </div>
+  </header>
+
+  @if (!permissions.allows('settings.write')) {
+    <div class="error-panel" role="alert">{{ i18n.t('integrations.permission') }}</div>
+  } @else {
+    @if (store.error()) {
+      <app-error-panel [error]="store.error()" (retry)="store.load()" />
+    }
+    @if (validationError()) {
+      <div class="error-panel" role="alert">
+        {{ i18n.t('integrations.webhooks.invalidUrl') }}
+      </div>
+    }
+
+    <section class="panel editor" [attr.aria-labelledby]="'webhook-create-title'">
+      <h2 id="webhook-create-title">{{ i18n.t('integrations.webhooks.createTitle') }}</h2>
+      <form (submit)="create($event)" novalidate>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ i18n.t('integrations.webhooks.url') }}</mat-label>
+          <input matInput inputmode="url" autocomplete="url" [formField]="webhookForm.url" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ i18n.t('integrations.webhooks.events') }}</mat-label>
+          <input matInput autocomplete="off" [formField]="webhookForm.eventTypes" />
+          <mat-hint>{{ i18n.t('integrations.webhooks.eventsHint') }}</mat-hint>
+        </mat-form-field>
+        <button mat-flat-button type="submit" [disabled]="store.saving()">
+          {{ i18n.t(store.saving() ? 'integrations.webhooks.saving' : 'common.action.create') }}
+        </button>
+      </form>
+    </section>
+
+    @if (store.revealedSecret(); as secret) {
+      <section class="secret-panel" role="status" aria-live="polite">
+        <div>
+          <strong>{{
+            i18n.t(
+              secret.reason === 'created'
+                ? 'integrations.webhooks.secretCreated'
+                : 'integrations.webhooks.secretRotated'
+            )
+          }}</strong>
+          <p>
+            {{ i18n.t('integrations.secretOnce') }}
+            <span class="secret-endpoint">{{ safeWebhookUrl(secret.subscriptionUrl) }}</span>
+          </p>
+        </div>
+        <code>{{ secret.value }}</code>
+        <div class="secret-actions">
+          <button mat-stroked-button type="button" (click)="copySecret(secret.value)">
+            {{
+              i18n.t(
+                copyState() === 'copied'
+                  ? 'integrations.webhooks.secretCopied'
+                  : 'integrations.webhooks.copySecret'
+              )
+            }}
+          </button>
+          <button mat-button type="button" (click)="closeSecret()">
+            {{ i18n.t('common.action.close') }}
+          </button>
+        </div>
+        @if (copyState() === 'failed') {
+          <p class="copy-help" role="alert">
+            {{ i18n.t('integrations.webhooks.copyFailed') }}
+          </p>
+        }
+      </section>
+    }
+
+    <section class="panel webhook-list" [attr.aria-busy]="store.loading()">
+      <div class="section-heading">
+        <div>
+          <h2>{{ i18n.t('integrations.webhooks.subscriptionsTitle') }}</h2>
+          <p>{{ i18n.t('integrations.webhooks.subscriptionsHint') }}</p>
+        </div>
+      </div>
+      @if (store.loading()) {
+        <div class="list-skeleton" aria-hidden="true">
+          <div class="skeleton"></div>
+          <div class="skeleton"></div>
+        </div>
+        <span class="visually-hidden" role="status">{{ i18n.t('common.app.loading') }}</span>
+      } @else {
+        @for (webhook of store.subscriptions(); track webhook.id) {
+          <article>
+            <div class="subscription-details">
+              <h3>{{ safeWebhookUrl(webhook.url) }}</h3>
+              <p>{{ webhook.eventTypes.join(', ') }}</p>
+              <small>
+                {{
+                  i18n.t('integrations.webhooks.secretVersion', {
+                    version: webhook.secretVersion,
+                  })
+                }}
+                ·
+                {{
+                  i18n.t('integrations.webhooks.deliveryPolicy', {
+                    attempts: webhook.maxAttempts,
+                    seconds: webhook.timeoutSeconds,
+                  })
+                }}
+              </small>
+            </div>
+            <button
+              mat-stroked-button
+              type="button"
+              [disabled]="store.isMutatingSubscription(webhook.id)"
+              [attr.aria-pressed]="webhook.enabled"
+              (click)="store.toggle(webhook)"
+            >
+              {{ i18n.t(webhook.enabled ? 'common.status.active' : 'common.status.inactive') }}
+            </button>
+            @if (rotationConfirmation() === webhook.id) {
+              <div class="rotation-confirmation" role="group">
+                <span>{{ i18n.t('integrations.webhooks.rotateConfirm') }}</span>
+                <button
+                  mat-flat-button
+                  type="button"
+                  [disabled]="store.isMutatingSubscription(webhook.id)"
+                  (click)="confirmRotation(webhook)"
+                >
+                  {{ i18n.t('integrations.webhooks.rotate') }}
+                </button>
+                <button mat-button type="button" (click)="cancelRotation()">
+                  {{ i18n.t('common.action.cancel') }}
+                </button>
+              </div>
+            } @else {
+              <button mat-button type="button" (click)="requestRotation(webhook.id)">
+                {{ i18n.t('integrations.webhooks.rotate') }}
+              </button>
+            }
+          </article>
+        } @empty {
+          <div class="empty-state">{{ i18n.t('integrations.webhooks.empty') }}</div>
+        }
+      }
+    </section>
+
+    <section class="panel delivery-log" [attr.aria-busy]="store.deliveriesLoading()">
+      <div class="section-heading delivery-toolbar">
+        <div>
+          <h2>{{ i18n.t('integrations.webhooks.deliveries.title') }}</h2>
+          <p>{{ i18n.t('integrations.webhooks.deliveries.subtitle') }}</p>
+        </div>
+        <label class="native-field">
+          <span>{{ i18n.t('integrations.webhooks.deliveries.filter') }}</span>
+          <select
+            [value]="store.selectedSubscriptionId() ?? ''"
+            (change)="selectSubscription($event)"
+          >
+            <option value="">{{ i18n.t('integrations.webhooks.deliveries.all') }}</option>
+            @for (webhook of store.subscriptions(); track webhook.id) {
+              <option [value]="webhook.id">{{ safeWebhookUrl(webhook.url) }}</option>
+            }
+          </select>
+        </label>
+      </div>
+
+      @if (store.deliveryError()) {
+        <div class="delivery-error">
+          <app-error-panel [error]="store.deliveryError()" (retry)="store.load()" />
+        </div>
+      }
+
+      @if (store.deliveriesLoading()) {
+        <div class="list-skeleton" aria-hidden="true">
+          <div class="skeleton"></div>
+          <div class="skeleton"></div>
+          <div class="skeleton"></div>
+        </div>
+        <span class="visually-hidden" role="status">{{ i18n.t('common.app.loading') }}</span>
+      } @else if (store.deliveries().length === 0) {
+        <div class="empty-state">{{ i18n.t('integrations.webhooks.deliveries.empty') }}</div>
+      } @else {
+        <div class="delivery-table-wrap">
+          <table>
+            <caption class="visually-hidden">
+              {{
+                i18n.t('integrations.webhooks.deliveries.caption')
+              }}
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">{{ i18n.t('integrations.webhooks.deliveries.endpoint') }}</th>
+                <th scope="col">{{ i18n.t('integrations.webhooks.deliveries.statusLabel') }}</th>
+                <th scope="col">{{ i18n.t('integrations.webhooks.deliveries.attempts') }}</th>
+                <th scope="col">{{ i18n.t('integrations.webhooks.deliveries.response') }}</th>
+                <th scope="col">{{ i18n.t('integrations.webhooks.deliveries.time') }}</th>
+                <th scope="col">
+                  <span class="visually-hidden">{{
+                    i18n.t('integrations.webhooks.deliveries.actions')
+                  }}</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (delivery of store.deliveries(); track delivery.id) {
+                <tr>
+                  <td>
+                    <strong>{{
+                      safeWebhookUrl(store.subscriptionUrl(delivery.subscriptionId))
+                    }}</strong>
+                    <small>
+                      {{ i18n.t('integrations.webhooks.deliveries.event') }}
+                      <code>{{ delivery.eventId }}</code>
+                    </small>
+                  </td>
+                  <td>
+                    <span
+                      class="status-pill"
+                      [class.status-dead]="delivery.status === 'dead'"
+                      [class.status-delivered]="delivery.status === 'delivered'"
+                    >
+                      {{ i18n.t(statusKey(delivery.status)) }}
+                    </span>
+                  </td>
+                  <td>{{ delivery.attempts }}</td>
+                  <td class="response-cell">
+                    @if (delivery.responseStatus) {
+                      <strong
+                        >{{ i18n.t('integrations.webhooks.deliveries.http') }}
+                        {{ delivery.responseStatus }}</strong
+                      >
+                    }
+                    @if (safeDeliverySummary(delivery.responseSummary); as summary) {
+                      <span>{{ summary }}</span>
+                    } @else if (delivery.lastErrorCode) {
+                      <code>{{ delivery.lastErrorCode }}</code>
+                    } @else {
+                      <span class="muted">{{
+                        i18n.t('integrations.webhooks.deliveries.noResponse')
+                      }}</span>
+                    }
+                  </td>
+                  <td>
+                    @let moment = deliveryTime(delivery);
+                    <span>{{ moment.label }}</span>
+                    <time [attr.datetime]="moment.value">
+                      {{
+                        i18n.date(moment.value, {
+                          dateStyle: 'medium',
+                          timeStyle: 'short',
+                        })
+                      }}
+                    </time>
+                  </td>
+                  <td class="delivery-action">
+                    @if (store.canRetry(delivery)) {
+                      <button
+                        mat-stroked-button
+                        type="button"
+                        [disabled]="store.retryingDeliveryIds().has(delivery.id)"
+                        (click)="store.retryDelivery(delivery)"
+                      >
+                        {{
+                          i18n.t(
+                            store.retryingDeliveryIds().has(delivery.id)
+                              ? 'integrations.webhooks.deliveries.retryingAction'
+                              : 'integrations.webhooks.deliveries.retry'
+                          )
+                        }}
+                      </button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        @if (store.nextCursor()) {
+          <div class="load-more">
+            <button
+              mat-stroked-button
+              type="button"
+              [disabled]="store.loadingMore()"
+              (click)="store.loadMoreDeliveries()"
+            >
+              {{
+                i18n.t(
+                  store.loadingMore()
+                    ? 'common.app.loading'
+                    : 'integrations.webhooks.deliveries.loadMore'
+                )
+              }}
+            </button>
+          </div>
+        }
+      }
+    </section>
+  }
+</div>

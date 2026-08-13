@@ -1,0 +1,4 @@
+{
+  "passwordReset.body": "We received a request to reset your {productName} password. Open this link to continue:\n\n{resetUrl}\n\nThe link expires in {expiresMinutes} minutes. If you did not request this, you can ignore this email.",
+  "passwordReset.subject": "Reset your {productName} password"
+}

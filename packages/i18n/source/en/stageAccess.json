@@ -1,0 +1,17 @@
+{
+  "empty": "No configurable roles are available.",
+  "enter": "Enter",
+  "enterLabel": "Allow {role} to move records into this stage",
+  "inheritance": "With no explicit rules, the stage inherits the normal lead or deal permission. Owners and administrators always retain access.",
+  "leave": "Leave",
+  "leaveLabel": "Allow {role} to move records out of this stage",
+  "restrict": "Rule",
+  "restrictLabel": "Set an explicit rule for {role}",
+  "role": "Role",
+  "saved": "Stage access rules saved.",
+  "subtitle": "Control which roles can see this stage and move records into or out of it.",
+  "tableLabel": "Stage access by role",
+  "title": "Access to {name}",
+  "view": "View",
+  "viewLabel": "Allow {role} to view records in this stage"
+}

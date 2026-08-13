@@ -1,0 +1,55 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    schema:
+      - "migrations/000001_core.up.sql"
+      - "migrations/000002_identity_advanced.up.sql"
+      - "migrations/000003_content_localization.up.sql"
+      - "migrations/000004_customers_advanced.up.sql"
+      - "migrations/000005_automation_integrations.up.sql"
+      - "migrations/000006_collaboration_reporting.up.sql"
+      - "migrations/000007_sales_advanced.up.sql"
+      - "migrations/000008_security_hardening.up.sql"
+      - "migrations/000009_automation_producers.up.sql"
+      - "migrations/000010_deal_planning.up.sql"
+      - "migrations/000011_projects.up.sql"
+      - "migrations/000012_sse_audience.up.sql"
+      - "migrations/000013_chat.up.sql"
+      - "migrations/000014_calendar_visibility.up.sql"
+      - "migrations/000015_calls.up.sql"
+      - "migrations/000016_custom_roles.up.sql"
+      - "migrations/000017_role_bootstrap_policy.up.sql"
+      - "migrations/000018_membership_role_compatibility.up.sql"
+      - "migrations/000019_lead_stages.up.sql"
+      - "migrations/000020_record_assignments.up.sql"
+      - "migrations/000021_sales_resource_permissions.up.sql"
+      - "migrations/000022_mailbox.up.sql"
+      - "migrations/000023_stage_role_access.up.sql"
+      - "migrations/000024_sse_channel_rebrand.up.sql"
+      - "migrations/000025_indexed_global_search.up.sql"
+      - "migrations/000026_search_authorization_hardening.up.sql"
+      - "migrations/000027_chat_calls_rls_hardening.up.sql"
+      - "migrations/000028_legacy_role_rebrand_bridge.up.sql"
+      - "migrations/000029_chat_creation_rls_hardening.up.sql"
+      - "migrations/000030_chat_creation_returning_rls.up.sql"
+      - "migrations/000031_chat_member_creation_rls.up.sql"
+      - "migrations/000032_activity_role_rls_hardening.up.sql"
+      - "migrations/000033_call_creation_returning_rls.up.sql"
+      - "migrations/000034_chat_owner_predicate_scope.up.sql"
+      - "migrations/000035_search_authorization_plan.up.sql"
+      - "migrations/000036_sales_entity_chat.up.sql"
+    queries:
+      - "queries"
+    gen:
+      go:
+        package: "dbgen"
+        out: "internal/platform/database/dbgen"
+        sql_package: "pgx/v5"
+        emit_interface: true
+        emit_json_tags: true
+        emit_empty_slices: true
+        emit_pointers_for_null_types: true
+        query_parameter_limit: 1
+        overrides:
+          - db_type: "uuid"
+            go_type: "github.com/jackc/pgx/v5/pgtype.UUID"

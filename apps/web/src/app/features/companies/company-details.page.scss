@@ -1,0 +1,287 @@
+.details-page {
+  gap: 1rem;
+  // The shared `.page` utility is a grid with an implicit `auto` column. An
+  // intrinsic Material form-field width can make that track wider than the
+  // mobile viewport even when the nested grid items have `min-width: 0`.
+  grid-template-columns: minmax(0, 1fr);
+}
+.back-control {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 2.5rem;
+  color: var(--text-muted);
+  text-decoration: none;
+}
+.back-control app-icon {
+  margin-inline-end: 0.4rem;
+}
+.company-hero {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+}
+.company-mark {
+  display: grid;
+  place-items: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  flex: 0 0 auto;
+  border-radius: 0.8rem;
+  color: var(--brand);
+  background: var(--brand-soft);
+  font-size: 1.15rem;
+  font-weight: 750;
+}
+.company-title {
+  min-width: 0;
+  flex: 1;
+}
+.company-title h1 {
+  margin: 0;
+  overflow: hidden;
+  font-size: 1.7rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.company-title p,
+.duplicates-panel p {
+  margin: 0.25rem 0 0;
+  color: var(--text-muted);
+}
+.hero-actions,
+.actions,
+.destructive-confirm,
+.destructive-confirm > div {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.status {
+  padding: 0.3rem 0.55rem;
+  border-radius: 999px;
+  color: var(--text-muted);
+  background: var(--surface-subtle);
+  font-size: 0.78rem;
+}
+.danger-action,
+.danger-button {
+  color: var(--danger);
+}
+.destructive-confirm,
+.conflict {
+  justify-content: space-between;
+  padding: 0.85rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--danger) 32%, var(--border));
+  border-radius: 0.65rem;
+  background: var(--danger-surface);
+}
+.conflict {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.details-grid {
+  display: grid;
+  grid-template-columns: minmax(24rem, 0.9fr) minmax(24rem, 1.1fr);
+  align-items: start;
+  gap: 1rem;
+  min-width: 0;
+}
+.details-grid > .panel {
+  min-width: 0;
+}
+.panel > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+.edit-panel header small {
+  display: block;
+  margin-top: 0.2rem;
+  color: var(--text-muted);
+}
+.edit-panel form,
+.activity-form {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+}
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 0.75rem;
+}
+fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0.85rem 0.85rem 0;
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+}
+legend,
+.select-field > span {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+.select-field {
+  display: grid;
+  align-content: start;
+  gap: 0.35rem;
+  min-width: 0;
+  margin-bottom: 1.25rem;
+}
+.select-field select {
+  min-height: 3.5rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 0.35rem;
+  color: var(--text);
+  background: var(--surface-raised);
+  font: inherit;
+}
+.select-field select:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+.actions {
+  justify-content: flex-end;
+}
+.form-error {
+  padding: 0.75rem;
+  border-radius: 0.45rem;
+  color: var(--danger);
+  background: var(--danger-surface);
+}
+.timeline-panel {
+  min-width: 0;
+}
+.timeline {
+  margin: 0;
+  padding: 0.5rem 1rem;
+  list-style: none;
+}
+.timeline li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.75rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.timeline .dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-top: 0.35rem;
+  border-radius: 50%;
+  background: var(--brand);
+}
+.timeline article,
+.timeline article header {
+  min-width: 0;
+}
+.timeline article header {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.timeline article header span,
+.timeline time {
+  color: var(--text-faint);
+  font-size: 0.72rem;
+}
+.timeline p {
+  color: var(--text-muted);
+  white-space: pre-wrap;
+}
+.duplicates-panel > header {
+  align-items: start;
+}
+.duplicates-skeleton {
+  min-height: 6rem;
+  margin: 1rem;
+}
+.duplicate-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.duplicate-list > li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.duplicate-list > li > div:first-child,
+.match-summary {
+  display: grid;
+  gap: 0.2rem;
+}
+.duplicate-list span,
+.match-summary span {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+.merge-confirm {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding-top: 0.65rem;
+}
+.merge-confirm > span {
+  margin-right: auto;
+  max-width: 55rem;
+}
+.hero-skeleton {
+  min-height: 6rem;
+}
+.body-skeleton {
+  min-height: 24rem;
+}
+button {
+  transition: transform 140ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+button:active {
+  transform: scale(0.98);
+}
+@media (max-width: 900px) {
+  .details-grid {
+    // A zero minimum keeps Material form-field intrinsic widths from widening
+    // the whole page and covering the following timeline on narrow screens.
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 640px) {
+  .company-hero,
+  .destructive-confirm,
+  .merge-confirm {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .hero-actions {
+    justify-content: space-between;
+  }
+  .field-grid,
+  .duplicate-list > li {
+    grid-template-columns: 1fr;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  button {
+    transition: none;
+  }
+  button:active {
+    transform: none;
+  }
+}

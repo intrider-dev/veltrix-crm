@@ -1,0 +1,3 @@
+SET ROLE veltrix_owner;
+DROP SCHEMA IF EXISTS mailbox CASCADE;
+RESET ROLE;

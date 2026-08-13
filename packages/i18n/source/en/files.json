@@ -1,0 +1,12 @@
+{
+  "confirmDelete": "Confirm delete",
+  "download": "Download",
+  "empty": "No attachments yet.",
+  "scan.clean": "Scan passed",
+  "scan.rejected": "Rejected",
+  "scan.unavailable": "Scan unavailable",
+  "subtitle": "Files are streamed, type-checked, and authorized against this record.",
+  "title": "Attachments",
+  "upload": "Add file",
+  "uploading": "Uploading…"
+}

@@ -1,0 +1,15 @@
+.git
+.github
+.agents
+node_modules
+**/node_modules
+.angular
+dist
+coverage
+playwright-report
+test-results
+benchmarks/results
+infra/data
+infra/uploads
+*.local
+

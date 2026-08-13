@@ -1,0 +1,288 @@
+<div class="page translation-page">
+  <header class="page-header">
+    <div>
+      <h1>{{ i18n.t('translations.title') }}</h1>
+      <p>{{ i18n.t('translations.subtitle') }}</p>
+    </div>
+    <button mat-flat-button type="button" (click)="createOpen.set(!createOpen())">
+      {{ i18n.t('translations.createResource') }}
+    </button>
+  </header>
+
+  @if (createOpen()) {
+    <section class="panel create-resource" aria-labelledby="translation-create-title">
+      <header>
+        <div>
+          <h2 id="translation-create-title">{{ i18n.t('translations.createTitle') }}</h2>
+          <p>{{ i18n.t('translations.createDescription') }}</p>
+        </div>
+      </header>
+      <form (submit)="createResource($event)" novalidate>
+        <label class="native-field">
+          <span>{{ i18n.t('translations.sourceLocale') }}</span>
+          <select [formField]="createForm.sourceLocale" (change)="changeCreateSourceLocale($event)">
+            @for (locale of store.supportedLocales(); track locale) {
+              <option [value]="locale">{{ localeName(locale) }}</option>
+            }
+          </select>
+        </label>
+        <label class="native-field">
+          <span>{{ i18n.t('translations.locale') }}</span>
+          <select [formField]="createForm.locale">
+            @for (locale of createTargetLocales(); track locale) {
+              <option [value]="locale">{{ localeName(locale) }}</option>
+            }
+          </select>
+        </label>
+        @if (createTargetLocales().length === 0) {
+          <p class="no-target-locale" role="status">
+            {{ i18n.t('translations.noTargetLocale') }}
+          </p>
+        }
+        <mat-form-field appearance="outline">
+          <mat-label>{{ i18n.t('translations.namespace') }}</mat-label>
+          <input matInput [formField]="createForm.namespace" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ i18n.t('translations.key') }}</mat-label>
+          <input matInput [formField]="createForm.key" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="wide-field">
+          <mat-label>{{ i18n.t('translations.sourceText') }}</mat-label>
+          <textarea matInput rows="3" [formField]="createForm.sourceText"></textarea>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="wide-field">
+          <mat-label>{{ i18n.t('translations.description') }}</mat-label>
+          <input matInput [formField]="createForm.description" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="wide-field">
+          <mat-label>{{ i18n.t('translations.translatedText') }}</mat-label>
+          <textarea matInput rows="3" [formField]="createForm.translatedText"></textarea>
+        </mat-form-field>
+        <label class="native-field">
+          <span>{{ i18n.t('translations.status') }}</span>
+          <select [formField]="createForm.status">
+            <option value="draft">{{ i18n.t('translations.draft') }}</option>
+            <option value="published">{{ i18n.t('translations.published') }}</option>
+          </select>
+        </label>
+        <div class="create-actions">
+          <button mat-button type="button" (click)="createOpen.set(false)">
+            {{ i18n.t('common.action.cancel') }}
+          </button>
+          <button
+            mat-flat-button
+            type="submit"
+            [disabled]="store.saving() || createTargetLocales().length === 0"
+          >
+            {{ i18n.t(store.saving() ? 'web.form.saving' : 'common.action.create') }}
+          </button>
+        </div>
+      </form>
+    </section>
+  }
+
+  <section class="panel coverage-panel" [attr.aria-label]="i18n.t('translations.coverage')">
+    <div class="coverage-summary">
+      <div>
+        <strong>{{ i18n.t('translations.coverage') }}</strong>
+        <span>{{ i18n.t('translations.total', { count: store.totals().total }) }}</span>
+      </div>
+      <div class="coverage-value">
+        {{ i18n.t('translations.completion', { percent: store.completion() }) }}
+      </div>
+    </div>
+    <progress
+      [value]="store.completion()"
+      max="100"
+      [attr.aria-label]="i18n.t('translations.coverage')"
+    ></progress>
+    @if (store.coverage().length > 0) {
+      <div class="coverage-breakdown">
+        @for (coverage of store.coverage(); track coverage.namespace) {
+          <span
+            ><strong>{{ coverage.namespace }}</strong> {{ coverage.published }}/{{
+              coverage.total
+            }}</span
+          >
+        }
+      </div>
+    }
+  </section>
+
+  <form class="panel filters" role="search" (submit)="applyFilters($event)">
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ i18n.t('translations.locale') }}</mat-label>
+      <mat-select [value]="store.locale()" (selectionChange)="changeLocale($event.value)">
+        @for (locale of targetLocales(); track locale) {
+          <mat-option [value]="locale">{{ localeName(locale) }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ i18n.t('translations.namespace') }}</mat-label>
+      <mat-select [value]="store.namespace()" (selectionChange)="changeNamespace($event.value)">
+        <mat-option value="">{{ i18n.t('translations.allNamespaces') }}</mat-option>
+        @for (namespace of store.namespaces(); track namespace) {
+          <mat-option [value]="namespace">{{ namespace }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ i18n.t('translations.status') }}</mat-label>
+      <mat-select [value]="store.status()" (selectionChange)="changeStatus($event.value)">
+        <mat-option value="">{{ i18n.t('translations.allStatuses') }}</mat-option>
+        <mat-option value="missing">{{ i18n.t('translations.missing') }}</mat-option>
+        <mat-option value="draft">{{ i18n.t('translations.draft') }}</mat-option>
+        <mat-option value="published">{{ i18n.t('translations.published') }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="query-field">
+      <mat-label>{{ i18n.t('translations.search') }}</mat-label>
+      <input
+        matInput
+        type="search"
+        [value]="store.query()"
+        [placeholder]="i18n.t('translations.searchPlaceholder')"
+        (input)="changeQuery($event)"
+      />
+    </mat-form-field>
+    <button mat-flat-button type="submit" [disabled]="store.loading()">
+      {{ i18n.t('common.action.search') }}
+    </button>
+  </form>
+
+  @if (store.error()) {
+    <app-error-panel [error]="store.error()" (retry)="store.load()" />
+  }
+
+  <div class="translation-layout" [class.has-editor]="selected() !== null">
+    <section class="panel translation-list" [attr.aria-busy]="store.loading()">
+      @if (store.loading() && store.items().length === 0) {
+        <div class="loading-list">
+          <div class="skeleton"></div>
+          <div class="skeleton"></div>
+          <div class="skeleton"></div>
+        </div>
+      } @else if (store.items().length === 0) {
+        <div class="empty-state">{{ i18n.t('translations.empty') }}</div>
+      } @else {
+        <div class="list-header" aria-hidden="true">
+          <span>{{ i18n.t('translations.key') }}</span>
+          <span>{{ i18n.t('translations.sourceText') }}</span>
+          <span>{{ i18n.t('translations.status') }}</span>
+        </div>
+        @for (item of store.items(); track item.locale + item.namespace + item.key) {
+          <button
+            #translationButton
+            type="button"
+            class="translation-row"
+            [class.selected]="sameItem(selected(), item)"
+            [attr.aria-pressed]="sameItem(selected(), item)"
+            (click)="edit(item, translationButton)"
+          >
+            <span class="translation-key"
+              ><small>{{ item.namespace }}</small
+              ><strong>{{ item.key }}</strong></span
+            >
+            <span class="source-preview">{{ item.sourceText }}</span>
+            <span class="status" [class]="'status ' + item.status">{{
+              statusLabel(item.status)
+            }}</span>
+          </button>
+        }
+      }
+      @if (store.nextCursor()) {
+        <button
+          mat-button
+          class="load-more"
+          type="button"
+          [disabled]="store.loading()"
+          (click)="store.load(false)"
+        >
+          {{ i18n.t('translations.loadMore') }}
+        </button>
+      }
+    </section>
+
+    @if (selected(); as item) {
+      <section #editor class="panel editor" tabindex="-1" [attr.aria-labelledby]="'editor-title'">
+        <header>
+          <div>
+            <span>{{ item.namespace }}</span>
+            <h2 id="editor-title">{{ i18n.t('translations.edit') }}</h2>
+          </div>
+          <button mat-button type="button" (click)="closeEditor()">
+            {{ i18n.t('common.action.close') }}
+          </button>
+        </header>
+
+        @if (conflict()) {
+          <div class="conflict-panel" role="alert">{{ i18n.t('translations.conflict') }}</div>
+        }
+        @if (saved()) {
+          <div class="saved-panel" role="status">{{ i18n.t('web.status.saved') }}</div>
+        }
+
+        <div class="source-message">
+          <small>{{ i18n.t('translations.sourceText') }} · {{ item.sourceLocale }}</small>
+          <p>{{ item.sourceText }}</p>
+          @if (item.description) {
+            <span>{{ item.description }}</span>
+          }
+        </div>
+
+        <form (submit)="save($event)" novalidate>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ i18n.t('translations.translatedText') }}</mat-label>
+            <textarea
+              matInput
+              rows="7"
+              [formField]="editorForm.translatedText"
+              [attr.aria-describedby]="placeholderErrors().length ? 'placeholder-error' : null"
+            ></textarea>
+            @if (editorForm.translatedText().touched() && editorForm.translatedText().invalid()) {
+              <mat-error>{{ i18n.t('auth.validation.required') }}</mat-error>
+            }
+          </mat-form-field>
+          @if (placeholderErrors().length > 0) {
+            <div id="placeholder-error" class="placeholder-error" role="alert">
+              {{
+                i18n.t('translations.placeholderMismatch', {
+                  placeholders: placeholderErrors().map(asPlaceholder).join(', '),
+                })
+              }}
+            </div>
+          }
+          <mat-form-field appearance="outline">
+            <mat-label>{{ i18n.t('translations.status') }}</mat-label>
+            <mat-select
+              [value]="editorModel().status"
+              (selectionChange)="setEditorStatus($event.value)"
+            >
+              <mat-option value="draft">{{ i18n.t('translations.draft') }}</mat-option>
+              <mat-option value="published">{{ i18n.t('translations.published') }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <div class="editor-actions">
+            <button mat-button type="button" (click)="resetEditor()">
+              {{ i18n.t('common.action.cancel') }}
+            </button>
+            <button
+              mat-flat-button
+              type="submit"
+              [disabled]="store.saving() || placeholderErrors().length > 0"
+            >
+              {{ i18n.t(store.saving() ? 'web.form.saving' : 'common.action.save') }}
+            </button>
+          </div>
+        </form>
+      </section>
+    }
+  </div>
+
+  <section class="panel readonly-panel">
+    <h2>{{ i18n.t('translations.readonlyTitle') }}</h2>
+    <p>{{ i18n.t('translations.readonlyDescription') }}</p>
+  </section>
+</div>

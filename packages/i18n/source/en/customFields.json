@@ -1,0 +1,23 @@
+{
+  "add": "Add custom field",
+  "empty": "No custom fields configured.",
+  "entity": "Record type",
+  "key": "Stable field key",
+  "label": "Display label",
+  "loadFailed": "Custom fields could not be loaded. Try reopening this record.",
+  "options": "Options",
+  "optionsHint": "One value:label pair per line.",
+  "required": "Required value",
+  "subtitle": "Add typed workspace fields with validated values and schema versions.",
+  "title": "Custom fields",
+  "type": "Value type",
+  "type.boolean": "Boolean",
+  "type.date": "Date",
+  "type.money": "Money",
+  "type.multiline_text": "Multiline text",
+  "type.multi_select": "Multi select",
+  "type.number": "Number",
+  "type.single_select": "Single select",
+  "type.text": "Text",
+  "type.user_reference": "User reference"
+}

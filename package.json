@@ -1,0 +1,53 @@
+{
+  "name": "veltrix-crm",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A resource-conscious, multi-tenant Sales CRM with reproducible performance evidence.",
+  "license": "MIT",
+  "packageManager": "pnpm@11.15.1",
+  "engines": {
+    "node": ">=24.15.0"
+  },
+  "scripts": {
+    "bootstrap": "pnpm install --frozen-lockfile && pnpm generate:contracts",
+    "dev": "pnpm --parallel --filter @veltrix-crm/web dev",
+    "build": "pnpm build:web && pnpm bundle:report && pnpm precompress:web && pnpm build:api",
+    "build:web": "pnpm --filter @veltrix-crm/web build",
+    "precompress:web": "node infra/container/precompress.mjs apps/web/dist/web/browser",
+    "build:api": "node scripts/build-api.mjs",
+    "lint": "pnpm lint:web && pnpm lint:api && pnpm check:i18n && pnpm i18n:extract && pnpm check:forbidden",
+    "lint:web": "pnpm --filter @veltrix-crm/web lint",
+    "lint:api": "gofmt -l apps/api | node scripts/assert-empty.mjs && go vet ./apps/api/...",
+    "typecheck": "pnpm --filter @veltrix-crm/web typecheck",
+    "test": "pnpm test:api && pnpm test:web",
+    "test:api": "go test ./apps/api/...",
+    "test:web": "pnpm --filter @veltrix-crm/web test",
+    "test:integration": "go test -tags=integration -count=1 -p 1 ./apps/api/...",
+    "test:e2e": "playwright test",
+    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "generate:contracts": "node scripts/generate-contracts.mjs",
+    "generate:brand": "node scripts/generate-product-config.mjs",
+    "generate:i18n": "node scripts/generate-i18n.mjs",
+    "i18n:extract": "node scripts/extract-i18n.mjs",
+    "i18n:add-locale": "node scripts/i18n-add-locale.mjs",
+    "i18n:pseudo": "node scripts/i18n-pseudo.mjs",
+    "check:i18n": "node scripts/check-i18n.mjs",
+    "check:forbidden": "node scripts/check-forbidden-imports.mjs",
+    "bundle:report": "node scripts/bundle-report.mjs",
+    "check:browser-tooling": "node --check benchmarks/browser/measure-performance.mjs && node --check scripts/run-lighthouse.mjs && node --test benchmarks/browser/measure-performance.test.mjs scripts/run-lighthouse.test.mjs",
+    "seed:small": "go run ./apps/api/cmd/seed --profile small",
+    "seed:benchmark": "go run ./apps/api/cmd/seed --profile benchmark",
+    "benchmark": "powershell -ExecutionPolicy Bypass -File scripts/benchmark.ps1 -Profile baseline -Runs 3",
+    "benchmark:browser": "node benchmarks/browser/measure-performance.mjs && node scripts/run-lighthouse.mjs",
+    "benchmark:browser:measure": "node benchmarks/browser/measure-performance.mjs",
+    "benchmark:lighthouse": "node scripts/run-lighthouse.mjs"
+  },
+  "devDependencies": {
+    "@angular/cli": "22.0.7",
+    "@axe-core/playwright": "4.12.1",
+    "@playwright/test": "1.61.1",
+    "node": "24.15.0",
+    "openapi-typescript": "7.13.0",
+    "pnpm": "11.15.1"
+  }
+}

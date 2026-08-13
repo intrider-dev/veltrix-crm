@@ -1,0 +1,317 @@
+.back-control {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 2.5rem;
+  color: var(--text-muted);
+  text-decoration: none;
+}
+.back-control app-icon {
+  margin-inline-end: 0.4rem;
+}
+.contact-hero {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+}
+.contact-avatar {
+  display: grid;
+  place-items: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 0.9rem;
+  color: var(--brand);
+  background: var(--brand-soft);
+  font-weight: 750;
+}
+.contact-hero h1 {
+  margin: 0;
+  font-size: 1.7rem;
+  letter-spacing: -0.04em;
+}
+.contact-hero p {
+  margin: 0.3rem 0 0;
+  color: var(--text-muted);
+}
+.contact-hero a {
+  color: inherit;
+}
+.status {
+  padding: 0.3rem 0.55rem;
+  border-radius: 2rem;
+  color: var(--brand);
+  background: var(--brand-soft);
+  font-size: 0.75rem;
+  font-weight: 650;
+}
+.hero-actions {
+  display: grid;
+  justify-items: end;
+  gap: 0.35rem;
+}
+.danger-action {
+  color: var(--danger);
+}
+.danger-button {
+  color: white;
+  background: var(--danger);
+}
+.destructive-confirm {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--danger) 35%, var(--border));
+  border-radius: 0.6rem;
+  color: var(--danger);
+  background: var(--danger-surface);
+}
+.destructive-confirm > div {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+.details-grid {
+  display: grid;
+  grid-template-columns: minmax(24rem, 0.9fr) minmax(26rem, 1.1fr);
+  align-items: start;
+  gap: 1rem;
+}
+.edit-panel > header,
+.timeline-panel > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+.edit-panel header small {
+  color: var(--text-muted);
+  text-align: right;
+}
+.edit-panel form {
+  padding: 1rem;
+}
+.field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 0.75rem;
+}
+.actions {
+  display: flex;
+  justify-content: flex-end;
+}
+.form-error,
+.conflict {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  color: var(--danger);
+  background: var(--danger-surface);
+}
+.conflict {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.activity-form {
+  display: grid;
+  gap: 0.65rem;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.activity-form label {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+.activity-form select {
+  min-height: 2.5rem;
+  padding: 0 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 0.45rem;
+  color: var(--text);
+  background: var(--surface-raised);
+}
+.timeline {
+  margin: 0;
+  padding: 0.6rem 1rem 1rem;
+  list-style: none;
+}
+.timeline li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1rem 1fr;
+  gap: 0.75rem;
+  padding: 0.7rem 0;
+}
+.timeline li:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  top: 1.5rem;
+  bottom: -0.5rem;
+  left: 0.26rem;
+  border-left: 1px solid var(--border);
+}
+.dot {
+  z-index: 1;
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-top: 0.25rem;
+  border-radius: 50%;
+  background: var(--brand);
+}
+.timeline article {
+  min-width: 0;
+}
+.timeline article header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.timeline article header span {
+  color: var(--text-faint);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+}
+.timeline p {
+  margin: 0.35rem 0;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+.timeline time {
+  color: var(--text-faint);
+  font-size: 0.72rem;
+}
+.hero-skeleton {
+  min-height: 6rem;
+}
+.body-skeleton {
+  min-height: 24rem;
+}
+.duplicates-panel {
+  overflow: hidden;
+}
+.duplicates-panel > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.duplicates-panel header p {
+  margin: 0.3rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+.duplicates-panel .form-error {
+  margin: 1rem;
+}
+.duplicates-skeleton {
+  min-height: 7rem;
+  margin: 1rem;
+}
+.compact-empty {
+  min-height: 7rem;
+}
+.duplicate-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.duplicate-list > li {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1fr) auto auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.duplicate-list > li:last-child {
+  border-bottom: 0;
+}
+.duplicate-list li > div:first-child,
+.match-summary {
+  display: grid;
+  gap: 0.2rem;
+}
+.duplicate-list a {
+  width: fit-content;
+  color: var(--text);
+  font-weight: 650;
+}
+.duplicate-list li > div:first-child span,
+.match-summary span {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+.match-summary {
+  min-width: 8rem;
+}
+.match-summary strong {
+  color: var(--brand);
+}
+.merge-confirm {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  color: var(--danger);
+  font-size: 0.82rem;
+}
+.merge-confirm span {
+  margin-inline-end: auto;
+}
+@media (max-width: 1050px) {
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 600px) {
+  .contact-hero {
+    grid-template-columns: auto 1fr;
+  }
+  .status {
+    grid-column: 1 / -1;
+    width: fit-content;
+  }
+  .field-grid {
+    grid-template-columns: 1fr;
+  }
+  .destructive-confirm,
+  .duplicates-panel > header,
+  .duplicate-list > li,
+  .merge-confirm {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+    flex-direction: column;
+  }
+  .hero-actions {
+    grid-column: 1 / -1;
+    justify-items: start;
+  }
+  .destructive-confirm > div {
+    justify-content: flex-end;
+  }
+  .match-summary {
+    min-width: 0;
+  }
+}
+
+@media (forced-colors: active) {
+  .destructive-confirm {
+    border-color: CanvasText;
+  }
+}

@@ -1,0 +1,250 @@
+services:
+  postgres:
+    image: ${POSTGRES_IMAGE:-crm-postgres:local}
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: postgres-runtime
+    restart: unless-stopped
+    # PostgreSQL SIGINT performs a clean fast shutdown and does not wait for
+    # pooled application sessions the way its default SIGTERM mode does.
+    stop_signal: SIGINT
+    stop_grace_period: 30s
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-veltrix_crm}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_local_password}
+      APP_ENV: ${APP_ENV:-development}
+      APP_BRAND_CONFIG: /app/config/brand.json
+      DATABASE_ADMIN_URL: ${DATABASE_ADMIN_URL:-postgres://postgres:postgres_local_password@postgres:5432/veltrix_crm?sslmode=disable}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:-veltrix_local_password}
+      DEMO_SEED: ${DEMO_SEED:-true}
+      DEMO_EMAIL: ${DEMO_EMAIL:-admin@demo.local}
+      DEMO_PASSWORD: ${DEMO_PASSWORD:-Demo123!}
+    command:
+      - postgres
+      - -c
+      - max_connections=50
+      - -c
+      - shared_buffers=64MB
+      - -c
+      - effective_cache_size=192MB
+      - -c
+      - work_mem=2MB
+    ports:
+      - "${LOCAL_BIND_ADDRESS:-127.0.0.1}:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      # PostgreSQL 18 uses a version-specific PGDATA below this mount point.
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /tmp/veltrix-bootstrap-ready && pg_isready -h 127.0.0.1 -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
+    shm_size: 64mb
+    cpus: 0.5
+    mem_limit: 384m
+    pids_limit: 128
+    security_opt:
+      - no-new-privileges:true
+
+  app:
+    image: ${APP_IMAGE:-crm-app:local}
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      APP_ADDR: :8080
+      APP_PUBLIC_URL: ${APP_PUBLIC_URL:-http://127.0.0.1:${APP_PORT:-8080}}
+      APP_BRAND_CONFIG: /app/config/brand.json
+      APP_DEFAULT_LOCALE: ${APP_DEFAULT_LOCALE:-en}
+      APP_SUPPORTED_LOCALES: ${APP_SUPPORTED_LOCALES:-en,ru}
+      DATABASE_URL: ${DATABASE_URL:-postgres://veltrix_app:veltrix_local_password@postgres:5432/veltrix_crm?sslmode=disable}
+      DATABASE_DISPATCHER_URL: ${DATABASE_DISPATCHER_URL:-postgres://veltrix_dispatcher:veltrix_local_password@postgres:5432/veltrix_crm?sslmode=disable}
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-false}
+      SESSION_TTL: ${SESSION_TTL:-168h}
+      PASSWORD_RESET_TTL: ${PASSWORD_RESET_TTL:-1h}
+      MFA_CHALLENGE_TTL: ${MFA_CHALLENGE_TTL:-5m}
+      MFA_SETUP_TTL: ${MFA_SETUP_TTL:-10m}
+      IDENTITY_ENCRYPTION_KEY_ID: ${IDENTITY_ENCRYPTION_KEY_ID:-dev-local-v1}
+      IDENTITY_ENCRYPTION_KEY_BASE64: ${IDENTITY_ENCRYPTION_KEY_BASE64:-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=}
+      SHUTDOWN_TIMEOUT: ${SHUTDOWN_TIMEOUT:-10s}
+      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-2}
+      MAX_DB_CONNECTIONS: ${MAX_DB_CONNECTIONS:-8}
+      UPLOAD_DIR: /var/lib/veltrix-crm/uploads
+      MAX_UPLOAD_BYTES: ${MAX_UPLOAD_BYTES:-10485760}
+      STORAGE_BACKEND: ${STORAGE_BACKEND:-local}
+      SMTP_ADDR: ${SMTP_ADDR:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_REQUIRE_TLS: ${SMTP_REQUIRE_TLS:-false}
+      SMTP_IMPLICIT_TLS: ${SMTP_IMPLICIT_TLS:-false}
+      SMTP_WRITE_TIMEOUT: ${SMTP_WRITE_TIMEOUT:-10s}
+      MAILBOX_ALLOW_PRIVATE_ENDPOINTS: ${MAILBOX_ALLOW_PRIVATE_ENDPOINTS:-false}
+      S3_ENDPOINT: ${S3_ENDPOINT:-}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      S3_BUCKET: ${S3_BUCKET:-crm-attachments}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-}
+      S3_SESSION_TOKEN: ${S3_SESSION_TOKEN:-}
+      S3_ALLOW_INSECURE: ${S3_ALLOW_INSECURE:-false}
+      AI_PROVIDER: ${AI_PROVIDER:-disabled}
+      AI_BASE_URL: ${AI_BASE_URL:-}
+      AI_MODEL: ${AI_MODEL:-}
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_TIMEOUT: ${AI_TIMEOUT:-15s}
+      AI_MAX_INPUT_BYTES: ${AI_MAX_INPUT_BYTES:-32768}
+      AI_MAX_OUTPUT_BYTES: ${AI_MAX_OUTPUT_BYTES:-8192}
+      AI_MAX_CONTEXT_ITEMS: ${AI_MAX_CONTEXT_ITEMS:-50}
+      AI_MAX_DUPLICATE_CANDIDATES: ${AI_MAX_DUPLICATE_CANDIDATES:-25}
+      AI_MAX_CONCURRENCY: ${AI_MAX_CONCURRENCY:-2}
+      AI_REQUESTS_PER_MINUTE: ${AI_REQUESTS_PER_MINUTE:-10}
+      CALLS_PROVIDER: ${CALLS_PROVIDER:-disabled}
+      LIVEKIT_PUBLIC_URL: ${LIVEKIT_PUBLIC_URL:-}
+      LIVEKIT_API_KEY: ${LIVEKIT_API_KEY:-}
+      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET:-}
+      LIVEKIT_TOKEN_TTL: ${LIVEKIT_TOKEN_TTL:-5m}
+    ports:
+      - "${APP_BIND_ADDRESS:-0.0.0.0}:${APP_PORT:-8080}:8080"
+    volumes:
+      - app-uploads:/var/lib/veltrix-crm/uploads
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=128m,uid=65532,gid=65532
+    read_only: true
+    user: "65532:65532"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    cpus: 0.5
+    mem_limit: 128m
+    pids_limit: 96
+    healthcheck:
+      test: ["CMD", "/app/healthcheck", "-url", "http://127.0.0.1:8080/api/v1/health/ready", "-timeout", "2s"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  mailpit:
+    image: axllent/mailpit:v1.30.4
+    profiles: [mail]
+    restart: unless-stopped
+    ports:
+      - "${LOCAL_BIND_ADDRESS:-127.0.0.1}:${MAILPIT_SMTP_PORT:-1025}:1025"
+      - "${LOCAL_BIND_ADDRESS:-127.0.0.1}:${MAILPIT_UI_PORT:-8025}:8025"
+    cpus: 0.25
+    mem_limit: 128m
+    pids_limit: 64
+    security_opt:
+      - no-new-privileges:true
+
+  minio:
+    image: quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z
+    profiles: [object-storage]
+    restart: unless-stopped
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minio_local_admin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minio_local_password}
+    ports:
+      - "${LOCAL_BIND_ADDRESS:-127.0.0.1}:${MINIO_API_PORT:-9000}:9000"
+      - "${LOCAL_BIND_ADDRESS:-127.0.0.1}:${MINIO_UI_PORT:-9001}:9001"
+    volumes:
+      - minio-data:/data
+    cpus: 0.5
+    mem_limit: 256m
+    pids_limit: 128
+    security_opt:
+      - no-new-privileges:true
+
+  ollama:
+    image: ollama/ollama:0.32.1
+    profiles: [ai-local]
+    restart: unless-stopped
+    ports:
+      - "${LOCAL_BIND_ADDRESS:-127.0.0.1}:${OLLAMA_PORT:-11434}:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    environment:
+      OLLAMA_KEEP_ALIVE: ${OLLAMA_KEEP_ALIVE:-0}
+    pids_limit: 256
+    security_opt:
+      - no-new-privileges:true
+
+  livekit:
+    image: livekit/livekit-server:v1.12.0
+    profiles: [calls]
+    restart: unless-stopped
+    command: ["--dev", "--bind", "0.0.0.0"]
+    ports:
+      - "${LOCAL_BIND_ADDRESS:-127.0.0.1}:${LIVEKIT_HTTP_PORT:-7880}:7880"
+      - "${LOCAL_BIND_ADDRESS:-127.0.0.1}:${LIVEKIT_TCP_PORT:-7881}:7881"
+      - "${LIVEKIT_UDP_PORT:-7882}:7882/udp"
+    cpus: 0.5
+    mem_limit: 256m
+    pids_limit: 128
+    security_opt:
+      - no-new-privileges:true
+
+  benchmark-seed:
+    image: ${APP_IMAGE:-crm-app:local}
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    profiles: [benchmark]
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      APP_ENV: benchmark
+      DATABASE_URL: ${DATABASE_URL:-postgres://veltrix_app:veltrix_local_password@postgres:5432/veltrix_crm?sslmode=disable}
+      DATABASE_ADMIN_URL: ${DATABASE_ADMIN_URL:-postgres://postgres:postgres_local_password@postgres:5432/veltrix_crm?sslmode=disable}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:-veltrix_local_password}
+      DEMO_SEED: "true"
+      DEMO_EMAIL: ${DEMO_EMAIL:-admin@demo.local}
+      DEMO_PASSWORD: ${DEMO_PASSWORD:-Demo123!}
+    command: ["seed", "--profile", "benchmark"]
+    read_only: true
+    user: "65532:65532"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    cpus: 0.5
+    mem_limit: 128m
+    pids_limit: 64
+
+  benchmark:
+    image: grafana/k6:2.1.0
+    profiles: [benchmark]
+    depends_on:
+      benchmark-seed:
+        condition: service_completed_successfully
+    environment:
+      BASE_URL: http://app:8080
+      K6_PROFILE: ${K6_PROFILE:-baseline}
+    volumes:
+      - ./benchmarks/k6:/benchmarks/k6:ro
+      - ./benchmarks/results:/benchmarks/results
+    command: ["run", "--out", "json=/benchmarks/results/k6.json", "/benchmarks/k6/baseline.js"]
+    cpus: 0.5
+    mem_limit: 256m
+    pids_limit: 128
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  postgres-data:
+  app-uploads:
+  minio-data:
+  ollama-data:
