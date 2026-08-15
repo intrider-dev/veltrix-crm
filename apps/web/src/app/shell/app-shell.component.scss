@@ -73,7 +73,7 @@
   top: 0;
   grid-column: 2;
   display: grid;
-  grid-template-columns: minmax(15rem, 40rem) minmax(0, 1fr);
+  grid-template-columns: minmax(15rem, 1fr) auto;
   align-items: center;
   gap: 1rem;
   min-height: 3.5rem;
@@ -96,6 +96,7 @@
   align-items: center;
   gap: 0.625rem;
   width: 100%;
+  max-width: 40rem;
   min-height: 2.375rem;
   padding: 0 0.5rem 0 0.75rem;
   border: 1px solid var(--border);
@@ -112,6 +113,13 @@
 
 .global-search app-icon {
   color: var(--text-faint);
+}
+
+.global-search > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .global-search kbd {
@@ -137,8 +145,18 @@
   color: var(--text);
 }
 
+.account-content {
+  display: inline-flex;
+  min-width: 0;
+  max-width: 12.5rem;
+  align-items: center;
+  gap: 0.625rem;
+  white-space: nowrap;
+}
+
 .avatar {
   display: grid;
+  flex: 0 0 auto;
   width: 1.875rem;
   height: 1.875rem;
   place-items: center;
@@ -151,6 +169,7 @@
 }
 
 .account-name {
+  min-width: 0;
   max-width: 10rem;
   overflow: hidden;
   text-overflow: ellipsis;

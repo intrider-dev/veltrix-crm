@@ -113,8 +113,10 @@ interface NavItem {
             i18n.t('web.shell.signedInAs', { name: auth.user()?.displayName ?? '' })
           "
         >
-          <span class="avatar" aria-hidden="true">{{ initials() }}</span>
-          <span class="account-name">{{ auth.user()?.displayName }}</span>
+          <span class="account-content">
+            <span class="avatar" aria-hidden="true">{{ initials() }}</span>
+            <span class="account-name">{{ auth.user()?.displayName }}</span>
+          </span>
         </button>
         <mat-menu #accountMenu="matMenu">
           <button mat-menu-item type="button" routerLink="/settings/security">
