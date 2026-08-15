@@ -87,7 +87,13 @@ import { DealsStore } from './deals.store';
         </form>
         <div class="header-actions">
           @if (permissions.allows('deals.create')) {
-            <button #dealCreateTrigger mat-flat-button type="button" (click)="openCreate()">
+            <button
+              #dealCreateTrigger
+              mat-flat-button
+              type="button"
+              [disabled]="store.loading()"
+              (click)="openCreate()"
+            >
               <app-icon name="add" />{{ i18n.t('sales.deal.add') }}
             </button>
           }
@@ -426,7 +432,7 @@ import { DealsStore } from './deals.store';
       }
     </div>
 
-    @if (createOpen() && store.activePipeline(); as pipeline) {
+    @if (createOpen()) {
       <button
         class="drawer-scrim"
         type="button"
@@ -452,47 +458,62 @@ import { DealsStore } from './deals.store';
             <app-icon name="close" />
           </button>
         </header>
-        <form (submit)="create($event)">
-          <mat-form-field appearance="outline"
-            ><mat-label>{{ i18n.t('common.field.name') }}</mat-label
-            ><input #dealNameInput matInput [formField]="dealForm.name"
-          /></mat-form-field>
-          <mat-form-field appearance="outline"
-            ><mat-label>{{ i18n.t('sales.deal.amount') }}</mat-label
-            ><input matInput type="number" [formField]="dealForm.amount"
-          /></mat-form-field>
-          <mat-form-field appearance="outline"
-            ><mat-label>{{ i18n.t('sales.deal.currency') }}</mat-label
-            ><input matInput [formField]="dealForm.currency"
-          /></mat-form-field>
-          <label class="native-field"
-            >{{ i18n.t('sales.deal.stage')
-            }}<mat-select
-              panelClass="crm-select-panel"
-              [aria-label]="i18n.t('sales.deal.stage')"
-              [formField]="dealForm.stageId"
+        @if (createPipeline(); as pipeline) {
+          <form (submit)="create($event)">
+            <mat-form-field appearance="outline"
+              ><mat-label>{{ i18n.t('common.field.name') }}</mat-label
+              ><input #dealNameInput matInput [formField]="dealForm.name"
+            /></mat-form-field>
+            <mat-form-field appearance="outline"
+              ><mat-label>{{ i18n.t('sales.deal.amount') }}</mat-label
+              ><input matInput type="number" [formField]="dealForm.amount"
+            /></mat-form-field>
+            <mat-form-field appearance="outline"
+              ><mat-label>{{ i18n.t('sales.deal.currency') }}</mat-label
+              ><input matInput [formField]="dealForm.currency"
+            /></mat-form-field>
+            <label class="native-field"
+              >{{ i18n.t('sales.deal.stage')
+              }}<mat-select
+                panelClass="crm-select-panel"
+                [aria-label]="i18n.t('sales.deal.stage')"
+                [formField]="dealForm.stageId"
+              >
+                @for (stage of pipeline.stages; track stage.id) {
+                  <mat-option [value]="stage.id">{{ stage.displayName }}</mat-option>
+                }
+              </mat-select></label
             >
-              @for (stage of pipeline.stages; track stage.id) {
-                <mat-option [value]="stage.id">{{ stage.displayName }}</mat-option>
-              }
-            </mat-select></label
-          >
-          <mat-form-field appearance="outline"
-            ><mat-label>{{ i18n.t('sales.deal.plannedStart') }}</mat-label
-            ><input matInput type="date" [formField]="dealForm.plannedStartDate"
-          /></mat-form-field>
-          <mat-form-field appearance="outline"
-            ><mat-label>{{ i18n.t('sales.deal.expectedClose') }}</mat-label
-            ><input matInput type="date" [formField]="dealForm.expectedCloseDate"
-          /></mat-form-field>
-          <div class="drawer-actions">
-            <button mat-button type="button" (click)="closeCreate()">
-              {{ i18n.t('common.action.cancel') }}</button
-            ><button mat-flat-button type="submit" [disabled]="store.saving()">
-              {{ i18n.t(store.saving() ? 'web.form.saving' : 'common.action.create') }}
-            </button>
-          </div>
-        </form>
+            <mat-form-field appearance="outline"
+              ><mat-label>{{ i18n.t('sales.deal.plannedStart') }}</mat-label
+              ><input matInput type="date" [formField]="dealForm.plannedStartDate"
+            /></mat-form-field>
+            <mat-form-field appearance="outline"
+              ><mat-label>{{ i18n.t('sales.deal.expectedClose') }}</mat-label
+              ><input matInput type="date" [formField]="dealForm.expectedCloseDate"
+            /></mat-form-field>
+            <div class="drawer-actions">
+              <button mat-button type="button" (click)="closeCreate()">
+                {{ i18n.t('common.action.cancel') }}</button
+              ><button mat-flat-button type="submit" [disabled]="store.saving()">
+                {{ i18n.t(store.saving() ? 'web.form.saving' : 'common.action.create') }}
+              </button>
+            </div>
+          </form>
+        } @else {
+          <section class="entity-config-required" role="status">
+            <span class="entity-config-required__icon" aria-hidden="true">
+              <app-icon name="deal" />
+            </span>
+            <h3>{{ i18n.t('pipelines.empty') }}</h3>
+            <p>{{ i18n.t('pipelines.subtitle') }}</p>
+            @if (permissions.allows('deal_stages.manage')) {
+              <a mat-flat-button routerLink="/settings/pipelines" (click)="createOpen.set(false)">
+                {{ i18n.t('settings.settings.pipelines') }}
+              </a>
+            }
+          </section>
+        }
       </aside>
     }
   `,
@@ -505,6 +526,10 @@ export class DealsPage implements OnInit {
   readonly permissions = inject(Permissions);
   readonly viewModes = ['kanban', 'list', 'gantt'] as const;
   readonly createOpen = signal(false);
+  readonly createPipeline = computed(() => {
+    const pipeline = this.store.activePipeline();
+    return pipeline?.stages.length ? pipeline : null;
+  });
   readonly selectedDealId = signal<string | null>(null);
   readonly visibleDealCount = computed(() =>
     this.store.viewMode() === 'kanban' ? this.store.deals().length : this.store.listDeals().length,

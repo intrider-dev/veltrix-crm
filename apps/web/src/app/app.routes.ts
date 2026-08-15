@@ -79,7 +79,7 @@ export const routes: Routes = [
       },
       {
         path: 'deals',
-        resolve: { translations: i18nNamespaces(['sales']) },
+        resolve: { translations: i18nNamespaces(['sales', 'pipelines', 'settings']) },
         loadComponent: () =>
           import('./features/deals/deals.page').then((module) => module.DealsPage),
       },

@@ -249,3 +249,60 @@ test("mobile creation drawers trap focus and close with Escape", async ({
   await expect(dealTrigger).toBeFocused();
   assertNoBrowserErrors();
 });
+
+test("deal creation drawer explains missing pipeline and centers its close icon", async ({
+  page,
+}) => {
+  const assertNoBrowserErrors = failOnBrowserErrors(page);
+  await loginAsDemo(page);
+  await setAppLanguage(page, "en");
+  await page.route("**/api/v1/workspaces/*/pipelines", async (route) => {
+    if (route.request().method() !== "GET") {
+      await route.continue();
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: "[]",
+    });
+  });
+  await page.goto("/deals");
+  await waitForAppReady(page);
+
+  const trigger = page.getByRole("button", { name: "Add deal" });
+  await trigger.click();
+  const dialog = page.getByRole("dialog", { name: "New deal" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByText("No pipelines are configured.")).toBeVisible();
+  await expect(
+    dialog.getByRole("link", { name: "Deal pipelines and stages" }),
+  ).toHaveAttribute("href", "/settings/pipelines");
+
+  const close = dialog.getByRole("button", { name: "Close" });
+  const buttonBox = await close.boundingBox();
+  const iconBox = await close.locator("app-icon").boundingBox();
+  expect(buttonBox).not.toBeNull();
+  expect(iconBox).not.toBeNull();
+  expect(buttonBox?.width ?? 0).toBeGreaterThanOrEqual(40);
+  expect(buttonBox?.height ?? 0).toBeGreaterThanOrEqual(40);
+  expect(
+    Math.abs(
+      (buttonBox?.x ?? 0) +
+        (buttonBox?.width ?? 0) / 2 -
+        ((iconBox?.x ?? 0) + (iconBox?.width ?? 0) / 2),
+    ),
+  ).toBeLessThanOrEqual(1);
+  expect(
+    Math.abs(
+      (buttonBox?.y ?? 0) +
+        (buttonBox?.height ?? 0) / 2 -
+        ((iconBox?.y ?? 0) + (iconBox?.height ?? 0) / 2),
+    ),
+  ).toBeLessThanOrEqual(1);
+
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+  assertNoBrowserErrors();
+});

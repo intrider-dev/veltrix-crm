@@ -279,6 +279,16 @@ input[type='search']::-webkit-search-decoration {
   margin-inline-end: 0;
 }
 
+/* Material leaves projected SVG hosts on a text baseline. Flex centering keeps
+   drawer and toolbar glyphs optically centered inside the full hit target. */
+.mat-mdc-icon-button {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  padding: 0 !important;
+  line-height: 1;
+}
+
 /* The sidebar workspace switcher is a compact navigation control, not a form field. */
 .workspace-select .mat-mdc-select-trigger {
   height: 100%;
@@ -933,6 +943,32 @@ app-chat-dock :where(.conversation-list, .message-pane) {
   padding: var(--toolbar-padding) var(--drawer-padding);
   border-top: 1px solid var(--entity-create-border, var(--border));
   background: var(--entity-create-surface, var(--surface-raised));
+}
+.entity-config-required {
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  gap: 0.75rem;
+  padding-block: 1rem;
+}
+.entity-config-required__icon {
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  place-items: center;
+  border-radius: 0.75rem;
+  color: var(--mat-sys-primary);
+  background: var(--mat-sys-primary-container);
+}
+.entity-config-required :is(h3, p) {
+  margin: 0;
+}
+.entity-config-required p {
+  max-width: 26rem;
+  color: var(--text-muted);
+}
+.entity-config-required a {
+  margin-top: 0.25rem;
 }
 .list-skeleton {
   display: grid;
