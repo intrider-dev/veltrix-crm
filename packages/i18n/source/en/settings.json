@@ -2,6 +2,8 @@
   "appearance.compact": "Compact",
   "appearance.comfortable": "Comfortable",
   "appearance.dark": "Dark",
+  "appearance.density": "Interface density",
+  "appearance.densityDescription": "Adjusts controls, navigation, cards, tables, and page spacing.",
   "appearance.light": "Light",
   "appearance.system": "System",
   "language.description": "Changes product messages, dates, numbers, and accessible labels.",

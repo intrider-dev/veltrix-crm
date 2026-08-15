@@ -76,7 +76,7 @@ docker compose --profile high-throughput up --build kafka rabbitmq broker-smoke
 
 | Метрика                                         |          Результат |
 | ----------------------------------------------- | -----------------: |
-| Начальные JS + CSS                              |    89,0 KiB Brotli |
+| Начальные JS + CSS                              |    92,9 KiB Brotli |
 | Lighthouse desktop / mobile                     |           100 / 94 |
 | Lighthouse accessibility                        |                100 |
 | Задержка контрольного действия                  |   48,4 мс, медиана |

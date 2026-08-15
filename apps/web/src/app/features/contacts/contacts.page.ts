@@ -42,6 +42,7 @@ import { Permissions } from '../../core/auth/permissions';
 import { DraftQuotaError, DraftService, type DraftKey } from '../../core/drafts/draft.service';
 import type { AppMessageKey } from '../../core/i18n/app-message-key';
 import { I18nService } from '../../core/i18n/i18n.service';
+import { AppearanceStore } from '../../core/preferences/appearance.store';
 import { WorkspaceStore } from '../../core/workspace/workspace.store';
 import { focusAfterNextRender } from '../../shared/a11y/focus-after-render';
 import { PhoneInputComponent } from '../../shared/forms/phone-input.component';
@@ -431,8 +432,8 @@ const CONTACTS_GRID_THEME = themeQuartz.withParams({
                   [getRowId]="getRowId"
                   [rowSelection]="rowSelection()"
                   [animateRows]="false"
-                  [rowHeight]="44"
-                  [headerHeight]="42"
+                  [rowHeight]="gridRowHeight()"
+                  [headerHeight]="gridHeaderHeight()"
                   [ariaLabel]="
                     i18n.t(
                       permissions.allows('records.update') || permissions.allows('records.delete')
@@ -794,6 +795,7 @@ export class ContactsPage implements OnInit, OnDestroy {
   readonly store = inject(ContactsStore);
   readonly i18n = inject(I18nService);
   readonly permissions = inject(Permissions);
+  readonly appearance = inject(AppearanceStore);
   readonly createOpen = signal(false);
   readonly importOpen = signal(false);
   readonly createError = signal<string | null>(null);
@@ -833,6 +835,8 @@ export class ContactsPage implements OnInit, OnDestroy {
   });
   readonly gridModules = [ClientSideRowModelModule, RowSelectionModule];
   readonly gridTheme = CONTACTS_GRID_THEME;
+  readonly gridRowHeight = computed(() => (this.appearance.density() === 'compact' ? 44 : 52));
+  readonly gridHeaderHeight = computed(() => (this.appearance.density() === 'compact' ? 38 : 44));
   readonly defaultColumn: ColDef<Contact> = {
     flex: 1,
     minWidth: 130,

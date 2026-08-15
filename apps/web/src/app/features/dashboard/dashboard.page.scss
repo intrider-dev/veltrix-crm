@@ -6,7 +6,7 @@
 
 .dashboard-page {
   display: grid;
-  gap: 1.25rem;
+  gap: var(--page-gap);
   width: 100%;
   max-width: 112rem;
   margin-inline: auto;
@@ -66,8 +66,8 @@ h1 {
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.6rem;
-  min-height: 2.65rem;
-  padding-inline: 0.9rem;
+  min-height: var(--control-height);
+  padding-inline: var(--control-inline-padding);
   border: 1px solid var(--border-strong);
   border-radius: 0.65rem;
   color: var(--text-muted);
@@ -84,7 +84,7 @@ h1 {
 }
 
 .primary-action {
-  min-height: 2.65rem;
+  min-height: var(--control-height);
   padding-inline: 1rem;
   color: #fff !important;
   background: #2864dc !important;
@@ -95,21 +95,21 @@ h1 {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(17.5rem, 20rem);
   align-items: start;
-  gap: 0.9rem;
+  gap: var(--section-gap);
   min-width: 0;
 }
 
 .main-column,
 .insight-rail {
   display: grid;
-  gap: 0.9rem;
+  gap: var(--section-gap);
   min-width: 0;
 }
 
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.75rem;
+  gap: var(--section-gap);
 }
 
 .metric-card,
@@ -124,8 +124,8 @@ h1 {
 
 .metric-card {
   min-width: 0;
-  min-height: 8.75rem;
-  padding: 1rem;
+  min-height: var(--metric-card-min-height);
+  padding: var(--summary-card-padding);
 }
 
 .metric-heading {
@@ -208,8 +208,8 @@ h1 {
 .card-header {
   justify-content: space-between;
   gap: 1rem;
-  min-height: 3.6rem;
-  padding: 0.9rem 1rem;
+  min-height: var(--toolbar-min-height);
+  padding: var(--toolbar-padding) var(--panel-padding);
   border-bottom: 1px solid var(--border);
 }
 

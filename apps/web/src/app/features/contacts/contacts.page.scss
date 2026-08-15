@@ -13,7 +13,6 @@
 
 .page {
   display: grid;
-  gap: 0.85rem;
   max-width: 112rem;
   margin: 0 auto;
 }
@@ -66,8 +65,6 @@
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.6rem;
-  min-height: 2.65rem;
-  padding: 0 0.45rem 0 0.75rem;
   border: 1px solid var(--contact-border);
   border-radius: 0.6rem;
   background: color-mix(in srgb, var(--contact-surface) 86%, transparent);
@@ -131,14 +128,11 @@
 .contact-summary {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.75rem;
 }
 
 .contact-summary article {
   display: grid;
   gap: 0.35rem;
-  min-height: 5.5rem;
-  padding: 0.9rem 1rem;
   align-content: center;
   border: 1px solid var(--contact-border);
   border-radius: 0.65rem;
@@ -175,7 +169,6 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(14rem, 17rem);
   align-items: start;
-  gap: 0.75rem;
   min-width: 0;
 }
 
@@ -195,8 +188,8 @@
   grid-column: 2;
   grid-row: 1;
   display: grid;
-  gap: 0.85rem;
-  padding: 1rem;
+  gap: var(--section-gap);
+  padding: var(--panel-padding);
   border: 1px solid var(--contact-border);
   border-radius: 0.65rem;
   background: var(--contact-surface);
@@ -236,7 +229,7 @@
 .saved-view-form input,
 .mapping-grid .mat-mdc-select {
   width: 100%;
-  min-height: 2.6rem;
+  min-height: var(--control-height);
 }
 
 .contacts-filter-toolbar > button {
@@ -249,8 +242,6 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  min-height: 3.5rem;
-  padding: 0 1rem;
   border-bottom: 1px solid var(--contact-border);
 }
 
@@ -306,8 +297,8 @@
 .saved-views,
 .bulk-bar,
 .persistent-message {
-  margin: 0.75rem;
-  padding: 0.7rem 0.8rem;
+  margin: var(--toolbar-padding);
+  padding: var(--toolbar-padding) var(--panel-padding);
   border: 1px solid var(--contact-border);
   border-radius: 0.55rem;
   background: var(--contact-raised);
@@ -380,12 +371,12 @@ ag-grid-angular {
 
 .grid-skeleton {
   display: grid;
-  gap: 0.75rem;
-  padding: 1rem;
+  gap: var(--section-gap);
+  padding: var(--panel-padding);
 }
 
 .grid-skeleton > div {
-  min-height: 2.5rem;
+  min-height: var(--data-row-min-height);
 }
 
 .empty-state {
@@ -435,7 +426,6 @@ table {
 
 th,
 td {
-  padding: 0.7rem 0.85rem;
   border-bottom: 1px solid var(--contact-border);
   text-align: start;
   white-space: nowrap;
@@ -461,7 +451,7 @@ th {
   inset: 0 0 0 auto;
   width: min(31rem, 100%);
   overflow: auto;
-  padding: 1.25rem;
+  padding: var(--drawer-padding);
   border-inline-start: 1px solid var(--contact-border);
   color: var(--contact-text);
   background: var(--contact-surface);
@@ -487,7 +477,7 @@ th {
 }
 
 .create-drawer > header {
-  margin-bottom: 1.25rem;
+  margin-bottom: var(--drawer-padding);
 }
 
 .create-drawer h2,

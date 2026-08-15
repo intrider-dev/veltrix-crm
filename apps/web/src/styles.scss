@@ -77,6 +77,26 @@ $system-font:
   --control-inline-padding: 0.75rem;
   --control-icon-size: 1.125rem;
   --page-gap: 1.5rem;
+  --section-gap: 0.875rem;
+  --panel-padding: 1rem;
+  --toolbar-min-height: 3.5rem;
+  --toolbar-padding: 0.75rem;
+  --data-row-min-height: 3.25rem;
+  --data-cell-block-padding: 0.7rem;
+  --summary-card-min-height: 6.25rem;
+  --summary-card-padding: 0.9rem;
+  --metric-card-min-height: 8.75rem;
+  --calendar-day-min-height: 8.75rem;
+  --project-card-min-height: 12.5rem;
+  --shell-bar-height: 3.5rem;
+  --shell-nav-item-height: 2.5rem;
+  --workspace-control-height: 2.75rem;
+  --select-option-height: 2.5rem;
+  --form-gap: 1rem;
+  --drawer-padding: 1.25rem;
+  --drawer-header-min-height: 4rem;
+  --empty-state-min-height: 14rem;
+  --control-vertical-padding: 0.5rem;
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
@@ -102,7 +122,7 @@ $system-font:
   --mat-sys-corner-small: var(--radius-control);
   --mat-sys-corner-medium: var(--radius-panel);
   --mat-form-field-container-height: var(--control-height);
-  --mat-form-field-container-vertical-padding: 0.5rem;
+  --mat-form-field-container-vertical-padding: var(--control-vertical-padding);
   --mat-form-field-outlined-container-shape: var(--radius-control);
   --mat-form-field-outlined-outline-color: var(--border-strong);
   --mat-form-field-outlined-hover-outline-color: var(--text-muted);
@@ -136,7 +156,28 @@ $system-font:
 }
 :root[data-density='compact'] {
   --control-height: 2.1rem;
-  --page-gap: 0.85rem;
+  --control-inline-padding: 0.625rem;
+  --page-gap: 0.75rem;
+  --section-gap: 0.625rem;
+  --panel-padding: 0.7rem;
+  --toolbar-min-height: 2.8rem;
+  --toolbar-padding: 0.45rem;
+  --data-row-min-height: 2.65rem;
+  --data-cell-block-padding: 0.42rem;
+  --summary-card-min-height: 4.75rem;
+  --summary-card-padding: 0.65rem;
+  --metric-card-min-height: 7rem;
+  --calendar-day-min-height: 7.25rem;
+  --project-card-min-height: 9.5rem;
+  --shell-bar-height: 3rem;
+  --shell-nav-item-height: 2.1rem;
+  --workspace-control-height: 2.25rem;
+  --select-option-height: 2.15rem;
+  --form-gap: 0.65rem;
+  --drawer-padding: 0.875rem;
+  --drawer-header-min-height: 3.25rem;
+  --empty-state-min-height: 10rem;
+  --control-vertical-padding: 0.35rem;
 }
 .cdk-overlay-container.dark-theme-overlay {
   --brand: #7061f2;
@@ -244,7 +285,7 @@ input[type='search']::-webkit-search-decoration {
 .workspace-select-panel .mat-mdc-option,
 .crm-select-panel .mat-mdc-option {
   width: 100%;
-  min-height: 2.5rem;
+  min-height: var(--select-option-height);
   padding-inline: 0.75rem;
   border-radius: calc(var(--radius-control) - 0.1875rem);
   color: var(--text-muted);
@@ -374,9 +415,9 @@ p {
 }
 .empty-state {
   display: grid;
-  min-height: 14rem;
+  min-height: var(--empty-state-min-height);
   place-items: center;
-  padding: 2rem;
+  padding: calc(var(--panel-padding) * 2);
   color: var(--text-muted);
   background: color-mix(in srgb, var(--surface-subtle) 60%, transparent);
   text-align: center;
@@ -408,8 +449,8 @@ p {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  min-height: 3.75rem;
-  padding: 0.625rem;
+  min-height: var(--toolbar-min-height);
+  padding: var(--toolbar-padding);
 }
 .feature-toolbar .grow {
   flex: 1;
@@ -418,9 +459,9 @@ p {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  gap: 0.75rem;
-  min-height: 4.5rem;
-  padding: 0.875rem;
+  gap: var(--section-gap);
+  min-height: calc(var(--toolbar-min-height) + 0.75rem);
+  padding: var(--toolbar-padding);
 }
 .filter-field {
   display: grid;
@@ -586,8 +627,8 @@ label > .mat-mdc-select:focus-visible,
 .feature-form {
   display: grid;
   align-items: start;
-  gap: 1rem;
-  padding: 1rem;
+  gap: var(--form-gap);
+  padding: var(--panel-padding);
 }
 .form-actions {
   grid-column: 1 / -1;
@@ -630,10 +671,10 @@ label > .mat-mdc-select:focus-visible,
 }
 .entity-create-drawer > header {
   display: flex;
-  min-height: 4rem;
+  min-height: var(--drawer-header-min-height);
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem 1.25rem;
+  padding: var(--toolbar-padding) var(--drawer-padding);
   border-bottom: 1px solid var(--entity-create-border, var(--border));
   background: var(--entity-create-surface, var(--surface-raised));
 }
@@ -650,7 +691,7 @@ label > .mat-mdc-select:focus-visible,
   display: grid;
   align-content: start;
   gap: 0.25rem;
-  padding: 1.25rem;
+  padding: var(--drawer-padding);
   overflow-y: auto;
   overscroll-behavior: contain;
 }
@@ -664,21 +705,21 @@ label > .mat-mdc-select:focus-visible,
 }
 .entity-create-actions {
   display: flex;
-  min-height: 4.5rem;
+  min-height: calc(var(--drawer-header-min-height) + 0.5rem);
   align-items: center;
   justify-content: flex-end;
   gap: 0.625rem;
-  padding: 0.75rem 1.25rem;
+  padding: var(--toolbar-padding) var(--drawer-padding);
   border-top: 1px solid var(--entity-create-border, var(--border));
   background: var(--entity-create-surface, var(--surface-raised));
 }
 .list-skeleton {
   display: grid;
-  gap: 0.75rem;
-  padding: 1rem;
+  gap: var(--section-gap);
+  padding: var(--panel-padding);
 }
 .list-skeleton .skeleton {
-  min-height: 4rem;
+  min-height: var(--data-row-min-height);
 }
 .status-pill {
   display: inline-flex;
@@ -689,6 +730,81 @@ label > .mat-mdc-select:focus-visible,
   color: var(--brand);
   background: var(--brand-soft);
   font-size: 0.7rem;
+}
+
+/*
+ * Density belongs to the workspace, so operational routes share one geometry
+ * layer instead of duplicating it in every lazy component stylesheet.
+ */
+:root[data-density] {
+  :is(app-contacts-page, app-leads-page, app-deals-page) :is(.page, .deals-page) {
+    gap: var(--section-gap);
+  }
+
+  :is(app-contacts-page, app-leads-page, app-deals-page, app-activities-page)
+    :is(.contact-search, .header-search, .deal-search) {
+    min-height: var(--control-height);
+    padding-inline: var(--control-inline-padding);
+  }
+
+  :is(app-contacts-page, app-leads-page, app-deals-page, app-activities-page)
+    .header-actions
+    button,
+  app-activities-page .create-task {
+    min-height: var(--control-height);
+  }
+
+  :is(app-contacts-page, app-leads-page, app-activities-page)
+    :is(.contact-summary, .stage-overview, .summary-grid),
+  :is(app-contacts-page, app-leads-page, app-deals-page, app-activities-page)
+    :is(.contacts-workspace, .leads-workspace, .kanban-workspace, .task-workspace) {
+    gap: var(--section-gap);
+  }
+
+  app-deals-page :is(.pipeline-summary, .kanban) {
+    gap: var(--section-gap);
+  }
+
+  app-deals-page :is(.pipeline-control, .status-filter, .deal-metrics > div) {
+    padding: var(--toolbar-padding) var(--panel-padding);
+  }
+
+  app-deals-page .drop-zone {
+    padding: var(--toolbar-padding);
+  }
+
+  app-deals-page .deal-card {
+    margin-bottom: var(--toolbar-padding);
+    padding: var(--panel-padding);
+  }
+
+  :is(app-contacts-page, app-leads-page, app-activities-page)
+    :is(.contact-summary article, .stage-summary, .summary-card) {
+    min-height: var(--summary-card-min-height);
+    padding: var(--summary-card-padding);
+  }
+
+  :is(app-contacts-page, app-leads-page, app-activities-page)
+    :is(.list-toolbar, .type-tabs, .activity-columns),
+  :is(app-leads-page, app-deals-page) :is(.filter-panel > header, .stage > header) {
+    min-height: var(--toolbar-min-height);
+  }
+
+  :is(app-contacts-page, app-leads-page, app-activities-page)
+    :is(.list-toolbar, .type-tabs, .activity-columns),
+  :is(app-leads-page, app-deals-page) :is(.filter-panel > header, .stage > header) {
+    padding-inline: var(--panel-padding);
+  }
+
+  :is(app-contacts-page, app-leads-page, app-deals-page) :is(th, td, .company-list > a, .trash-row),
+  app-activities-page .activity-list > article {
+    min-height: var(--data-row-min-height);
+    padding: var(--data-cell-block-padding) var(--control-inline-padding);
+  }
+
+  :is(app-contacts-page, app-leads-page, app-deals-page) :is(th, td) {
+    height: var(--data-row-min-height);
+  }
 }
 @keyframes skeleton {
   to {

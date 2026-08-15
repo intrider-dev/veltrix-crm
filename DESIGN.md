@@ -4,7 +4,7 @@
 
 Direction: **Veltrix Signal**
 
-Last updated: 2026-08-13
+Last updated: 2026-08-16
 
 This document defines the interface rules for VeltrixCRM. New screens should reuse these tokens, components, layouts, and interaction patterns. Visual references inform the product direction but never authorize copying another product's assets, brand marks, or distinctive artwork.
 
@@ -90,6 +90,22 @@ The leads route shares the dashboard's theme-responsive, high-density workspace 
 ## 3. Design tokens
 
 All values must be exposed through semantic CSS variables. Feature styles must not use raw brand colors.
+
+### Density modes
+
+Density is a workspace-wide operating preference, not a cosmetic toggle. Both modes preserve the same information, permissions, keyboard behavior, and readable type sizes; they differ in spatial rhythm:
+
+| Surface                  | Comfortable | Compact |
+| ------------------------ | ----------: | ------: |
+| Standard control         |       40 px | 33.6 px |
+| Shell bar                |       56 px |   48 px |
+| Navigation item          |       40 px | 33.6 px |
+| AG Grid contact row      |       52 px |   44 px |
+| General data row minimum |       52 px | 42.4 px |
+| Summary card minimum     |      100 px |   76 px |
+| Page gap                 |       24 px |   12 px |
+
+Comfortable is the default and favors touch, mixed input, and longer reading sessions. Compact favors pointer-and-keyboard workflows and increases visible records without reducing font sizes or hiding fields. Controls, navigation, toolbars, forms, drawers, summary cards, tables, Kanban cards, calendars, and project cards must consume the shared density tokens; feature-local fixed spacing is allowed only when it encodes data, such as a calendar event duration. New components are incomplete if switching density does not change their relevant geometry immediately.
 
 ### Color roles
 

@@ -2,7 +2,7 @@
 
 > Kafka/RabbitMQ comparative throughput: **Not measured**. Dual-broker confirmed-delivery smoke passed on 2026-08-13, but no throughput benefit is claimed until the matrix in [BROKER_BENCHMARK.md](BROKER_BENCHMARK.md) is complete.
 
-Last updated: 2026-07-31
+Last updated: 2026-08-16
 Evidence status: bundle, Lighthouse, browser interaction, DOM, scrolling, heap, screenshots, E2E, and runtime snapshots were regenerated from the final redesign working tree. The retained serving-performance scenario remains historical evidence for application commit `3b26934ba388b7289c400733a46001d6acae6108`; the clean three-run k6 baseline was executed from documentation-only descendant `feaffdda59244d950578c452beb2a835534e2a68`. Results are not presented as a tagged release.
 
 ## Reporting rules
@@ -28,13 +28,13 @@ Raw local artifacts are written under `benchmarks/results/` by the documented sc
 
 ## Frontend bundle
 
-Production output was compressed with Node zlib gzip level 9 and Brotli quality 11. Evidence: `benchmarks/results/bundle-report.json`, generated `2026-07-31T18:50:56.374Z`.
+Production output was compressed with Node zlib gzip level 9 and Brotli quality 11. Evidence: `benchmarks/results/bundle-report.json`, generated `2026-08-15T20:12:09.466Z` for the density-system build. Browser and server benchmark metrics below retain their separately dated runs.
 
 | Metric                                  |              Measured |              Target | Status |
 | --------------------------------------- | --------------------: | ------------------: | ------ |
-| Initial JS + CSS, Brotli                |   90,978 B / 88.8 KiB |            ≤350 KiB | Pass   |
+| Initial JS + CSS, Brotli                |   95,114 B / 92.9 KiB |            ≤350 KiB | Pass   |
 | Largest ordinary lazy app chunk, Brotli |   20,397 B / 19.9 KiB |            ≤200 KiB | Pass   |
-| Lazy AG Grid Community chunk, Brotli    | 171,215 B / 167.2 KiB | lazy and documented | Pass   |
+| Lazy AG Grid Community chunk, Brotli    | 172,331 B / 168.3 KiB | lazy and documented | Pass   |
 | Optional lazy LiveKit client, Brotli    | 116,990 B / 114.2 KiB |   optional and lazy | Pass   |
 | External font references                |                     0 |                   0 | Pass   |
 | Inline event handlers                   |                     0 |                   0 | Pass   |

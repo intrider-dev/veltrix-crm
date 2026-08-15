@@ -2,6 +2,8 @@
   "appearance.compact": "Компактно",
   "appearance.comfortable": "Комфортно",
   "appearance.dark": "Тёмная",
+  "appearance.density": "Плотность интерфейса",
+  "appearance.densityDescription": "Меняет высоту элементов, навигацию, карточки, таблицы и отступы страниц.",
   "appearance.light": "Светлая",
   "appearance.system": "Как в системе",
   "language.description": "Меняет сообщения продукта, даты, числа и подписи для вспомогательных технологий.",

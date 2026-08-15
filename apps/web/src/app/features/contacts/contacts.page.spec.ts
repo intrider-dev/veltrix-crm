@@ -10,6 +10,7 @@ import type { SavedView } from '../../core/api/api.types';
 import { Permissions } from '../../core/auth/permissions';
 import { DraftService } from '../../core/drafts/draft.service';
 import { I18nService } from '../../core/i18n/i18n.service';
+import { AppearanceStore } from '../../core/preferences/appearance.store';
 import { WorkspaceStore } from '../../core/workspace/workspace.store';
 import { ContactsPage } from './contacts.page';
 
@@ -62,6 +63,7 @@ async function render(api: object): Promise<ComponentFixture<ContactsPage>> {
     providers: [
       { provide: ApiClient, useValue: api },
       { provide: WorkspaceStore, useValue: { id: signal('workspace-1') } },
+      { provide: AppearanceStore, useValue: { density: signal('comfortable') } },
       { provide: Permissions, useValue: { allows: () => true } },
       {
         provide: I18nService,

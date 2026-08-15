@@ -12,7 +12,7 @@
 
 .calendar-page {
   display: grid;
-  gap: 1rem;
+  gap: var(--page-gap);
 }
 
 .calendar-header,
@@ -28,7 +28,7 @@
 .calendar-header {
   min-width: 0;
   justify-content: space-between;
-  gap: 1rem;
+  gap: var(--section-gap);
 }
 
 .title-block h1 {
@@ -44,7 +44,7 @@
 .calendar-actions {
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: 0.625rem;
+  gap: var(--section-gap);
 }
 
 .view-switcher {
@@ -57,7 +57,7 @@
 
 .view-switcher button {
   min-width: 4.5rem;
-  min-height: 2.5rem;
+  min-height: var(--control-height);
   border-radius: calc(var(--radius-control, 0.625rem) - 0.1875rem);
   color: var(--calendar-muted);
 }
@@ -73,7 +73,7 @@
 
 .icon-button,
 .export-action {
-  min-width: 2.5rem;
+  min-width: var(--control-height);
   padding-inline: 0.625rem;
 }
 
@@ -84,7 +84,7 @@
 
 .compact-select .mat-mdc-select {
   min-width: 8.75rem;
-  min-height: 2.5rem;
+  min-height: var(--control-height);
   border: 1px solid var(--calendar-border);
   border-radius: var(--radius-control, 0.625rem);
   color: var(--text);
@@ -109,7 +109,7 @@
 .calendar-workspace {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 18.5rem;
-  gap: 1rem;
+  gap: var(--section-gap);
   align-items: start;
 }
 
@@ -126,10 +126,10 @@
 }
 
 .surface-heading {
-  min-height: 3.75rem;
+  min-height: var(--toolbar-min-height);
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.75rem 1.25rem;
+  padding: var(--toolbar-padding) var(--panel-padding);
   border-bottom: 1px solid var(--calendar-border);
 }
 
@@ -183,8 +183,8 @@
 .day-cell {
   position: relative;
   min-width: 0;
-  min-height: 8.75rem;
-  padding: 0.45rem;
+  min-height: var(--calendar-day-min-height);
+  padding: var(--toolbar-padding);
   border-inline-end: 1px solid var(--calendar-border);
   border-block-end: 1px solid var(--calendar-border);
   background: var(--calendar-surface);
@@ -260,7 +260,7 @@
 
 .calendar-insights {
   display: grid;
-  gap: 0.75rem;
+  gap: var(--section-gap);
   min-width: 0;
 }
 
@@ -269,10 +269,10 @@
 }
 
 .insight-card > header {
-  min-height: 3.5rem;
+  min-height: var(--toolbar-min-height);
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.875rem 1rem;
+  padding: var(--toolbar-padding) var(--panel-padding);
   border-bottom: 1px solid var(--calendar-border);
 }
 
@@ -361,7 +361,7 @@
 
 .upcoming-list {
   display: grid;
-  padding: 0.25rem 1rem 0.75rem;
+  padding: 0.25rem var(--panel-padding) var(--toolbar-padding);
 }
 
 .upcoming-list article {
@@ -369,7 +369,7 @@
   grid-template-columns: auto minmax(0, 1fr);
   gap: 0.75rem;
   align-items: start;
-  padding: 0.75rem 0;
+  padding: var(--data-cell-block-padding) 0;
   border-bottom: 1px solid var(--calendar-border);
 }
 
@@ -422,7 +422,7 @@
 
 .calendar-filters {
   display: grid;
-  padding: 0.5rem 1rem 0.875rem;
+  padding: var(--toolbar-padding) var(--panel-padding);
 }
 
 .calendar-filters label {

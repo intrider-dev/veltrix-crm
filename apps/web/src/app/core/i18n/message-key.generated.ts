@@ -1009,6 +1009,8 @@ export type MessageKey =
   | 'settings.appearance.comfortable'
   | 'settings.appearance.compact'
   | 'settings.appearance.dark'
+  | 'settings.appearance.density'
+  | 'settings.appearance.densityDescription'
   | 'settings.appearance.light'
   | 'settings.appearance.system'
   | 'settings.language.description'

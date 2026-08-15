@@ -7,7 +7,7 @@
   grid-template-columns: minmax(14rem, 1fr) minmax(18rem, 27rem) auto;
   gap: 1rem;
   align-items: center;
-  margin-bottom: 1.1rem;
+  margin-bottom: var(--page-gap);
 }
 .page-heading h1,
 .insight-card h2,
@@ -35,8 +35,6 @@
   grid-template-columns: auto 1fr auto;
   gap: 0.6rem;
   align-items: center;
-  min-height: 2.65rem;
-  padding-inline: 0.75rem;
   border: 1px solid var(--task-border);
   border-radius: 0.65rem;
   background: var(--task-panel);
@@ -65,7 +63,6 @@
   font-size: 0.68rem;
 }
 .create-task {
-  min-height: 2.65rem;
   padding-inline: 1.1rem;
   color: white !important;
   background: linear-gradient(100deg, #4865f4, #7351ed) !important;
@@ -79,16 +76,13 @@
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 0.7rem;
-  margin-bottom: 0.85rem;
+  margin-bottom: var(--section-gap);
 }
 .summary-card {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   gap: 0.65rem;
   align-items: center;
-  min-height: 6.15rem;
-  padding: 0.8rem;
   border: 1px solid var(--task-border);
   border-radius: 0.8rem;
   background: linear-gradient(145deg, var(--task-raised), var(--task-panel));
@@ -116,7 +110,6 @@
 .task-workspace {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 18rem;
-  gap: 0.75rem;
   align-items: start;
 }
 .activity-list {
@@ -130,8 +123,6 @@
 .type-tabs {
   display: flex;
   gap: 1.4rem;
-  min-height: 3.5rem;
-  padding-inline: 1rem;
   border-bottom: 1px solid var(--task-border);
   background: transparent;
 }
@@ -161,9 +152,9 @@
 }
 .filter-toolbar {
   display: flex;
-  gap: 0.65rem;
+  gap: var(--section-gap);
   align-items: end;
-  padding: 0.7rem 1rem;
+  padding: var(--toolbar-padding) var(--panel-padding);
   border-bottom: 1px solid var(--task-border);
 }
 .filter-toolbar label {
@@ -178,13 +169,13 @@
 }
 .filter-toolbar .mat-mdc-select {
   width: 100%;
-  min-height: 2.35rem;
+  min-height: var(--control-height);
   border-color: var(--task-border);
   background-color: var(--task-panel);
 }
 .filter-toolbar button {
   margin-inline-start: auto;
-  min-height: 2.35rem;
+  min-height: var(--control-height);
   white-space: nowrap;
 }
 
@@ -196,14 +187,11 @@
   align-items: center;
 }
 .activity-columns {
-  min-height: 2.7rem;
-  padding-inline: 0.9rem;
   border-bottom: 1px solid var(--task-border);
   color: var(--task-muted);
   font-size: 0.68rem;
 }
 .activity-list > article {
-  padding: 0.6rem 0.9rem;
   border-bottom: 1px solid var(--task-border);
 }
 .row-check {
@@ -309,10 +297,10 @@
 
 .task-insights {
   display: grid;
-  gap: 0.75rem;
+  gap: var(--section-gap);
 }
 .insight-card {
-  padding: 0.9rem;
+  padding: var(--panel-padding);
   border: 1px solid var(--task-border);
   border-radius: 0.8rem;
   background: linear-gradient(155deg, var(--task-raised), var(--task-panel));

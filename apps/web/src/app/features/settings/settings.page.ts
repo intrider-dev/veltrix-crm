@@ -100,11 +100,14 @@ import { IconComponent } from '../../shared/icon/icon.component';
           </div>
         </div>
         <div class="setting-row">
-          <strong>{{ i18n.t('settings.appearance.comfortable') }}</strong>
+          <div>
+            <strong>{{ i18n.t('settings.appearance.density') }}</strong>
+            <small>{{ i18n.t('settings.appearance.densityDescription') }}</small>
+          </div>
           <div
             class="segmented segmented-control"
             role="group"
-            [attr.aria-label]="i18n.t('settings.appearance.comfortable')"
+            [attr.aria-label]="i18n.t('settings.appearance.density')"
           >
             @for (density of densities; track density.value) {
               <button
@@ -355,8 +358,8 @@ import { IconComponent } from '../../shared/icon/icon.component';
       background: var(--workspace-surface);
     }
     .setting-section > header {
-      min-height: 4rem;
-      padding: 1rem 1.25rem;
+      min-height: var(--drawer-header-min-height);
+      padding: var(--toolbar-padding) var(--panel-padding);
       border-color: var(--workspace-border);
       background: var(--workspace-subtle);
     }
@@ -369,8 +372,8 @@ import { IconComponent } from '../../shared/icon/icon.component';
       line-height: 1.45;
     }
     .setting-row {
-      min-height: 4.75rem;
-      padding: 0.875rem 1.25rem;
+      min-height: calc(var(--toolbar-min-height) + 1.25rem);
+      padding: var(--toolbar-padding) var(--panel-padding);
       border-color: color-mix(in srgb, var(--workspace-border) 72%, transparent);
     }
     .setting-row:hover {

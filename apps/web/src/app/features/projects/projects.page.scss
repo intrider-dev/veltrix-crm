@@ -22,14 +22,14 @@
 .project-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(20rem, 100%), 1fr));
-  gap: 0.75rem;
+  gap: var(--section-gap);
 }
 
 .project-card {
   display: grid;
-  gap: 0.75rem;
-  min-height: 12.5rem;
-  padding: 1rem;
+  gap: var(--section-gap);
+  min-height: var(--project-card-min-height);
+  padding: var(--panel-padding);
   border-color: var(--workspace-border);
   border-radius: var(--radius-panel, 0.875rem);
   color: inherit;
@@ -108,7 +108,7 @@
   inset: 0 0 0 auto;
   width: min(34rem, 100%);
   overflow: auto;
-  padding: 1.25rem;
+  padding: var(--drawer-padding);
   border-left: 1px solid var(--workspace-border);
   background: var(--workspace-surface);
   box-shadow: var(--shadow-xl);
@@ -121,7 +121,7 @@
 
 .create-drawer form {
   display: grid;
-  margin-top: 1rem;
+  margin-top: var(--form-gap);
 }
 
 .date-grid > * {

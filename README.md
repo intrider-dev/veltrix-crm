@@ -76,7 +76,7 @@ The following results come from the documented local benchmark profile. They are
 
 | Metric                                   |              Result |
 | ---------------------------------------- | ------------------: |
-| Initial JS + CSS                         |     89.0 KiB Brotli |
+| Initial JS + CSS                         |     92.9 KiB Brotli |
 | Lighthouse desktop / mobile              |            100 / 94 |
 | Lighthouse accessibility                 |                 100 |
 | Browser interaction latency              |      48.4 ms median |
