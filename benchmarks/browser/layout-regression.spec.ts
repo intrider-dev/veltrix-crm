@@ -117,6 +117,20 @@ for (const route of ["/contacts", "/companies"] as const) {
     expect(radius).toBeGreaterThanOrEqual(6);
 
     if (route === "/companies") {
+      const selectedTab = segmented.locator("button.selected");
+      const segmentedBox = await segmented.boundingBox();
+      const selectedTabBox = await selectedTab.boundingBox();
+      expect(segmentedBox).not.toBeNull();
+      expect(selectedTabBox).not.toBeNull();
+      expect(
+        Math.abs(
+          (segmentedBox?.y ?? 0) +
+            (segmentedBox?.height ?? 0) / 2 -
+            ((selectedTabBox?.y ?? 0) + (selectedTabBox?.height ?? 0) / 2),
+        ),
+      ).toBeLessThanOrEqual(2);
+      expect((segmentedBox?.height ?? 0) - (selectedTabBox?.height ?? 0)).toBeLessThanOrEqual(8);
+
       const add = page.getByRole("button", {
         name: "Add company",
         exact: true,

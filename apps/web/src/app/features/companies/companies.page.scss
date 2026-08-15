@@ -193,8 +193,9 @@
 }
 
 .mode-switch {
-  align-self: stretch;
+  align-self: end;
   flex: 0 0 auto;
+  height: var(--control-height);
   padding: 0.2rem;
   border-radius: 0.55rem;
   background: var(--surface-subtle);
@@ -228,7 +229,7 @@
   flex: 1 1 12rem;
 }
 
-.company-toolbar button {
+.company-toolbar > button {
   min-height: var(--control-height);
   border-color: var(--border-strong) !important;
   color: var(--text) !important;
