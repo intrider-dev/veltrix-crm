@@ -1,5 +1,5 @@
 import { DOCUMENT } from '@angular/common';
-import { effect, inject, Injectable, signal } from '@angular/core';
+import { computed, effect, inject, Injectable, signal } from '@angular/core';
 
 import { openAppDatabase } from '../storage/app-database';
 
@@ -16,12 +16,12 @@ export class AppearanceStore {
 
   readonly theme = this.themeState.asReadonly();
   readonly density = this.densityState.asReadonly();
+  readonly dark = computed(() => resolveDarkTheme(this.themeState(), this.systemDark()));
 
   constructor() {
     this.media.addEventListener('change', (event) => this.systemDark.set(event.matches));
     effect(() => {
-      const dark =
-        this.themeState() === 'dark' || (this.themeState() === 'system' && this.systemDark());
+      const dark = this.dark();
       this.document.documentElement.dataset['theme'] = dark ? 'dark' : 'light';
       this.document.documentElement.dataset['density'] = this.densityState();
       this.document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
@@ -77,4 +77,8 @@ export class AppearanceStore {
     }).catch(() => undefined);
     database.close();
   }
+}
+
+export function resolveDarkTheme(theme: ThemePreference, systemDark: boolean): boolean {
+  return theme === 'dark' || (theme === 'system' && systemDark);
 }

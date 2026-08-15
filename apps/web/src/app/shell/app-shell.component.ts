@@ -36,12 +36,14 @@ import type { AppMessageKey } from '../core/i18n/app-message-key';
 import { I18nService } from '../core/i18n/i18n.service';
 import { NetworkStatusService } from '../core/network/network-status.service';
 import { NotificationRealtimeService } from '../core/notifications/notification-realtime.service';
+import { AppearanceStore } from '../core/preferences/appearance.store';
 import { WorkspaceStore } from '../core/workspace/workspace.store';
 import { ChatDockComponent } from '../features/chat/chat-dock.component';
 import { focusAfterNextRender } from '../shared/a11y/focus-after-render';
 import { BrandLogoComponent } from '../shared/brand/brand-logo.component';
 import { ToastViewportComponent } from '../shared/feedback/toast-viewport.component';
 import { IconComponent, type IconName } from '../shared/icon/icon.component';
+import { usesDarkWorkspace } from './workspace-appearance';
 
 interface NavItem {
   readonly path: string;
@@ -285,6 +287,7 @@ export class AppShellComponent {
   readonly i18n = inject(I18nService);
   readonly network = inject(NetworkStatusService);
   readonly notifications = inject(NotificationRealtimeService);
+  readonly appearance = inject(AppearanceStore);
   readonly workspace = inject(WorkspaceStore);
   readonly permissions = inject(Permissions);
   readonly product = productConfig;
@@ -292,7 +295,9 @@ export class AppShellComponent {
   readonly mobileOpen = signal(false);
   readonly mobileViewport = signal(false);
   readonly commandOpen = signal(false);
-  readonly darkWorkspaceRoute = signal(false);
+  readonly darkWorkspaceRoute = computed(
+    () => this.appearance.dark() || this.routeUsesDarkWorkspace(),
+  );
   readonly searchPending = signal(false);
   readonly searchQuery = signal('');
   readonly searchResults = signal<readonly SearchResult[]>([]);
@@ -330,6 +335,7 @@ export class AppShellComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly injector = inject(Injector);
   private readonly searchTerms = new Subject<string>();
+  private readonly routeUsesDarkWorkspace = signal(false);
 
   constructor() {
     this.syncWorkspaceAppearance();
@@ -378,7 +384,7 @@ export class AppShellComponent {
   }
 
   private syncWorkspaceAppearance(): void {
-    this.darkWorkspaceRoute.set(true);
+    this.routeUsesDarkWorkspace.set(usesDarkWorkspace(this.router.url));
   }
 
   readonly initials = () => {
