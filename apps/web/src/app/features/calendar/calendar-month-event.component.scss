@@ -1,0 +1,66 @@
+.calendar-event {
+  --event-color: #38bdf8;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.2rem 0.35rem;
+  min-width: 0;
+  align-items: center;
+  padding: 0.35rem 0.4rem;
+  border: 1px solid color-mix(in srgb, var(--event-color) 34%, transparent);
+  border-radius: 0.375rem;
+  color: var(--event-color);
+  background: color-mix(in srgb, var(--event-color) 13%, var(--surface-raised));
+  font-size: 0.625rem;
+  line-height: 1.25;
+}
+
+.type-call {
+  --event-color: #34d399;
+}
+
+.type-task {
+  --event-color: #a78bfa;
+}
+
+.type-note {
+  --event-color: #fbbf24;
+}
+
+.event-type {
+  overflow: hidden;
+  color: var(--event-color);
+  font-weight: 700;
+  letter-spacing: 0.025em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+time {
+  color: color-mix(in srgb, var(--event-color) 82%, white);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+strong {
+  grid-column: 1 / -1;
+  overflow: hidden;
+  color: var(--text);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.is-completed {
+  opacity: 0.58;
+}
+
+.is-completed strong {
+  text-decoration: line-through;
+}
+
+@media (forced-colors: active) {
+  .calendar-event {
+    border: 1px solid CanvasText;
+  }
+}

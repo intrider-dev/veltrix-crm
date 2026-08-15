@@ -139,6 +139,10 @@ export class I18nService {
     }
   }
 
+  currentTimeZone(): string {
+    return this.activeTimeZone();
+  }
+
   money(minorUnits: number, currency: string): string {
     return new Intl.NumberFormat(this.activeLocale(), { style: 'currency', currency }).format(
       minorUnits / 100,

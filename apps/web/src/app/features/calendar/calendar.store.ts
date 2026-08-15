@@ -21,6 +21,11 @@ export interface CalendarDay {
   readonly items: readonly CalendarActivity[];
 }
 
+export interface CalendarEventLayout {
+  readonly top: number;
+  readonly height: number;
+}
+
 @Injectable()
 export class CalendarStore {
   private readonly api = inject(ApiClient);
@@ -162,6 +167,73 @@ export function calendarRange(anchor: Date, view: CalendarView): { start: Date; 
   const mondayOffset = (first.getDay() + 6) % 7;
   const start = addDays(first, -mondayOffset);
   return { start, end: addDays(start, 42) };
+}
+
+export function calendarActivityIntersectsDay(
+  activity: Pick<CalendarActivity, 'occurredAt' | 'endsAt'>,
+  day: Date,
+  timeZone?: string,
+): boolean {
+  const dayStart = timeZone
+    ? Date.UTC(day.getFullYear(), day.getMonth(), day.getDate())
+    : startOfDay(day).getTime();
+  const dayEnd = dayStart + 86_400_000;
+  const eventStart = wallClockTimestamp(activity.occurredAt, timeZone);
+  const parsedEnd = activity.endsAt ? wallClockTimestamp(activity.endsAt, timeZone) : Number.NaN;
+  const eventEnd =
+    Number.isFinite(parsedEnd) && parsedEnd > eventStart ? parsedEnd : eventStart + 3_600_000;
+  return eventStart < dayEnd && eventEnd > dayStart;
+}
+
+export function calendarEventLayout(
+  activity: Pick<CalendarActivity, 'occurredAt' | 'endsAt'>,
+  day: Date,
+  hourHeight = 48,
+  timeZone?: string,
+): CalendarEventLayout {
+  const dayStart = timeZone
+    ? Date.UTC(day.getFullYear(), day.getMonth(), day.getDate())
+    : startOfDay(day).getTime();
+  const dayEnd = dayStart + 86_400_000;
+  const rawStart = wallClockTimestamp(activity.occurredAt, timeZone);
+  const parsedEnd = activity.endsAt ? wallClockTimestamp(activity.endsAt, timeZone) : Number.NaN;
+  const rawEnd =
+    Number.isFinite(parsedEnd) && parsedEnd > rawStart ? parsedEnd : rawStart + 3_600_000;
+  const visibleStart = Math.max(rawStart, dayStart);
+  const visibleEnd = Math.min(rawEnd, dayEnd);
+  const top = ((visibleStart - dayStart) / 3_600_000) * hourHeight;
+  const proportionalHeight =
+    ((Math.max(visibleEnd, visibleStart) - visibleStart) / 3_600_000) * hourHeight;
+  return {
+    top: Math.max(0, top),
+    height: Math.min(Math.max(44, proportionalHeight), 24 * hourHeight - top),
+  };
+}
+
+function wallClockTimestamp(value: string, timeZone?: string): number {
+  const instant = new Date(value);
+  if (!timeZone || Number.isNaN(instant.getTime())) return instant.getTime();
+  const parts = new Intl.DateTimeFormat('en', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(instant);
+  const values = Object.fromEntries(
+    parts.filter((part) => part.type !== 'literal').map((part) => [part.type, Number(part.value)]),
+  );
+  return Date.UTC(
+    values['year'],
+    values['month'] - 1,
+    values['day'],
+    values['hour'],
+    values['minute'],
+    values['second'],
+  );
 }
 
 function startOfDay(date: Date): Date {

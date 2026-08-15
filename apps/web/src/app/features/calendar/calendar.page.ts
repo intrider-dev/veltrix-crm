@@ -21,7 +21,10 @@ import { focusAfterNextRender } from '../../shared/a11y/focus-after-render';
 import { trimmedOrNull } from '../../shared/forms/feature-validation';
 import { IconComponent } from '../../shared/icon/icon.component';
 import { ErrorPanelComponent } from '../../shared/state/error-panel.component';
-import { CalendarStore, type CalendarView } from './calendar.store';
+import { CalendarEventLegendComponent } from './calendar-event-legend.component';
+import { CalendarMonthEventComponent } from './calendar-month-event.component';
+import { CalendarTimelineComponent } from './calendar-timeline.component';
+import { CalendarStore, calendarActivityIntersectsDay, type CalendarView } from './calendar.store';
 
 type ActivityType = CalendarActivity['type'];
 type VisibilityScope = CalendarActivity['visibilityScope'];
@@ -30,6 +33,9 @@ type VisibilityScope = CalendarActivity['visibilityScope'];
   selector: 'app-calendar-page',
   imports: [
     ErrorPanelComponent,
+    CalendarEventLegendComponent,
+    CalendarMonthEventComponent,
+    CalendarTimelineComponent,
     FormField,
     IconComponent,
     MatButtonModule,
@@ -230,61 +236,48 @@ type VisibilityScope = CalendarActivity['visibilityScope'];
                 <span>{{ weekday }}</span>
               }
             </div>
+            <div
+              class="calendar-grid month-view"
+              role="group"
+              [attr.aria-label]="i18n.t('common.nav.calendar')"
+            >
+              @if (store.loading() && store.activities().length === 0) {
+                @for (placeholder of placeholders; track placeholder) {
+                  <div class="skeleton day-cell"></div>
+                }
+              } @else {
+                @for (day of visibleDays(); track day.key) {
+                  <article
+                    class="day-cell"
+                    [class.outside]="!day.currentMonth"
+                    [class.today]="isToday(day.date)"
+                    [attr.aria-label]="dayAriaLabel(day.date, day.items.length)"
+                  >
+                    <button class="day-number" type="button" (click)="openCreate(day.date)">
+                      <time [attr.datetime]="day.key">{{ day.date.getDate() }}</time>
+                    </button>
+                    <div class="day-events">
+                      @for (item of day.items.slice(0, eventLimit()); track item.id) {
+                        <app-calendar-month-event [item]="item" />
+                      }
+                      @if (day.items.length > eventLimit()) {
+                        <span class="more-events"
+                          >+{{ day.items.length - eventLimit() }}
+                          {{ i18n.t('calendar.more') }}</span
+                        >
+                      }
+                    </div>
+                  </article>
+                }
+              }
+            </div>
+          } @else {
+            <app-calendar-timeline
+              [days]="visibleDays()"
+              [view]="store.view() === 'day' ? 'day' : 'week'"
+              (createRequested)="openCreate($event)"
+            />
           }
-
-          <div
-            class="calendar-grid"
-            [class.month-view]="store.view() === 'month'"
-            [class.week-view]="store.view() === 'week'"
-            [class.day-view]="store.view() === 'day'"
-            [attr.aria-label]="i18n.t('common.nav.calendar')"
-            tabindex="0"
-          >
-            @if (store.loading() && store.activities().length === 0) {
-              @for (placeholder of placeholders; track placeholder) {
-                <div class="skeleton day-cell"></div>
-              }
-            } @else {
-              @for (day of visibleDays(); track day.key) {
-                <article
-                  class="day-cell"
-                  [class.outside]="!day.currentMonth"
-                  [class.today]="isToday(day.date)"
-                  [attr.aria-label]="dayAriaLabel(day.date, day.items.length)"
-                >
-                  <button class="day-number" type="button" (click)="openCreate(day.date)">
-                    <time [attr.datetime]="day.key">{{ day.date.getDate() }}</time>
-                  </button>
-                  <div class="day-events">
-                    @for (item of day.items.slice(0, eventLimit()); track item.id) {
-                      <article
-                        class="calendar-event"
-                        [class]="'calendar-event type-' + item.type"
-                        [class.is-completed]="item.status === 'completed'"
-                      >
-                        <span class="event-dot"></span>
-                        <time [attr.datetime]="item.occurredAt">{{ eventTime(item) }}</time>
-                        <strong>{{ item.title }}</strong>
-                        @if (store.view() !== 'month') {
-                          <span class="event-meta">{{
-                            i18n.t(scopeKey(item.visibilityScope))
-                          }}</span>
-                          @if (item.location) {
-                            <small>{{ item.location }}</small>
-                          }
-                        }
-                      </article>
-                    }
-                    @if (day.items.length > eventLimit()) {
-                      <span class="more-events"
-                        >+{{ day.items.length - eventLimit() }} {{ i18n.t('calendar.more') }}</span
-                      >
-                    }
-                  </div>
-                </article>
-              }
-            }
-          </div>
         </section>
 
         <aside class="calendar-insights" [attr.aria-label]="i18n.t('calendar.insights')">
@@ -342,9 +335,10 @@ type VisibilityScope = CalendarActivity['visibilityScope'];
                 <article>
                   <i [class]="'type-' + item.type"></i>
                   <div>
+                    <span class="upcoming-type">{{ i18n.t(typeKey(item.type)) }}</span>
                     <time [attr.datetime]="item.occurredAt">{{ upcomingDate(item) }}</time>
                     <strong>{{ item.title }}</strong>
-                    <span>{{ i18n.t(scopeKey(item.visibilityScope)) }}</span>
+                    <span class="upcoming-scope">{{ i18n.t(scopeKey(item.visibilityScope)) }}</span>
                   </div>
                 </article>
               } @empty {
@@ -352,6 +346,8 @@ type VisibilityScope = CalendarActivity['visibilityScope'];
               }
             </div>
           </section>
+
+          <app-calendar-event-legend />
 
           <section class="insight-card calendars-card">
             <header>
@@ -399,18 +395,13 @@ export class CalendarPage implements OnInit {
   );
   readonly visibleDays = computed(() => {
     const activities = this.visibleActivities();
-    const byDay = new Map<string, CalendarActivity[]>();
-    for (const item of activities) {
-      const key = dateKey(new Date(item.occurredAt));
-      const items = byDay.get(key) ?? [];
-      items.push(item);
-      byDay.set(key, items);
-    }
     return this.store.days().map((day) => ({
       ...day,
-      items: [...(byDay.get(day.key) ?? [])].sort(
-        (left, right) => Date.parse(left.occurredAt) - Date.parse(right.occurredAt),
-      ),
+      items: activities
+        .filter((item) =>
+          calendarActivityIntersectsDay(item, day.date, this.i18n.currentTimeZone()),
+        )
+        .sort((left, right) => Date.parse(left.occurredAt) - Date.parse(right.occurredAt)),
     }));
   });
   readonly upcomingActivities = computed(() => {
@@ -424,7 +415,10 @@ export class CalendarPage implements OnInit {
   });
   readonly weekdayLabels = computed(() =>
     Array.from({ length: 7 }, (_, index) =>
-      this.i18n.date(new Date(2026, 0, 5 + index, 12), { weekday: 'short' }),
+      this.i18n.date(new Date(Date.UTC(2026, 0, 5 + index, 12)), {
+        weekday: 'short',
+        timeZone: 'UTC',
+      }),
     ),
   );
   readonly miniDays = computed(() => {
@@ -438,7 +432,9 @@ export class CalendarPage implements OnInit {
         date,
         key,
         currentMonth: date.getMonth() === anchor.getMonth(),
-        items: this.store.activities().filter((item) => dateKey(new Date(item.occurredAt)) === key),
+        items: this.store
+          .activities()
+          .filter((item) => calendarActivityIntersectsDay(item, date, this.i18n.currentTimeZone())),
       };
     });
   });
@@ -507,19 +503,15 @@ export class CalendarPage implements OnInit {
   periodLabel(): string {
     if (this.store.view() === 'month') return this.monthLabel();
     const range = this.store.range();
-    return `${this.i18n.date(range.start, { dateStyle: 'medium' })} – ${this.i18n.date(new Date(range.end.getTime() - 1), { dateStyle: 'medium' })}`;
+    return `${this.calendarDate(range.start, { dateStyle: 'medium' })} – ${this.calendarDate(addDays(range.end, -1), { dateStyle: 'medium' })}`;
   }
 
   monthLabel(): string {
-    return this.i18n.date(this.store.anchor(), { month: 'long', year: 'numeric' });
+    return this.calendarDate(this.store.anchor(), { month: 'long', year: 'numeric' });
   }
 
   eventLimit(): number {
     return this.store.view() === 'month' ? 3 : 12;
-  }
-
-  eventTime(item: CalendarActivity): string {
-    return this.i18n.date(item.occurredAt, { hour: '2-digit', minute: '2-digit', hour12: false });
   }
 
   upcomingDate(item: CalendarActivity): string {
@@ -537,7 +529,7 @@ export class CalendarPage implements OnInit {
   }
 
   dayAriaLabel(date: Date, count: number): string {
-    return `${this.i18n.date(date, { dateStyle: 'full' })}, ${count} ${this.i18n.t('calendar.eventsCount')}`;
+    return `${this.calendarDate(date, { dateStyle: 'full' })}, ${count} ${this.i18n.t('calendar.eventsCount')}`;
   }
 
   viewKey(view: CalendarView): 'calendar.view.day' | 'calendar.view.week' | 'calendar.view.month' {
@@ -630,6 +622,11 @@ export class CalendarPage implements OnInit {
       scopeDepartmentId: '',
     });
     this.closeCreate();
+  }
+
+  private calendarDate(date: Date, options: Intl.DateTimeFormatOptions): string {
+    const value = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 12));
+    return this.i18n.date(value, { ...options, timeZone: 'UTC' });
   }
 
   private matchesFilters(item: CalendarActivity): boolean {
