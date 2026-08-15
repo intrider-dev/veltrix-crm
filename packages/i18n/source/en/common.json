@@ -45,5 +45,6 @@
   "status.completed": "Completed",
   "status.inactive": "Inactive",
   "status.open": "Open",
-  "validation.name": "Enter a name between 1 and 200 characters."
+  "validation.name": "Enter a name between 1 and 200 characters.",
+  "validation.phone": "Enter a valid phone number for the selected country."
 }

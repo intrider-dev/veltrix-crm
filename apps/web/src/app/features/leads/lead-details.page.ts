@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, effect, inject, input, signal } from '@angular/core';
-import { FormField, form, required } from '@angular/forms/signals';
+import { FormField, form, required, validate } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -10,6 +10,7 @@ import { Permissions } from '../../core/auth/permissions';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { RecordAssignmentsComponent } from '../../shared/assignments/record-assignments.component';
 import { CustomFieldEditorComponent } from '../../shared/custom-fields/custom-field-editor.component';
+import { PhoneInputComponent } from '../../shared/forms/phone-input.component';
 import { IconComponent } from '../../shared/icon/icon.component';
 import { ErrorPanelComponent } from '../../shared/state/error-panel.component';
 import { EntityChatComponent } from '../chat/entity-chat.component';
@@ -26,6 +27,7 @@ import { LeadDetailsStore } from './lead-details.store';
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
+    PhoneInputComponent,
     RecordAssignmentsComponent,
     RouterLink,
   ],
@@ -79,10 +81,11 @@ import { LeadDetailsStore } from './lead-details.store';
                     ><mat-label>{{ i18n.t('common.field.email') }}</mat-label
                     ><input matInput type="email" [formField]="leadForm.email"
                   /></mat-form-field>
-                  <mat-form-field appearance="outline"
-                    ><mat-label>{{ i18n.t('common.field.phone') }}</mat-label
-                    ><input matInput [formField]="leadForm.phone"
-                  /></mat-form-field>
+                  <app-phone-input
+                    [formField]="leadForm.phone"
+                    [label]="i18n.t('common.field.phone')"
+                    (validityChange)="phoneValid.set($event)"
+                  />
                   <mat-form-field appearance="outline"
                     ><mat-label>{{ i18n.t('leads.company') }}</mat-label
                     ><input matInput [formField]="leadForm.companyName"
@@ -233,6 +236,7 @@ export class LeadDetailsPage {
   readonly permissions = inject(Permissions);
   private readonly router = inject(Router);
   readonly customFields = signal<Record<string, unknown>>({});
+  readonly phoneValid = signal(true);
   readonly model = signal({
     name: '',
     email: '',
@@ -244,7 +248,14 @@ export class LeadDetailsPage {
     expectedCloseDate: '',
     stageId: '',
   });
-  readonly leadForm = form(this.model, (schema) => required(schema.name));
+  readonly leadForm = form(this.model, (schema) => {
+    required(schema.name);
+    validate(schema.phone, ({ value }) =>
+      !value() || this.phoneValid()
+        ? undefined
+        : { kind: 'phone', message: this.i18n.t('common.validation.phone') },
+    );
+  });
   private readonly routeLoad = effect(() => void this.load(this.id()));
   async load(id = this.id()): Promise<void> {
     const lead = await this.store.load(id);
@@ -270,7 +281,8 @@ export class LeadDetailsPage {
   async save(event: SubmitEvent): Promise<void> {
     event.preventDefault();
     const lead = this.store.lead();
-    if (!lead || this.leadForm().invalid()) return;
+    this.leadForm().markAsTouched();
+    if (!lead || this.leadForm().invalid() || (!!this.model().phone && !this.phoneValid())) return;
     const value = this.model();
     const body: LeadInput = {
       name: value.name.trim(),

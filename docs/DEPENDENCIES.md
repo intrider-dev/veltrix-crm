@@ -1,6 +1,6 @@
 # Dependency inventory and policy
 
-Last reviewed: 2026-07-22. Versions are exact direct versions from `package.json`, `apps/web/package.json`, `apps/api/go.mod`, `Dockerfile`, and `compose.yaml`; transitive versions are pinned by `pnpm-lock.yaml` and `apps/api/go.sum`.
+Last reviewed: 2026-08-15. Versions are exact direct versions from `package.json`, `apps/web/package.json`, `apps/api/go.mod`, `Dockerfile`, and `compose.yaml`; transitive versions are pinned by `pnpm-lock.yaml` and `apps/api/go.sum`.
 
 Licenses below describe the upstream projects at the recorded versions and must be confirmed by the dependency-license CI report before a release. This document is not legal advice.
 
@@ -22,6 +22,8 @@ Frontend dependencies are compiled into static assets; Node.js is not present in
 | `@angular/aria`               |    22.0.5 | Accessible headless interaction primitives                | MIT         |
 | `ag-grid-angular`             |    36.0.1 | Angular adapter for complex lazy lists                    | MIT         |
 | `ag-grid-community`           |    36.0.1 | Community-only grid, selectively registered               | MIT         |
+| `@intl-tel-input/angular`     |    29.2.3 | Official Angular adapter for international phone controls | MIT         |
+| `intl-tel-input`              |    29.2.3 | Country flags/search, formatting, E.164 and validation    | MIT         |
 | `livekit-client`              |    2.20.2 | Lazy-loaded optional WebRTC calls inside authorized chats | Apache-2.0  |
 | `rxjs`                        |     7.8.2 | Cancellable async composition and SSE/Angular integration | Apache-2.0  |
 | `tslib`                       |     2.8.1 | TypeScript runtime helpers                                | Apache-2.0  |

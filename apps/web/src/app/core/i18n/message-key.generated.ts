@@ -264,6 +264,7 @@ export type MessageKey =
   | 'common.status.inactive'
   | 'common.status.open'
   | 'common.validation.name'
+  | 'common.validation.phone'
   | 'companies.actions.activeList'
   | 'companies.actions.add'
   | 'companies.actions.trashList'

@@ -6,6 +6,7 @@ import {
   form,
   readonly as readonlyField,
   required,
+  validate,
 } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -17,6 +18,7 @@ import { Permissions } from '../../core/auth/permissions';
 import type { AppMessageKey } from '../../core/i18n/app-message-key';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { AttachmentPanelComponent } from '../../shared/attachments/attachment-panel.component';
+import { PhoneInputComponent } from '../../shared/forms/phone-input.component';
 import { IconComponent } from '../../shared/icon/icon.component';
 import { ErrorPanelComponent } from '../../shared/state/error-panel.component';
 import { ContactDetailsStore } from './contact-details.store';
@@ -31,6 +33,7 @@ import { ContactDetailsStore } from './contact-details.store';
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
+    PhoneInputComponent,
     RouterLink,
   ],
   providers: [ContactDetailsStore],
@@ -130,10 +133,11 @@ import { ContactDetailsStore } from './contact-details.store';
                   ><mat-label>{{ i18n.t('common.field.email') }}</mat-label
                   ><input matInput type="email" [formField]="contactForm.email"
                 /></mat-form-field>
-                <mat-form-field appearance="outline"
-                  ><mat-label>{{ i18n.t('common.field.phone') }}</mat-label
-                  ><input matInput inputmode="tel" [formField]="contactForm.phone"
-                /></mat-form-field>
+                <app-phone-input
+                  [formField]="contactForm.phone"
+                  [label]="i18n.t('common.field.phone')"
+                  (validityChange)="phoneValid.set($event)"
+                />
                 <mat-form-field appearance="outline"
                   ><mat-label>{{ i18n.t('contacts.contacts.jobTitle') }}</mat-label
                   ><input matInput [formField]="contactForm.jobTitle"
@@ -298,6 +302,7 @@ export class ContactDetailsPage implements OnInit {
   readonly deleteConfirm = signal(false);
   readonly deleteError = signal<string | null>(null);
   readonly mergeConfirmId = signal<string | null>(null);
+  readonly phoneValid = signal(true);
   readonly contactModel = signal({
     firstName: '',
     lastName: '',
@@ -310,6 +315,11 @@ export class ContactDetailsPage implements OnInit {
     required(schema.firstName);
     required(schema.lastName);
     email(schema.email);
+    validate(schema.phone, ({ value }) =>
+      !value() || this.phoneValid()
+        ? undefined
+        : { kind: 'phone', message: this.i18n.t('common.validation.phone') },
+    );
     readonlyField(schema, { when: () => !this.permissions.allows('records.update') });
   });
   readonly activityModel = signal<{
@@ -342,7 +352,7 @@ export class ContactDetailsPage implements OnInit {
     event.preventDefault();
     if (!this.permissions.allows('records.update')) return;
     this.saveError.set(null);
-    if (this.contactForm().invalid()) {
+    if (this.contactForm().invalid() || (!!this.contactModel().phone && !this.phoneValid())) {
       this.contactForm().markAsTouched();
       return;
     }

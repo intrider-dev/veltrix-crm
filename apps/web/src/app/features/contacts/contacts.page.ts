@@ -10,7 +10,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { FormField, email, form, required } from '@angular/forms/signals';
+import { FormField, email, form, required, validate } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -43,6 +43,7 @@ import type { AppMessageKey } from '../../core/i18n/app-message-key';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { WorkspaceStore } from '../../core/workspace/workspace.store';
 import { focusAfterNextRender } from '../../shared/a11y/focus-after-render';
+import { PhoneInputComponent } from '../../shared/forms/phone-input.component';
 import { IconComponent } from '../../shared/icon/icon.component';
 import { ErrorPanelComponent } from '../../shared/state/error-panel.component';
 import { ContactsStore, type DeletedContact } from './contacts.store';
@@ -77,6 +78,7 @@ const CONTACTS_GRID_THEME = themeQuartz.withParams({
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
+    PhoneInputComponent,
   ],
   providers: [ContactsStore],
   template: `
@@ -723,10 +725,11 @@ const CONTACTS_GRID_THEME = themeQuartz.withParams({
               <mat-error>{{ i18n.t('auth.validation.email') }}</mat-error>
             }
           </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>{{ i18n.t('common.field.phone') }}</mat-label>
-            <input matInput inputmode="tel" [formField]="contactForm.phone" />
-          </mat-form-field>
+          <app-phone-input
+            [formField]="contactForm.phone"
+            [label]="i18n.t('common.field.phone')"
+            (validityChange)="phoneValid.set($event)"
+          />
           <mat-form-field appearance="outline">
             <mat-label>{{ i18n.t('contacts.contacts.jobTitle') }}</mat-label>
             <input matInput [formField]="contactForm.jobTitle" />
@@ -781,11 +784,17 @@ export class ContactsPage implements OnInit, OnDestroy {
   readonly importFileInput = viewChild<ElementRef<HTMLInputElement>>('importFileInput');
   readonly bulkDeleteConfirmButton =
     viewChild<ElementRef<HTMLButtonElement>>('bulkDeleteConfirmButton');
+  readonly phoneValid = signal(true);
   readonly model = signal({ firstName: '', lastName: '', email: '', phone: '', jobTitle: '' });
   readonly contactForm = form(this.model, (schema) => {
     required(schema.firstName);
     required(schema.lastName);
     email(schema.email);
+    validate(schema.phone, ({ value }) =>
+      !value() || this.phoneValid()
+        ? undefined
+        : { kind: 'phone', message: this.i18n.t('common.validation.phone') },
+    );
   });
   readonly gridModules = [ClientSideRowModelModule, RowSelectionModule];
   readonly gridTheme = CONTACTS_GRID_THEME;
@@ -1164,6 +1173,7 @@ export class ContactsPage implements OnInit, OnDestroy {
 
   async openCreate(): Promise<void> {
     this.createError.set(null);
+    this.phoneValid.set(true);
     this.createOpen.set(true);
     const draft = await this.drafts.load<ContactDraftModel>(this.draftKey());
     if (draft) {
@@ -1209,7 +1219,7 @@ export class ContactsPage implements OnInit, OnDestroy {
   async create(event: SubmitEvent): Promise<void> {
     event.preventDefault();
     this.createError.set(null);
-    if (this.contactForm().invalid()) {
+    if (this.contactForm().invalid() || (!!this.model().phone && !this.phoneValid())) {
       this.contactForm().markAsTouched();
       return;
     }

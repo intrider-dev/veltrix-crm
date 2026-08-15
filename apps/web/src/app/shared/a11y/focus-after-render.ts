@@ -15,5 +15,10 @@ export function focusAfterNextRender(
   injector: Injector,
   target: () => FocusTarget | null | undefined,
 ): void {
-  afterNextRender(() => target()?.focus(), { injector });
+  runAfterNextRender(injector, () => target()?.focus());
+}
+
+/** Runs render-dependent work with the caller's explicit injection context. */
+export function runAfterNextRender(injector: Injector, callback: () => void): void {
+  afterNextRender(callback, { injector });
 }

@@ -17,7 +17,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { FormField, email, form, required } from '@angular/forms/signals';
+import { FormField, email, form, required, validate } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -30,6 +30,7 @@ import { I18nService } from '../../core/i18n/i18n.service';
 import { focusAfterNextRender } from '../../shared/a11y/focus-after-render';
 import { RecordAssignmentsComponent } from '../../shared/assignments/record-assignments.component';
 import { trimmedOrNull } from '../../shared/forms/feature-validation';
+import { PhoneInputComponent } from '../../shared/forms/phone-input.component';
 import { IconComponent } from '../../shared/icon/icon.component';
 import { ErrorPanelComponent } from '../../shared/state/error-panel.component';
 import { LeadsStore } from './leads.store';
@@ -50,6 +51,7 @@ import { LeadsStore } from './leads.store';
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
+    PhoneInputComponent,
     RecordAssignmentsComponent,
     RouterLink,
   ],
@@ -158,10 +160,11 @@ import { LeadsStore } from './leads.store';
                   <mat-error>{{ i18n.t('auth.validation.email') }}</mat-error>
                 }
               </mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>{{ i18n.t('common.field.phone') }}</mat-label>
-                <input matInput [formField]="leadForm.phone" inputmode="tel" />
-              </mat-form-field>
+              <app-phone-input
+                [formField]="leadForm.phone"
+                [label]="i18n.t('common.field.phone')"
+                (validityChange)="phoneValid.set($event)"
+              />
               <mat-form-field appearance="outline">
                 <mat-label>{{ i18n.t('leads.company') }}</mat-label>
                 <input matInput [formField]="leadForm.companyName" />
@@ -743,6 +746,7 @@ export class LeadsPage implements OnInit {
   readonly statuses = ['new', 'qualified', 'disqualified'] as const;
   readonly filterStatuses = ['new', 'qualified', 'disqualified', 'converted'] as const;
   readonly viewModes = ['list', 'kanban', 'gantt'] as const;
+  readonly phoneValid = signal(true);
   readonly model = signal({
     name: '',
     email: '',
@@ -755,6 +759,11 @@ export class LeadsPage implements OnInit {
   readonly leadForm = form(this.model, (schema) => {
     required(schema.name);
     email(schema.email);
+    validate(schema.phone, ({ value }) =>
+      !value() || this.phoneValid()
+        ? undefined
+        : { kind: 'phone', message: this.i18n.t('common.validation.phone') },
+    );
   });
   readonly nameInput = viewChild<ElementRef<HTMLInputElement>>('nameInput');
   readonly leadCreateTrigger = viewChild<ElementRef<HTMLButtonElement>>('leadCreateTrigger');
@@ -766,6 +775,7 @@ export class LeadsPage implements OnInit {
 
   openCreate(): void {
     this.store.formError.set(null);
+    this.phoneValid.set(true);
     this.leadForm().reset();
     this.createOpen.set(true);
     focusAfterNextRender(this.injector, () => this.nameInput()?.nativeElement);
@@ -938,7 +948,7 @@ export class LeadsPage implements OnInit {
   async create(event: Event): Promise<void> {
     event.preventDefault();
     this.leadForm().markAsTouched();
-    if (this.leadForm().invalid()) return;
+    if (this.leadForm().invalid() || (!!this.model().phone && !this.phoneValid())) return;
     const value = this.model();
     const stage = this.store.stages().find((candidate) => candidate.id === value.stageId);
     if (!stage || stage.category === 'converted') return;
