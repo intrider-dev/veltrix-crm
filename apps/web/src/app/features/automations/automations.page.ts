@@ -4,6 +4,7 @@ import { FormField, form, min, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 
 import type {
   AutomationActionType,
@@ -39,6 +40,7 @@ interface AutomationFormModel {
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
   ],
   providers: [AutomationsStore],
   template: `
@@ -72,19 +74,29 @@ interface AutomationFormModel {
               /></mat-form-field>
               <label class="native-field"
                 ><span>{{ i18n.t('automations.trigger') }}</span
-                ><select [formField]="ruleForm.trigger">
+                ><mat-select
+                  panelClass="crm-select-panel"
+                  class="crm-select"
+                  [aria-label]="i18n.t('automations.trigger')"
+                  [formField]="ruleForm.trigger"
+                >
                   @for (item of triggers; track item) {
-                    <option [value]="item">{{ i18n.t(triggerKey(item)) }}</option>
+                    <mat-option [value]="item">{{ i18n.t(triggerKey(item)) }}</mat-option>
                   }
-                </select></label
+                </mat-select></label
               >
               <label class="native-field"
                 ><span>{{ i18n.t('automations.entity') }}</span
-                ><select [formField]="ruleForm.entityType">
+                ><mat-select
+                  panelClass="crm-select-panel"
+                  class="crm-select"
+                  [aria-label]="i18n.t('automations.entity')"
+                  [formField]="ruleForm.entityType"
+                >
                   @for (item of entities; track item) {
-                    <option [value]="item">{{ i18n.t(entityKey(item)) }}</option>
+                    <mat-option [value]="item">{{ i18n.t(entityKey(item)) }}</mat-option>
                   }
-                </select></label
+                </mat-select></label
               >
               <mat-form-field appearance="outline"
                 ><mat-label>{{ i18n.t('automations.conditionField') }}</mat-label
@@ -92,11 +104,16 @@ interface AutomationFormModel {
               /></mat-form-field>
               <label class="native-field"
                 ><span>{{ i18n.t('automations.comparator') }}</span
-                ><select [formField]="ruleForm.comparator">
+                ><mat-select
+                  panelClass="crm-select-panel"
+                  class="crm-select"
+                  [aria-label]="i18n.t('automations.comparator')"
+                  [formField]="ruleForm.comparator"
+                >
                   @for (item of comparators; track item) {
-                    <option [value]="item">{{ i18n.t(comparatorKey(item)) }}</option>
+                    <mat-option [value]="item">{{ i18n.t(comparatorKey(item)) }}</mat-option>
                   }
-                </select></label
+                </mat-select></label
               >
               <mat-form-field appearance="outline"
                 ><mat-label>{{ i18n.t('automations.conditionValue') }}</mat-label
@@ -104,11 +121,16 @@ interface AutomationFormModel {
               /></mat-form-field>
               <label class="native-field"
                 ><span>{{ i18n.t('automations.action') }}</span
-                ><select [formField]="ruleForm.actionType">
+                ><mat-select
+                  panelClass="crm-select-panel"
+                  class="crm-select"
+                  [aria-label]="i18n.t('automations.action')"
+                  [formField]="ruleForm.actionType"
+                >
                   @for (item of actions; track item) {
-                    <option [value]="item">{{ i18n.t(actionKey(item)) }}</option>
+                    <mat-option [value]="item">{{ i18n.t(actionKey(item)) }}</mat-option>
                   }
-                </select></label
+                </mat-select></label
               >
               <mat-form-field class="wide" appearance="outline"
                 ><mat-label>{{ i18n.t('automations.actionParams') }}</mat-label

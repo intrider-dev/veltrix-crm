@@ -3,6 +3,7 @@ import { FormField, form, min, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { RouterLink } from '@angular/router';
 
 import type {
@@ -43,6 +44,7 @@ interface DealEditorModel {
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
     RouterLink,
   ],
   providers: [DealDetailsStore],
@@ -124,12 +126,23 @@ interface DealEditorModel {
                   </mat-form-field>
                   <label class="native-field">
                     {{ i18n.t('sales.deal.forecastCategory') }}
-                    <select [formField]="dealForm.forecastCategory">
-                      <option value="pipeline">{{ i18n.t('sales.forecast.pipeline') }}</option>
-                      <option value="best_case">{{ i18n.t('sales.forecast.bestCase') }}</option>
-                      <option value="commit">{{ i18n.t('sales.forecast.commit') }}</option>
-                      <option value="omitted">{{ i18n.t('sales.forecast.omitted') }}</option>
-                    </select>
+                    <mat-select
+                      panelClass="crm-select-panel"
+                      class="crm-select"
+                      [aria-label]="i18n.t('sales.deal.forecastCategory')"
+                      [formField]="dealForm.forecastCategory"
+                    >
+                      <mat-option value="pipeline">{{
+                        i18n.t('sales.forecast.pipeline')
+                      }}</mat-option>
+                      <mat-option value="best_case">{{
+                        i18n.t('sales.forecast.bestCase')
+                      }}</mat-option>
+                      <mat-option value="commit">{{ i18n.t('sales.forecast.commit') }}</mat-option>
+                      <mat-option value="omitted">{{
+                        i18n.t('sales.forecast.omitted')
+                      }}</mat-option>
+                    </mat-select>
                   </label>
                   <app-custom-field-editor
                     entityType="deal"

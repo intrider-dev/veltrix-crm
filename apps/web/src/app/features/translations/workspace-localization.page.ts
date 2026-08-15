@@ -2,6 +2,7 @@ import type { OnInit } from '@angular/core';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormField, disabled, form, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
+import { MatSelectModule } from '@angular/material/select';
 import { RouterLink } from '@angular/router';
 import type { SupportedLocale } from '@veltrix-crm/product-config';
 
@@ -14,7 +15,7 @@ import { LocalizationSettingsStore } from './localization-settings.store';
 
 @Component({
   selector: 'app-workspace-localization-page',
-  imports: [ErrorPanelComponent, FormField, MatButtonModule, RouterLink],
+  imports: [ErrorPanelComponent, FormField, MatButtonModule, MatSelectModule, RouterLink],
   providers: [LocalizationSettingsStore],
   template: `
     <div class="page locale-settings-page">
@@ -55,11 +56,16 @@ import { LocalizationSettingsStore } from './localization-settings.store';
           <form (submit)="save($event)" novalidate>
             <label class="native-field">
               <span>{{ i18n.t('translations.defaultLocale') }}</span>
-              <select [formField]="policyForm.defaultLocale">
+              <mat-select
+                panelClass="crm-select-panel"
+                class="crm-select"
+                [aria-label]="i18n.t('translations.defaultLocale')"
+                [formField]="policyForm.defaultLocale"
+              >
                 @for (locale of supported(); track locale) {
-                  <option [value]="locale">{{ i18n.languageName(locale) }}</option>
+                  <mat-option [value]="locale">{{ i18n.languageName(locale) }}</mat-option>
                 }
-              </select>
+              </mat-select>
             </label>
 
             <fieldset>
@@ -124,7 +130,7 @@ import { LocalizationSettingsStore } from './localization-settings.store';
       color: var(--text-muted);
       font-size: 0.78rem;
     }
-    .native-field select {
+    .native-field .mat-mdc-select {
       min-height: 2.75rem;
       padding-inline: 0.8rem 2.4rem;
       border: 1px solid var(--locale-border);

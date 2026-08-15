@@ -3,6 +3,7 @@ import { FormField, form, maxLength, minLength, pattern, required } from '@angul
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { Router } from '@angular/router';
 import type { SupportedLocale } from '@veltrix-crm/product-config';
 
@@ -59,7 +60,7 @@ const CYRILLIC_SLUG_TRANSLITERATION: Readonly<Record<string, string>> = {
 
 @Component({
   selector: 'app-workspace-create-page',
-  imports: [FormField, MatButtonModule, MatFormFieldModule, MatInputModule],
+  imports: [FormField, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule],
   template: `
     <div class="page workspace-create-page">
       <header class="page-header">
@@ -101,11 +102,16 @@ const CYRILLIC_SLUG_TRANSLITERATION: Readonly<Record<string, string>> = {
 
           <label class="native-field">
             <span>{{ i18n.t('identity.workspace.defaultLocale') }}</span>
-            <select [formField]="workspaceForm.defaultLocale">
+            <mat-select
+              panelClass="crm-select-panel"
+              class="crm-select"
+              [aria-label]="i18n.t('identity.workspace.defaultLocale')"
+              [formField]="workspaceForm.defaultLocale"
+            >
               @for (locale of i18n.supportedLocales; track locale) {
-                <option [value]="locale">{{ i18n.languageName(locale) }}</option>
+                <mat-option [value]="locale">{{ i18n.languageName(locale) }}</mat-option>
               }
-            </select>
+            </mat-select>
           </label>
 
           <mat-form-field appearance="outline">
@@ -170,7 +176,7 @@ const CYRILLIC_SLUG_TRANSLITERATION: Readonly<Record<string, string>> = {
     .wide {
       grid-column: 1 / -1;
     }
-    .native-field select {
+    .native-field .mat-mdc-select {
       min-height: 3.5rem;
       padding-inline: 0.9rem;
       border-radius: 0.25rem;

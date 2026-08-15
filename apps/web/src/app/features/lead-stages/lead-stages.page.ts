@@ -11,6 +11,7 @@ import { FormField, form, maxLength, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { RouterLink } from '@angular/router';
 
 import type { LeadStage, LeadStageCategory, LeadStageInput } from '../../core/api/api.types';
@@ -35,6 +36,7 @@ interface StageModel {
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
     RouterLink,
     StageAccessEditorComponent,
   ],
@@ -101,18 +103,23 @@ interface StageModel {
               </mat-form-field>
               <label class="native-field">
                 <span>{{ i18n.t('leadStages.category') }}</span>
-                <select
+                <mat-select
+                  panelClass="crm-select-panel"
+                  class="crm-select"
+                  [aria-label]="i18n.t('leadStages.category')"
                   [value]="model().category"
                   [disabled]="editing() !== null"
-                  (change)="setCategory($event)"
+                  (selectionChange)="setCategory($event.value)"
                 >
                   @for (category of creatableCategories; track category) {
-                    <option [value]="category">{{ i18n.t(categoryKey(category)) }}</option>
+                    <mat-option [value]="category">{{ i18n.t(categoryKey(category)) }}</mat-option>
                   }
                   @if (model().category === 'converted') {
-                    <option value="converted">{{ i18n.t(categoryKey('converted')) }}</option>
+                    <mat-option value="converted">{{
+                      i18n.t(categoryKey('converted'))
+                    }}</mat-option>
                   }
-                </select>
+                </mat-select>
               </label>
               <label class="color-field">
                 <span>{{ i18n.t('leadStages.color') }}</span>
@@ -370,8 +377,7 @@ export class LeadStagesPage implements OnInit {
     focusAfterNextRender(this.injector, () => this.editorTrigger);
   }
 
-  setCategory(event: Event): void {
-    const category = (event.target as HTMLSelectElement).value as LeadStageCategory;
+  setCategory(category: LeadStageCategory): void {
     this.model.update((value) => ({ ...value, category }));
   }
 

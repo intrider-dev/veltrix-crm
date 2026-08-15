@@ -182,7 +182,7 @@
   color: var(--task-muted);
   font-size: 0.66rem;
 }
-.filter-toolbar select {
+.filter-toolbar .mat-mdc-select {
   width: 100%;
   min-height: 2.35rem;
   color: #eaf0f8;

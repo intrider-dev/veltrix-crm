@@ -13,6 +13,7 @@ import { FormField, form, maxLength, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { RouterLink } from '@angular/router';
 
 import { apiErrorMessage } from '../../core/api/api-error-message';
@@ -42,6 +43,7 @@ interface ProjectCreateModel {
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
     RouterLink,
   ],
   providers: [ProjectsStore],
@@ -178,10 +180,19 @@ interface ProjectCreateModel {
           </div>
           <label class="native-field"
             ><span>{{ i18n.t('projects.visibility.workspace') }}</span
-            ><select [formField]="projectForm.visibility">
-              <option value="workspace">{{ i18n.t('projects.visibility.workspace') }}</option>
-              <option value="restricted">{{ i18n.t('projects.visibility.restricted') }}</option>
-            </select></label
+            ><mat-select
+              panelClass="crm-select-panel"
+              class="crm-select"
+              [aria-label]="i18n.t('projects.visibility.workspace')"
+              [formField]="projectForm.visibility"
+            >
+              <mat-option value="workspace">{{
+                i18n.t('projects.visibility.workspace')
+              }}</mat-option>
+              <mat-option value="restricted">{{
+                i18n.t('projects.visibility.restricted')
+              }}</mat-option>
+            </mat-select></label
           >
           @if (createError()) {
             <div class="form-error" id="project-date-error" role="alert">

@@ -97,10 +97,11 @@ import { DealsStore } from './deals.store';
         <div class="pipeline-control">
           <span>{{ i18n.t('sales.deal.pipeline') }}</span>
           <mat-select
+            panelClass="crm-select-panel"
             class="pipeline-select"
             [value]="store.activePipelineId()"
             (selectionChange)="store.selectPipeline($event.value)"
-            [attr.aria-label]="i18n.t('sales.deal.pipeline')"
+            [aria-label]="i18n.t('sales.deal.pipeline')"
           >
             @for (pipeline of store.pipelines(); track pipeline.id) {
               <mat-option [value]="pipeline.id">{{ pipeline.displayName }}</mat-option>
@@ -127,12 +128,18 @@ import { DealsStore } from './deals.store';
         </dl>
         <label class="status-filter">
           <span>{{ i18n.t('common.field.status') }}</span>
-          <select class="crm-native-select" [value]="store.status()" (change)="setStatus($event)">
-            <option value="">{{ i18n.t('sales.deal.status.all') }}</option>
-            <option value="open">{{ i18n.t('sales.status.open') }}</option>
-            <option value="won">{{ i18n.t('sales.status.won') }}</option>
-            <option value="lost">{{ i18n.t('sales.status.lost') }}</option>
-          </select>
+          <mat-select
+            panelClass="crm-select-panel"
+            class="crm-native-select"
+            [aria-label]="i18n.t('common.field.status')"
+            [value]="store.status()"
+            (selectionChange)="setStatus($event.value)"
+          >
+            <mat-option value="">{{ i18n.t('sales.deal.status.all') }}</mat-option>
+            <mat-option value="open">{{ i18n.t('sales.status.open') }}</mat-option>
+            <mat-option value="won">{{ i18n.t('sales.status.won') }}</mat-option>
+            <mat-option value="lost">{{ i18n.t('sales.status.lost') }}</mat-option>
+          </mat-select>
         </label>
       </section>
       @if (store.conflict()) {
@@ -208,17 +215,18 @@ import { DealsStore } from './deals.store';
                           ><span class="visually-hidden">{{
                             i18n.t('web.deal.moveWithKeyboard')
                           }}</span
-                          ><select
+                          ><mat-select
+                            panelClass="crm-select-panel"
                             class="crm-native-select"
                             [ngModel]="deal.stageId"
                             [disabled]="!permissions.allows('deals.update')"
                             (ngModelChange)="moveFromSelect(deal, $event)"
-                            [attr.aria-label]="i18n.t('web.deal.moveWithKeyboard')"
+                            [aria-label]="i18n.t('web.deal.moveWithKeyboard')"
                           >
                             @for (target of pipeline.stages; track target.id) {
-                              <option [value]="target.id">{{ target.displayName }}</option>
+                              <mat-option [value]="target.id">{{ target.displayName }}</mat-option>
                             }
-                          </select></label
+                          </mat-select></label
                         >
                       </article>
                     } @empty {
@@ -290,17 +298,19 @@ import { DealsStore } from './deals.store';
                 </dl>
                 <div class="preview-stage">
                   <label [for]="'preview-stage-' + deal.id">{{ i18n.t('sales.deal.move') }}</label>
-                  <select
+                  <mat-select
+                    panelClass="crm-select-panel"
                     class="crm-native-select"
+                    [aria-label]="i18n.t('sales.deal.move')"
                     [id]="'preview-stage-' + deal.id"
                     [ngModel]="deal.stageId"
                     [disabled]="!permissions.allows('deals.update')"
                     (ngModelChange)="moveFromSelect(deal, $event)"
                   >
                     @for (stage of pipeline.stages; track stage.id) {
-                      <option [value]="stage.id">{{ stage.displayName }}</option>
+                      <mat-option [value]="stage.id">{{ stage.displayName }}</mat-option>
                     }
-                  </select>
+                  </mat-select>
                 </div>
                 <a mat-flat-button [routerLink]="['/deals', deal.id]">{{
                   i18n.t('sales.deal.preview.details')
@@ -328,17 +338,18 @@ import { DealsStore } from './deals.store';
                         <a [routerLink]="['/deals', deal.id]">{{ deal.name }}</a>
                       </td>
                       <td>
-                        <select
+                        <mat-select
+                          panelClass="crm-select-panel"
                           class="crm-native-select"
                           [ngModel]="deal.stageId"
                           [disabled]="!permissions.allows('deals.update')"
                           (ngModelChange)="moveFromSelect(deal, $event)"
-                          [attr.aria-label]="i18n.t('web.deal.moveWithKeyboard')"
+                          [aria-label]="i18n.t('web.deal.moveWithKeyboard')"
                         >
                           @for (stage of pipeline.stages; track stage.id) {
-                            <option [value]="stage.id">{{ stage.displayName }}</option>
+                            <mat-option [value]="stage.id">{{ stage.displayName }}</mat-option>
                           }
-                        </select>
+                        </mat-select>
                       </td>
                       <td>{{ i18n.money(deal.amountMinor, deal.currency) }}</td>
                       <td>{{ deal.plannedStartDate ? i18n.date(deal.plannedStartDate) : '—' }}</td>
@@ -456,11 +467,15 @@ import { DealsStore } from './deals.store';
           /></mat-form-field>
           <label class="native-field"
             >{{ i18n.t('sales.deal.stage')
-            }}<select [formField]="dealForm.stageId">
+            }}<mat-select
+              panelClass="crm-select-panel"
+              [aria-label]="i18n.t('sales.deal.stage')"
+              [formField]="dealForm.stageId"
+            >
               @for (stage of pipeline.stages; track stage.id) {
-                <option [value]="stage.id">{{ stage.displayName }}</option>
+                <mat-option [value]="stage.id">{{ stage.displayName }}</mat-option>
               }
-            </select></label
+            </mat-select></label
           >
           <mat-form-field appearance="outline"
             ><mat-label>{{ i18n.t('sales.deal.plannedStart') }}</mat-label
@@ -555,8 +570,8 @@ export class DealsPage implements OnInit {
     void this.store.load();
   }
 
-  setStatus(event: Event): void {
-    this.store.status.set((event.target as HTMLSelectElement).value as Deal['status'] | '');
+  setStatus(status: Deal['status'] | ''): void {
+    this.store.status.set(status);
     void this.store.load();
   }
 

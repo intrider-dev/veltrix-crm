@@ -152,15 +152,18 @@
         </div>
         <label class="native-field">
           <span>{{ i18n.t('integrations.webhooks.deliveries.filter') }}</span>
-          <select
+          <mat-select
+            panelClass="crm-select-panel"
+            class="crm-select"
+            [aria-label]="i18n.t('integrations.webhooks.deliveries.filter')"
             [value]="store.selectedSubscriptionId() ?? ''"
-            (change)="selectSubscription($event)"
+            (selectionChange)="selectSubscription($event.value)"
           >
-            <option value="">{{ i18n.t('integrations.webhooks.deliveries.all') }}</option>
+            <mat-option value="">{{ i18n.t('integrations.webhooks.deliveries.all') }}</mat-option>
             @for (webhook of store.subscriptions(); track webhook.id) {
-              <option [value]="webhook.id">{{ safeWebhookUrl(webhook.url) }}</option>
+              <mat-option [value]="webhook.id">{{ safeWebhookUrl(webhook.url) }}</mat-option>
             }
-          </select>
+          </mat-select>
         </label>
       </div>
 

@@ -100,12 +100,18 @@ type VisibilityScope = CalendarActivity['visibilityScope'];
 
           <label class="compact-select">
             <span class="visually-hidden">{{ i18n.t('calendar.typeFilter') }}</span>
-            <select [value]="typeFilter()" (change)="setTypeFilter($event)">
-              <option value="all">{{ i18n.t('calendar.allTypes') }}</option>
+            <mat-select
+              panelClass="crm-select-panel"
+              class="crm-select"
+              [aria-label]="i18n.t('calendar.typeFilter')"
+              [value]="typeFilter()"
+              (selectionChange)="setTypeFilter($event.value)"
+            >
+              <mat-option value="all">{{ i18n.t('calendar.allTypes') }}</mat-option>
               @for (type of activityTypes; track type) {
-                <option [value]="type">{{ i18n.t(typeKey(type)) }}</option>
+                <mat-option [value]="type">{{ i18n.t(typeKey(type)) }}</mat-option>
               }
-            </select>
+            </mat-select>
           </label>
 
           @if (store.icsUrl(); as url) {
@@ -174,7 +180,7 @@ type VisibilityScope = CalendarActivity['visibilityScope'];
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>{{ i18n.t('web.activity.type') }}</mat-label>
-                <mat-select [formField]="activityForm.type">
+                <mat-select panelClass="crm-select-panel" [formField]="activityForm.type">
                   <mat-option value="task">{{ i18n.t('activities.activity.task') }}</mat-option>
                   <mat-option value="call">{{ i18n.t('activities.activity.call') }}</mat-option>
                   <mat-option value="meeting">{{
@@ -197,6 +203,7 @@ type VisibilityScope = CalendarActivity['visibilityScope'];
               <mat-form-field appearance="outline">
                 <mat-label>{{ i18n.t('calendar.audience') }}</mat-label>
                 <mat-select
+                  panelClass="crm-select-panel"
                   [formField]="activityForm.visibilityScope"
                   (selectionChange)="scopeChanged()"
                 >
@@ -214,7 +221,7 @@ type VisibilityScope = CalendarActivity['visibilityScope'];
               @if (model().visibilityScope === 'user') {
                 <mat-form-field appearance="outline">
                   <mat-label>{{ i18n.t('calendar.targetUser') }}</mat-label>
-                  <mat-select [formField]="activityForm.scopeUserId">
+                  <mat-select panelClass="crm-select-panel" [formField]="activityForm.scopeUserId">
                     @if (store.currentUser(); as currentUser) {
                       <mat-option [value]="currentUser.id">{{
                         currentUser.displayName
@@ -230,7 +237,10 @@ type VisibilityScope = CalendarActivity['visibilityScope'];
               } @else if (model().visibilityScope === 'department') {
                 <mat-form-field appearance="outline">
                   <mat-label>{{ i18n.t('calendar.targetDepartment') }}</mat-label>
-                  <mat-select [formField]="activityForm.scopeDepartmentId">
+                  <mat-select
+                    panelClass="crm-select-panel"
+                    [formField]="activityForm.scopeDepartmentId"
+                  >
                     @for (department of store.departments(); track department.id) {
                       <mat-option [value]="department.id">{{ department.name }}</mat-option>
                     }
@@ -594,8 +604,8 @@ export class CalendarPage implements OnInit {
     return `calendar.audience.${scope}`;
   }
 
-  setTypeFilter(event: Event): void {
-    this.typeFilter.set((event.target as HTMLSelectElement).value as 'all' | ActivityType);
+  setTypeFilter(value: 'all' | ActivityType): void {
+    this.typeFilter.set(value);
   }
 
   toggleScope(scope: VisibilityScope): void {

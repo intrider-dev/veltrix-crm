@@ -7,6 +7,7 @@ import {
   output,
   signal,
 } from '@angular/core';
+import { MatSelectModule } from '@angular/material/select';
 
 import { ApiClient } from '../../core/api/api-client.service';
 import type { CustomFieldDefinition, ReferenceUser } from '../../core/api/api.types';
@@ -15,6 +16,7 @@ import { WorkspaceStore } from '../../core/workspace/workspace.store';
 
 @Component({
   selector: 'app-custom-field-editor',
+  imports: [MatSelectModule],
   template: `
     @if (definitions().length > 0) {
       <section class="custom-fields" aria-labelledby="custom-fields-title">
@@ -75,32 +77,48 @@ import { WorkspaceStore } from '../../core/workspace/workspace.store';
                   />
                 }
                 @case ('single_select') {
-                  <select [value]="textValue(field)" (change)="setText(field, $event)">
-                    <option value=""></option>
+                  <mat-select
+                    panelClass="crm-select-panel"
+                    class="crm-select"
+                    [aria-label]="field.label"
+                    [value]="textValue(field)"
+                    (selectionChange)="setChoice(field, $event.value)"
+                  >
+                    <mat-option value=""></mat-option>
                     @for (option of field.options; track option.value) {
-                      <option [value]="option.value">{{ option.label }}</option>
+                      <mat-option [value]="option.value">{{ option.label }}</mat-option>
                     }
-                  </select>
+                  </mat-select>
                 }
                 @case ('multi_select') {
-                  <select multiple (change)="setMultiple(field, $event)">
+                  <mat-select
+                    panelClass="crm-select-panel"
+                    class="crm-select"
+                    [aria-label]="field.label"
+                    multiple
+                    [value]="arrayValue(field)"
+                    (selectionChange)="setMultiple(field, $event.value)"
+                  >
                     @for (option of field.options; track option.value) {
-                      <option
-                        [value]="option.value"
-                        [selected]="arrayValue(field).includes(option.value)"
-                      >
+                      <mat-option [value]="option.value">
                         {{ option.label }}
-                      </option>
+                      </mat-option>
                     }
-                  </select>
+                  </mat-select>
                 }
                 @case ('user_reference') {
-                  <select [value]="textValue(field)" (change)="setText(field, $event)">
-                    <option value=""></option>
+                  <mat-select
+                    panelClass="crm-select-panel"
+                    class="crm-select"
+                    [aria-label]="field.label"
+                    [value]="textValue(field)"
+                    (selectionChange)="setChoice(field, $event.value)"
+                  >
+                    <mat-option value=""></mat-option>
                     @for (member of members(); track member.userId) {
-                      <option [value]="member.userId">{{ member.displayName }}</option>
+                      <mat-option [value]="member.userId">{{ member.displayName }}</mat-option>
                     }
-                  </select>
+                  </mat-select>
                 }
                 @default {
                   <input type="text" [value]="textValue(field)" (input)="setText(field, $event)" />
@@ -133,7 +151,7 @@ import { WorkspaceStore } from '../../core/workspace/workspace.store';
       grid-column: 1 / -1;
     }
     input,
-    select,
+    .mat-mdc-select,
     textarea {
       width: 100%;
       min-height: 2.6rem;
@@ -239,6 +257,9 @@ export class CustomFieldEditorComponent {
       .value;
     this.update(field.fieldKey, value || null);
   }
+  setChoice(field: CustomFieldDefinition, value: string): void {
+    this.update(field.fieldKey, value || null);
+  }
   setNumber(field: CustomFieldDefinition, event: Event): void {
     const value = (event.target as HTMLInputElement).value;
     this.update(field.fieldKey, value === '' ? null : Number(value));
@@ -246,11 +267,8 @@ export class CustomFieldEditorComponent {
   setBoolean(field: CustomFieldDefinition, event: Event): void {
     this.update(field.fieldKey, (event.target as HTMLInputElement).checked);
   }
-  setMultiple(field: CustomFieldDefinition, event: Event): void {
-    const options = [...(event.target as HTMLSelectElement).selectedOptions].map(
-      (item) => item.value,
-    );
-    this.update(field.fieldKey, options);
+  setMultiple(field: CustomFieldDefinition, values: readonly string[]): void {
+    this.update(field.fieldKey, values);
   }
   setMoney(field: CustomFieldDefinition, event: Event): void {
     const amount = (event.target as HTMLInputElement).value;

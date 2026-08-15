@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { RouterLink } from '@angular/router';
 
 import type {
@@ -27,6 +28,7 @@ type ForecastCategory = PipelineStageInput['forecastCategory'];
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
     RouterLink,
     StageAccessEditorComponent,
   ],
@@ -129,11 +131,17 @@ type ForecastCategory = PipelineStageInput['forecastCategory'];
             </label>
             <label class="native-field">
               <span>{{ i18n.t('pipelines.forecast') }}</span>
-              <select [value]="stageForecast()" (change)="setStageForecast($event)">
+              <mat-select
+                panelClass="crm-select-panel"
+                class="crm-select"
+                [aria-label]="i18n.t('pipelines.forecast')"
+                [value]="stageForecast()"
+                (selectionChange)="setStageForecast($event.value)"
+              >
                 @for (category of forecastCategories; track category) {
-                  <option [value]="category">{{ i18n.t(forecastKey(category)) }}</option>
+                  <mat-option [value]="category">{{ i18n.t(forecastKey(category)) }}</mat-option>
                 }
-              </select>
+              </mat-select>
             </label>
             <button
               mat-flat-button
@@ -400,8 +408,8 @@ export class PipelineSettingsPage implements OnInit {
   setStageProbability(event: Event): void {
     this.stageProbability.set(Number((event.target as HTMLInputElement).value));
   }
-  setStageForecast(event: Event): void {
-    this.stageForecast.set((event.target as HTMLSelectElement).value as ForecastCategory);
+  setStageForecast(forecast: ForecastCategory): void {
+    this.stageForecast.set(forecast);
   }
   startPipelineCreate(): void {
     this.editingPipeline.set(null);

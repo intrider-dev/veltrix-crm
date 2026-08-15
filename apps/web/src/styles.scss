@@ -103,6 +103,20 @@ $system-font:
   --control-height: 2.1rem;
   --page-gap: 0.85rem;
 }
+.cdk-overlay-container.dark-workspace-overlay {
+  --brand: #7061f2;
+  --on-brand: #ffffff;
+  --brand-soft: #252050;
+  --surface-raised: #0b1320;
+  --surface-subtle: #111b29;
+  --surface-selected: #242044;
+  --text: #f2f5f9;
+  --text-muted: #9ba6b7;
+  --border: #1d2837;
+  --border-strong: #2b384b;
+  --focus: rgb(128 111 255 / 62%);
+  color-scheme: dark;
+}
 * {
   box-sizing: border-box;
 }
@@ -121,7 +135,7 @@ body {
 }
 button,
 input,
-select,
+.mat-mdc-select,
 textarea {
   font: inherit;
 }
@@ -180,7 +194,8 @@ input[type='search']::-webkit-search-decoration {
 .workspace-select.mat-select-open .mat-mdc-select-arrow-wrapper {
   color: var(--text);
 }
-.workspace-select-panel.mat-mdc-select-panel {
+.workspace-select-panel.mat-mdc-select-panel,
+.crm-select-panel.mat-mdc-select-panel {
   max-height: min(20rem, calc(100dvh - 8rem));
   margin-block-start: 0.375rem;
   padding: 0.375rem;
@@ -191,7 +206,8 @@ input[type='search']::-webkit-search-decoration {
     0 0.75rem 2rem rgb(0 0 0 / 28%),
     0 0.125rem 0.5rem rgb(0 0 0 / 18%);
 }
-.workspace-select-panel .mat-mdc-option {
+.workspace-select-panel .mat-mdc-option,
+.crm-select-panel .mat-mdc-option {
   width: 100%;
   min-height: 2.5rem;
   padding-inline: 0.75rem;
@@ -203,21 +219,26 @@ input[type='search']::-webkit-search-decoration {
     background-color 120ms var(--ease-out);
 }
 .workspace-select-panel .mat-mdc-option:hover:not(.mdc-list-item--disabled),
-.workspace-select-panel .mat-mdc-option.mat-mdc-option-active {
+.workspace-select-panel .mat-mdc-option.mat-mdc-option-active,
+.crm-select-panel .mat-mdc-option:hover:not(.mdc-list-item--disabled),
+.crm-select-panel .mat-mdc-option.mat-mdc-option-active {
   color: var(--text);
   background: color-mix(in srgb, var(--brand) 12%, var(--surface-subtle));
 }
-.workspace-select-panel .mat-mdc-option.mdc-list-item--selected:not(.mdc-list-item--disabled) {
+.workspace-select-panel .mat-mdc-option.mdc-list-item--selected:not(.mdc-list-item--disabled),
+.crm-select-panel .mat-mdc-option.mdc-list-item--selected:not(.mdc-list-item--disabled) {
   color: var(--text);
   background: color-mix(in srgb, var(--brand) 22%, var(--surface-subtle));
 }
-.workspace-select-panel.mat-mdc-select-panel .mat-mdc-option .mdc-list-item__primary-text {
+.workspace-select-panel.mat-mdc-select-panel .mat-mdc-option .mdc-list-item__primary-text,
+.crm-select-panel.mat-mdc-select-panel .mat-mdc-option .mdc-list-item__primary-text {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.workspace-select-panel .mat-pseudo-checkbox {
+.workspace-select-panel .mat-pseudo-checkbox,
+.crm-select-panel .mat-pseudo-checkbox {
   flex: 0 0 auto;
   color: var(--brand);
 }
@@ -392,7 +413,7 @@ p {
   font-weight: 560;
 }
 .filter-field > input,
-.filter-field > select,
+.filter-field > .mat-mdc-select,
 .filter-search-control {
   min-height: var(--control-height);
   border: 1px solid var(--border-strong);
@@ -400,27 +421,12 @@ p {
   color: var(--text);
   background-color: var(--surface-raised);
 }
-.filter-field > input,
-.filter-field > select {
+.filter-field > input {
   padding-inline: var(--control-inline-padding);
   font-size: 0.875rem;
   line-height: 1.3;
 }
-.filter-field > select {
-  appearance: none;
-  padding-inline-end: 2.35rem;
-  background-image:
-    linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
-    linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
-  background-position:
-    calc(100% - 1.05rem) 50%,
-    calc(100% - 0.77rem) 50%;
-  background-size:
-    0.3rem 0.3rem,
-    0.3rem 0.3rem;
-  background-repeat: no-repeat;
-}
-.filter-field > :is(input, select):focus-visible,
+.filter-field > :is(input, .mat-mdc-select):focus-visible,
 .filter-search-control:focus-within {
   border-color: var(--brand);
   outline: 3px solid var(--focus);
@@ -490,7 +496,6 @@ p {
   font-weight: 560;
 }
 .native-field input,
-.native-field select,
 .native-field textarea {
   min-height: var(--control-height);
   padding: 0 var(--control-inline-padding);
@@ -499,23 +504,61 @@ p {
   color: var(--text);
   background: var(--surface-raised);
 }
-.native-field select,
-.crm-native-select {
-  appearance: none;
-  padding-inline-end: 2.35rem;
-  background-image:
-    linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
-    linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
-  background-position:
-    calc(100% - 1.05rem) 50%,
-    calc(100% - 0.77rem) 50%;
-  background-size:
-    0.3rem 0.3rem,
-    0.3rem 0.3rem;
-  background-repeat: no-repeat;
+.native-field > .mat-mdc-select,
+label > .mat-mdc-select,
+.crm-select.mat-mdc-select,
+.crm-native-select.mat-mdc-select,
+.status-filter > .mat-mdc-select,
+.locale-control > .mat-mdc-select {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: var(--control-height);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--control-radius);
+  color: var(--text);
+  background: var(--surface-raised);
+}
+.native-field > .mat-mdc-select .mat-mdc-select-trigger,
+label > .mat-mdc-select .mat-mdc-select-trigger,
+.crm-select.mat-mdc-select .mat-mdc-select-trigger,
+.crm-native-select.mat-mdc-select .mat-mdc-select-trigger,
+.status-filter > .mat-mdc-select .mat-mdc-select-trigger,
+.locale-control > .mat-mdc-select .mat-mdc-select-trigger {
+  min-height: calc(var(--control-height) - 2px);
+  padding-inline: var(--control-inline-padding) 0.75rem;
+  gap: 0.625rem;
+}
+.native-field > .mat-mdc-select .mat-mdc-select-value,
+label > .mat-mdc-select .mat-mdc-select-value,
+.crm-select.mat-mdc-select .mat-mdc-select-value,
+.crm-native-select.mat-mdc-select .mat-mdc-select-value,
+.status-filter > .mat-mdc-select .mat-mdc-select-value,
+.locale-control > .mat-mdc-select .mat-mdc-select-value {
+  min-width: 0;
+  color: currentColor;
+}
+.native-field > .mat-mdc-select .mat-mdc-select-arrow-wrapper,
+label > .mat-mdc-select .mat-mdc-select-arrow-wrapper,
+.crm-select.mat-mdc-select .mat-mdc-select-arrow-wrapper,
+.crm-native-select.mat-mdc-select .mat-mdc-select-arrow-wrapper,
+.status-filter > .mat-mdc-select .mat-mdc-select-arrow-wrapper,
+.locale-control > .mat-mdc-select .mat-mdc-select-arrow-wrapper {
+  flex: 0 0 1.25rem;
+  color: var(--text-muted);
+}
+.native-field > .mat-mdc-select:focus-visible,
+label > .mat-mdc-select:focus-visible,
+.crm-select.mat-mdc-select:focus-visible,
+.crm-native-select.mat-mdc-select:focus-visible,
+.status-filter > .mat-mdc-select:focus-visible,
+.locale-control > .mat-mdc-select:focus-visible {
+  border-color: var(--brand);
+  outline: 3px solid var(--focus);
+  outline-offset: 1px;
 }
 .native-field input:focus-visible,
-.native-field select:focus-visible,
+.native-field .mat-mdc-select:focus-visible,
 .native-field textarea:focus-visible,
 .crm-native-select:focus-visible {
   border-color: var(--brand);

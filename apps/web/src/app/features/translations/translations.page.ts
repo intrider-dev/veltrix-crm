@@ -198,8 +198,7 @@ export class TranslationsPage implements OnInit {
     void this.store.load();
   }
 
-  changeCreateSourceLocale(event: Event): void {
-    const sourceLocale = (event.target as HTMLSelectElement).value as SupportedLocale;
+  changeCreateSourceLocale(sourceLocale: SupportedLocale): void {
     this.createModel.update((value) => ({
       ...value,
       sourceLocale,

@@ -129,7 +129,7 @@
   min-width: 0;
 }
 
-.native-field select {
+.native-field .mat-mdc-select {
   min-height: var(--control-height, 2.5rem);
   border-radius: var(--radius-control, 0.625rem);
 }

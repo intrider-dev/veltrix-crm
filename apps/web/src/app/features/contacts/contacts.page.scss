@@ -231,10 +231,10 @@
 }
 
 .contacts-filter-toolbar input,
-.contacts-filter-toolbar select,
-.compact-field select,
+.contacts-filter-toolbar .mat-mdc-select,
+.compact-field .mat-mdc-select,
 .saved-view-form input,
-.mapping-grid select {
+.mapping-grid .mat-mdc-select {
   width: 100%;
   min-height: 2.6rem;
 }

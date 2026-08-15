@@ -35,7 +35,10 @@ export default tseslint.config(
       '@angular-eslint/template/button-has-type': 'error',
       '@angular-eslint/template/elements-content': 'error',
       '@angular-eslint/template/interactive-supports-focus': 'error',
-      '@angular-eslint/template/label-has-associated-control': 'error',
+      '@angular-eslint/template/label-has-associated-control': [
+        'error',
+        { controlComponents: ['mat-select'] },
+      ],
       '@angular-eslint/template/no-positive-tabindex': 'error',
       '@angular-eslint/template/role-has-required-aria': 'error',
       '@angular-eslint/template/table-scope': 'error',

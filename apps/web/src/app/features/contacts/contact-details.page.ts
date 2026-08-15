@@ -11,6 +11,7 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { Router, RouterLink } from '@angular/router';
 
 import type { Activity, CreateActivity, UpdateContact } from '../../core/api/api.types';
@@ -33,6 +34,7 @@ import { ContactDetailsStore } from './contact-details.store';
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
     PhoneInputComponent,
     RouterLink,
   ],
@@ -173,12 +175,19 @@ import { ContactDetailsStore } from './contact-details.store';
               <form class="activity-form" (submit)="addActivity($event)">
                 <label
                   >{{ i18n.t('activities.activity.task') }}
-                  <select [formField]="activityForm.type">
-                    <option value="task">{{ i18n.t('activities.activity.task') }}</option>
-                    <option value="call">{{ i18n.t('activities.activity.call') }}</option>
-                    <option value="meeting">{{ i18n.t('activities.activity.meeting') }}</option>
-                    <option value="note">{{ i18n.t('activities.activity.note') }}</option>
-                  </select>
+                  <mat-select
+                    panelClass="crm-select-panel"
+                    class="crm-select"
+                    [aria-label]="i18n.t('web.activity.type')"
+                    [formField]="activityForm.type"
+                  >
+                    <mat-option value="task">{{ i18n.t('activities.activity.task') }}</mat-option>
+                    <mat-option value="call">{{ i18n.t('activities.activity.call') }}</mat-option>
+                    <mat-option value="meeting">{{
+                      i18n.t('activities.activity.meeting')
+                    }}</mat-option>
+                    <mat-option value="note">{{ i18n.t('activities.activity.note') }}</mat-option>
+                  </mat-select>
                 </label>
                 <mat-form-field appearance="outline"
                   ><mat-label>{{ i18n.t('activities.activity.title') }}</mat-label

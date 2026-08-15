@@ -5,6 +5,7 @@ import { FormField, form, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { RouterLink } from '@angular/router';
 
 import type { Activity, CreateActivity } from '../../core/api/api.types';
@@ -29,6 +30,7 @@ type ActivityPriorityFilter = 'all' | NonNullable<Activity['priority']>;
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
     RecordAssignmentsComponent,
     RouterLink,
   ],
@@ -136,36 +138,52 @@ type ActivityPriorityFilter = 'all' | NonNullable<Activity['priority']>;
           <div class="filter-toolbar" [attr.aria-label]="i18n.t('activities.filters.title')">
             <label
               ><span>{{ i18n.t('common.field.status') }}</span
-              ><select
+              ><mat-select
+                panelClass="crm-select-panel"
+                class="crm-select"
+                [aria-label]="i18n.t('common.field.status')"
                 [value]="statusFilter()"
-                (change)="statusFilter.set($any($event.target).value)"
+                (selectionChange)="statusFilter.set($event.value)"
               >
-                <option value="all">{{ i18n.t('activities.filters.allStatuses') }}</option>
-                <option value="open">{{ i18n.t('common.status.open') }}</option>
-                <option value="completed">{{ i18n.t('common.status.completed') }}</option>
-                <option value="cancelled">{{ i18n.t('activities.status.cancelled') }}</option>
-              </select></label
+                <mat-option value="all">{{ i18n.t('activities.filters.allStatuses') }}</mat-option>
+                <mat-option value="open">{{ i18n.t('common.status.open') }}</mat-option>
+                <mat-option value="completed">{{ i18n.t('common.status.completed') }}</mat-option>
+                <mat-option value="cancelled">{{
+                  i18n.t('activities.status.cancelled')
+                }}</mat-option>
+              </mat-select></label
             >
             <label
               ><span>{{ i18n.t('activities.activity.priority') }}</span
-              ><select
+              ><mat-select
+                panelClass="crm-select-panel"
+                class="crm-select"
+                [aria-label]="i18n.t('activities.activity.priority')"
                 [value]="priorityFilter()"
-                (change)="priorityFilter.set($any($event.target).value)"
+                (selectionChange)="priorityFilter.set($event.value)"
               >
-                <option value="all">{{ i18n.t('activities.filters.allPriorities') }}</option>
-                <option value="high">{{ i18n.t('activities.priority.high') }}</option>
-                <option value="normal">{{ i18n.t('activities.priority.normal') }}</option>
-                <option value="low">{{ i18n.t('activities.priority.low') }}</option>
-              </select></label
+                <mat-option value="all">{{
+                  i18n.t('activities.filters.allPriorities')
+                }}</mat-option>
+                <mat-option value="high">{{ i18n.t('activities.priority.high') }}</mat-option>
+                <mat-option value="normal">{{ i18n.t('activities.priority.normal') }}</mat-option>
+                <mat-option value="low">{{ i18n.t('activities.priority.low') }}</mat-option>
+              </mat-select></label
             >
             <label
               ><span>{{ i18n.t('activities.filters.due') }}</span
-              ><select [value]="dueFilter()" (change)="dueFilter.set($any($event.target).value)">
-                <option value="all">{{ i18n.t('activities.filters.anyDate') }}</option>
-                <option value="today">{{ i18n.t('common.date.today') }}</option>
-                <option value="overdue">{{ i18n.t('activities.summary.overdue') }}</option>
-                <option value="none">{{ i18n.t('activities.filters.noDueDate') }}</option>
-              </select></label
+              ><mat-select
+                panelClass="crm-select-panel"
+                class="crm-select"
+                [aria-label]="i18n.t('activities.filters.due')"
+                [value]="dueFilter()"
+                (selectionChange)="dueFilter.set($event.value)"
+              >
+                <mat-option value="all">{{ i18n.t('activities.filters.anyDate') }}</mat-option>
+                <mat-option value="today">{{ i18n.t('common.date.today') }}</mat-option>
+                <mat-option value="overdue">{{ i18n.t('activities.summary.overdue') }}</mat-option>
+                <mat-option value="none">{{ i18n.t('activities.filters.noDueDate') }}</mat-option>
+              </mat-select></label
             >
             <button mat-button type="button" (click)="resetFilters()">
               {{ i18n.t('activities.filters.reset') }}
@@ -354,12 +372,17 @@ type ActivityPriorityFilter = 'all' | NonNullable<Activity['priority']>;
         <form (submit)="create($event)">
           <label
             >{{ i18n.t('web.activity.type')
-            }}<select [formField]="activityForm.type">
-              <option value="task">{{ i18n.t('activities.activity.task') }}</option>
-              <option value="call">{{ i18n.t('activities.activity.call') }}</option>
-              <option value="meeting">{{ i18n.t('activities.activity.meeting') }}</option>
-              <option value="note">{{ i18n.t('activities.activity.note') }}</option>
-            </select></label
+            }}<mat-select
+              panelClass="crm-select-panel"
+              class="crm-select"
+              [aria-label]="i18n.t('web.activity.type')"
+              [formField]="activityForm.type"
+            >
+              <mat-option value="task">{{ i18n.t('activities.activity.task') }}</mat-option>
+              <mat-option value="call">{{ i18n.t('activities.activity.call') }}</mat-option>
+              <mat-option value="meeting">{{ i18n.t('activities.activity.meeting') }}</mat-option>
+              <mat-option value="note">{{ i18n.t('activities.activity.note') }}</mat-option>
+            </mat-select></label
           >
           <mat-form-field appearance="outline"
             ><mat-label>{{ i18n.t('activities.activity.title') }}</mat-label
@@ -375,11 +398,16 @@ type ActivityPriorityFilter = 'all' | NonNullable<Activity['priority']>;
           /></mat-form-field>
           <label
             >{{ i18n.t('activities.activity.priority')
-            }}<select [formField]="activityForm.priority">
-              <option value="low">{{ i18n.t('activities.priority.low') }}</option>
-              <option value="normal">{{ i18n.t('activities.priority.normal') }}</option>
-              <option value="high">{{ i18n.t('activities.priority.high') }}</option>
-            </select></label
+            }}<mat-select
+              panelClass="crm-select-panel"
+              class="crm-select"
+              [aria-label]="i18n.t('activities.activity.priority')"
+              [formField]="activityForm.priority"
+            >
+              <mat-option value="low">{{ i18n.t('activities.priority.low') }}</mat-option>
+              <mat-option value="normal">{{ i18n.t('activities.priority.normal') }}</mat-option>
+              <mat-option value="high">{{ i18n.t('activities.priority.high') }}</mat-option>
+            </mat-select></label
           >
           <div class="form-actions">
             <button mat-button type="button" (click)="closeCreate()">

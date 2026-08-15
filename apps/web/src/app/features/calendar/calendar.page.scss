@@ -82,26 +82,11 @@
   display: block;
 }
 
-.compact-select::after {
-  position: absolute;
-  inset-block-start: 50%;
-  inset-inline-end: 0.875rem;
-  width: 0.4rem;
-  height: 0.4rem;
-  border-inline-end: 1.5px solid currentColor;
-  border-block-end: 1.5px solid currentColor;
-  content: '';
-  pointer-events: none;
-  transform: translateY(-70%) rotate(45deg);
-}
-
-.compact-select select {
+.compact-select .mat-mdc-select {
   min-width: 8.75rem;
   min-height: 2.5rem;
-  padding: 0 2.25rem 0 0.875rem;
   border: 1px solid var(--calendar-border);
   border-radius: var(--radius-control, 0.625rem);
-  appearance: none;
   color: var(--text);
   background: var(--calendar-surface);
   font: inherit;
@@ -533,7 +518,7 @@
   .period-navigation > button:first-child {
     flex: 1;
   }
-  .compact-select select {
+  .compact-select .mat-mdc-select {
     width: 100%;
   }
   .create-action {

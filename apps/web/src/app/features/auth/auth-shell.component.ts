@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  HostListener,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { productConfig, type SupportedLocale } from '@veltrix-crm/product-config';
 
@@ -46,15 +53,41 @@ import { IconComponent } from '../../shared/icon/icon.component';
 
       <section class="auth-pane">
         <div class="locale-wrap">
-          <label class="locale-control">
-            <span class="visually-hidden">{{ i18n.t('settings.language.label') }}</span>
+          <div class="locale-control">
             <app-icon name="language" />
-            <select [value]="i18n.locale()" (change)="changeLocale($event)">
-              @for (locale of i18n.supportedLocales; track locale) {
-                <option [value]="locale">{{ i18n.languageName(locale) }}</option>
-              }
-            </select>
-          </label>
+            <button
+              class="locale-trigger"
+              type="button"
+              [attr.aria-expanded]="localeOpen()"
+              aria-controls="locale-options"
+              (click)="toggleLocale($event)"
+            >
+              {{ i18n.languageName(i18n.locale()) }}
+              <span class="locale-chevron" aria-hidden="true"></span>
+            </button>
+            @if (localeOpen()) {
+              <div
+                id="locale-options"
+                class="locale-menu"
+                role="group"
+                [attr.aria-label]="i18n.t('settings.language.label')"
+              >
+                @for (locale of i18n.supportedLocales; track locale) {
+                  <button
+                    type="button"
+                    [attr.aria-label]="i18n.languageName(locale)"
+                    [attr.aria-pressed]="i18n.locale() === locale"
+                    (click)="changeLocale(locale)"
+                  >
+                    {{ i18n.languageName(locale) }}
+                    @if (i18n.locale() === locale) {
+                      <app-icon name="check" />
+                    }
+                  </button>
+                }
+              </div>
+            }
+          </div>
         </div>
 
         <div class="auth-card">
@@ -80,9 +113,21 @@ export class AuthShellComponent {
   readonly subtitle = input.required<string>();
   readonly i18n = inject(I18nService);
   readonly product = productConfig;
+  readonly localeOpen = signal(false);
 
-  async changeLocale(event: Event): Promise<void> {
-    const locale = (event.target as HTMLSelectElement).value as SupportedLocale;
+  toggleLocale(event: MouseEvent): void {
+    event.stopPropagation();
+    this.localeOpen.update((open) => !open);
+  }
+
+  async changeLocale(locale: SupportedLocale): Promise<void> {
+    this.localeOpen.set(false);
     await this.i18n.setLocale(locale);
+  }
+
+  @HostListener('document:click')
+  @HostListener('document:keydown.escape')
+  closeLocaleMenu(): void {
+    this.localeOpen.set(false);
   }
 }

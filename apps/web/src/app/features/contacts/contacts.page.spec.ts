@@ -1,6 +1,8 @@
 import { signal } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import type { MatSelect } from '@angular/material/select';
 import { Router } from '@angular/router';
 
 import { ApiClient } from '../../core/api/api-client.service';
@@ -44,9 +46,12 @@ describe('ContactsPage', () => {
     await page.saveCurrentView(new SubmitEvent('submit'));
     fixture.detectChanges();
 
-    const element = fixture.nativeElement as HTMLElement;
-    const picker = element.querySelector('.saved-view-picker select') as HTMLSelectElement;
-    expect(Array.from(picker.options).map((option) => option.value)).toContain(savedView.id);
+    const picker = fixture.debugElement.query(By.css('.saved-view-picker mat-select'))
+      .componentInstance as MatSelect;
+    const optionValues: readonly unknown[] = picker.options.map(
+      (option) => option.value as unknown,
+    );
+    expect(optionValues).toContain(savedView.id);
     expect(picker.value).toBe(savedView.id);
   });
 });

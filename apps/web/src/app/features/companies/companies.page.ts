@@ -5,6 +5,7 @@ import { FormField, form, maxLength, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { Router, RouterLink } from '@angular/router';
 
 import { apiErrorMessage } from '../../core/api/api-error-message';
@@ -26,6 +27,7 @@ import { CompaniesStore } from './companies.store';
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
     RouterLink,
   ],
   providers: [CompaniesStore],
@@ -123,20 +125,32 @@ import { CompaniesStore } from './companies.store';
           @if (store.mode() === 'companies') {
             <label class="filter-field">
               <span>{{ i18n.t('common.field.status') }}</span>
-              <select [value]="store.status()" (change)="statusChanged($event)">
-                <option value="all">{{ i18n.t('companies.filters.allStatuses') }}</option>
-                <option value="active">{{ i18n.t('common.status.active') }}</option>
-                <option value="inactive">{{ i18n.t('common.status.inactive') }}</option>
-              </select>
+              <mat-select
+                panelClass="crm-select-panel"
+                class="crm-select"
+                [aria-label]="i18n.t('common.field.status')"
+                [value]="store.status()"
+                (selectionChange)="statusChanged($event.value)"
+              >
+                <mat-option value="all">{{ i18n.t('companies.filters.allStatuses') }}</mat-option>
+                <mat-option value="active">{{ i18n.t('common.status.active') }}</mat-option>
+                <mat-option value="inactive">{{ i18n.t('common.status.inactive') }}</mat-option>
+              </mat-select>
             </label>
             <label class="filter-field saved-view-select">
               <span>{{ i18n.t('companies.savedViews.title') }}</span>
-              <select [value]="selectedViewId()" (change)="savedViewChanged($event)">
-                <option value="">{{ i18n.t('companies.savedViews.current') }}</option>
+              <mat-select
+                panelClass="crm-select-panel"
+                class="crm-select"
+                [aria-label]="i18n.t('companies.savedViews.title')"
+                [value]="selectedViewId()"
+                (selectionChange)="savedViewChanged($event.value)"
+              >
+                <mat-option value="">{{ i18n.t('companies.savedViews.current') }}</mat-option>
                 @for (view of store.savedViews(); track view.id) {
-                  <option [value]="view.id">{{ view.name }}</option>
+                  <mat-option [value]="view.id">{{ view.name }}</mat-option>
                 }
-              </select>
+              </mat-select>
             </label>
             @if (permissions.allows('records.update')) {
               <button mat-stroked-button type="button" (click)="saveViewOpen.set(true)">
@@ -482,15 +496,13 @@ export class CompaniesPage implements OnInit, OnDestroy {
     }, 150);
   }
 
-  statusChanged(event: Event): void {
-    const value = (event.target as HTMLSelectElement).value;
+  statusChanged(value: string): void {
     if (value === 'all' || value === 'active' || value === 'inactive') {
       void this.store.setStatus(value);
     }
   }
 
-  savedViewChanged(event: Event): void {
-    const id = (event.target as HTMLSelectElement).value;
+  savedViewChanged(id: string): void {
     this.selectedViewId.set(id);
     const view = this.selectedView();
     if (view) void this.store.applySavedView(view);

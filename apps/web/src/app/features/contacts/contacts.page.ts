@@ -14,6 +14,7 @@ import { FormField, email, form, required, validate } from '@angular/forms/signa
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { Router } from '@angular/router';
 import { AgGridAngular } from 'ag-grid-angular';
 import {
@@ -78,6 +79,7 @@ const CONTACTS_GRID_THEME = themeQuartz.withParams({
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
     PhoneInputComponent,
   ],
   providers: [ContactsStore],
@@ -179,24 +181,34 @@ const CONTACTS_GRID_THEME = themeQuartz.withParams({
           </label>
           <label class="filter-field">
             <span>{{ i18n.t('common.field.status') }}</span>
-            <select [value]="store.status()" (change)="setStatus($event)">
-              <option value="all">{{ i18n.t('contacts.filter.allStatuses') }}</option>
-              <option value="active">{{ i18n.t('common.status.active') }}</option>
-              <option value="inactive">{{ i18n.t('common.status.inactive') }}</option>
-            </select>
+            <mat-select
+              panelClass="crm-select-panel"
+              [aria-label]="i18n.t('common.field.status')"
+              [value]="store.status()"
+              (selectionChange)="setStatus($event.value)"
+            >
+              <mat-option value="all">{{ i18n.t('contacts.filter.allStatuses') }}</mat-option>
+              <mat-option value="active">{{ i18n.t('common.status.active') }}</mat-option>
+              <mat-option value="inactive">{{ i18n.t('common.status.inactive') }}</mat-option>
+            </mat-select>
           </label>
           <label class="filter-field saved-view-picker">
             <span>{{ i18n.t('contacts.savedViews.title') }}</span>
-            <select (change)="applySavedView($event)">
-              <option value="" [selected]="selectedSavedView() === null">
+            <mat-select
+              panelClass="crm-select-panel"
+              [aria-label]="i18n.t('contacts.savedViews.title')"
+              [value]="selectedSavedView()?.id ?? ''"
+              (selectionChange)="applySavedView($event.value)"
+            >
+              <mat-option value="">
                 {{ i18n.t('contacts.savedViews.current') }}
-              </option>
+              </mat-option>
               @for (view of store.savedViews(); track view.id) {
-                <option [value]="view.id" [selected]="selectedSavedView()?.id === view.id">
+                <mat-option [value]="view.id">
                   {{ view.name }}
-                </option>
+                </mat-option>
               }
-            </select>
+            </mat-select>
           </label>
           <button mat-stroked-button type="submit">{{ i18n.t('common.action.search') }}</button>
           @if (permissions.allows('records.update')) {
@@ -299,12 +311,17 @@ const CONTACTS_GRID_THEME = themeQuartz.withParams({
                 @if (store.members().length > 0) {
                   <label class="compact-field">
                     <span>{{ i18n.t('contacts.bulk.assign') }}</span>
-                    <select [value]="selectedOwnerId()" (change)="setSelectedOwner($event)">
-                      <option value="">{{ i18n.t('contacts.bulk.unassigned') }}</option>
+                    <mat-select
+                      panelClass="crm-select-panel"
+                      [aria-label]="i18n.t('contacts.bulk.assign')"
+                      [value]="selectedOwnerId()"
+                      (selectionChange)="setSelectedOwner($event.value)"
+                    >
+                      <mat-option value="">{{ i18n.t('contacts.bulk.unassigned') }}</mat-option>
                       @for (member of store.members(); track member.id) {
-                        <option [value]="member.userId">{{ member.displayName }}</option>
+                        <mat-option [value]="member.userId">{{ member.displayName }}</mat-option>
                       }
-                    </select>
+                    </mat-select>
                   </label>
                   <button
                     mat-button
@@ -318,20 +335,34 @@ const CONTACTS_GRID_THEME = themeQuartz.withParams({
                 @if (store.tags().length > 0) {
                   <label class="compact-field">
                     <span>{{ i18n.t('contacts.bulk.tag') }}</span>
-                    <select [value]="selectedTagId()" (change)="setSelectedTag($event)">
-                      <option value="">{{ i18n.t('contacts.bulk.chooseTag') }}</option>
+                    <mat-select
+                      panelClass="crm-select-panel"
+                      [aria-label]="i18n.t('contacts.bulk.tag')"
+                      [value]="selectedTagId()"
+                      (selectionChange)="setSelectedTag($event.value)"
+                    >
+                      <mat-option value="">{{ i18n.t('contacts.bulk.chooseTag') }}</mat-option>
                       @for (tag of store.tags(); track tag.id) {
-                        <option [value]="tag.id">{{ tag.name }}</option>
+                        <mat-option [value]="tag.id">{{ tag.name }}</mat-option>
                       }
-                    </select>
+                    </mat-select>
                   </label>
                   <label class="compact-field">
                     <span>{{ i18n.t('contacts.bulk.tagMode') }}</span>
-                    <select [value]="tagMode()" (change)="setTagMode($event)">
-                      <option value="add">{{ i18n.t('contacts.bulk.tagAdd') }}</option>
-                      <option value="remove">{{ i18n.t('contacts.bulk.tagRemove') }}</option>
-                      <option value="replace">{{ i18n.t('contacts.bulk.tagReplace') }}</option>
-                    </select>
+                    <mat-select
+                      panelClass="crm-select-panel"
+                      [aria-label]="i18n.t('contacts.bulk.tagMode')"
+                      [value]="tagMode()"
+                      (selectionChange)="setTagMode($event.value)"
+                    >
+                      <mat-option value="add">{{ i18n.t('contacts.bulk.tagAdd') }}</mat-option>
+                      <mat-option value="remove">{{
+                        i18n.t('contacts.bulk.tagRemove')
+                      }}</mat-option>
+                      <mat-option value="replace">{{
+                        i18n.t('contacts.bulk.tagReplace')
+                      }}</mat-option>
+                    </mat-select>
                   </label>
                   <button
                     mat-button
@@ -586,29 +617,33 @@ const CONTACTS_GRID_THEME = themeQuartz.withParams({
                         <span aria-hidden="true">*</span>
                       }
                     </span>
-                    <select
+                    <mat-select
+                      panelClass="crm-select-panel"
+                      [aria-label]="i18n.t(field.label)"
                       [value]="mappingValue(field.key)"
-                      (change)="setMapping(field.key, $event)"
+                      (selectionChange)="setMapping(field.key, $event.value)"
                     >
-                      <option value="">{{ i18n.t('contacts.import.notMapped') }}</option>
+                      <mat-option value="">{{ i18n.t('contacts.import.notMapped') }}</mat-option>
                       @for (header of preview.headers; track header) {
-                        <option [value]="header">{{ header }}</option>
+                        <mat-option [value]="header">{{ header }}</mat-option>
                       }
-                    </select>
+                    </mat-select>
                   </label>
                 }
                 @for (field of store.customFields(); track field.id) {
                   <label>
                     <span>{{ i18n.t('contacts.import.customField', { name: field.label }) }}</span>
-                    <select
+                    <mat-select
+                      panelClass="crm-select-panel"
+                      [aria-label]="i18n.t('contacts.import.customField', { name: field.label })"
                       [value]="customMappingValue(field.fieldKey)"
-                      (change)="setCustomMapping(field.fieldKey, $event)"
+                      (selectionChange)="setCustomMapping(field.fieldKey, $event.value)"
                     >
-                      <option value="">{{ i18n.t('contacts.import.notMapped') }}</option>
+                      <mat-option value="">{{ i18n.t('contacts.import.notMapped') }}</mat-option>
                       @for (header of preview.headers; track header) {
-                        <option [value]="header">{{ header }}</option>
+                        <mat-option [value]="header">{{ header }}</mat-option>
                       }
-                    </select>
+                    </mat-select>
                   </label>
                 }
               </div>
@@ -920,8 +955,7 @@ export class ContactsPage implements OnInit, OnDestroy {
     this.store.query.set((event.target as HTMLInputElement).value);
   }
 
-  setStatus(event: Event): void {
-    const status = (event.target as HTMLSelectElement).value;
+  setStatus(status: string): void {
     if (status === 'all' || status === 'active' || status === 'inactive')
       this.store.status.set(status);
   }
@@ -937,8 +971,7 @@ export class ContactsPage implements OnInit, OnDestroy {
     void this.store.setMode(mode);
   }
 
-  applySavedView(event: Event): void {
-    const id = (event.target as HTMLSelectElement).value;
+  applySavedView(id: string): void {
     const view = this.store.savedViews().find((item) => item.id === id) ?? null;
     this.selectedSavedView.set(view);
     this.clearSelection();
@@ -999,16 +1032,15 @@ export class ContactsPage implements OnInit, OnDestroy {
     this.bulkDeleteConfirm.set(false);
   }
 
-  setSelectedOwner(event: Event): void {
-    this.selectedOwnerId.set((event.target as HTMLSelectElement).value);
+  setSelectedOwner(ownerId: string): void {
+    this.selectedOwnerId.set(ownerId);
   }
 
-  setSelectedTag(event: Event): void {
-    this.selectedTagId.set((event.target as HTMLSelectElement).value);
+  setSelectedTag(tagId: string): void {
+    this.selectedTagId.set(tagId);
   }
 
-  setTagMode(event: Event): void {
-    const mode = (event.target as HTMLSelectElement).value;
+  setTagMode(mode: string): void {
     if (mode === 'add' || mode === 'remove' || mode === 'replace') this.tagMode.set(mode);
   }
 
@@ -1097,8 +1129,7 @@ export class ContactsPage implements OnInit, OnDestroy {
     return this.importMapping()[field] ?? '';
   }
 
-  setMapping(field: ImportField, event: Event): void {
-    const value = (event.target as HTMLSelectElement).value;
+  setMapping(field: ImportField, value: string): void {
     this.importMapping.update((current) => ({ ...current, [field]: value }));
     this.importMappingError.set(null);
   }
@@ -1107,8 +1138,7 @@ export class ContactsPage implements OnInit, OnDestroy {
     return this.importMapping().customFields?.[fieldKey] ?? '';
   }
 
-  setCustomMapping(fieldKey: string, event: Event): void {
-    const value = (event.target as HTMLSelectElement).value;
+  setCustomMapping(fieldKey: string, value: string): void {
     this.importMapping.update((current) => {
       const customFields = { ...current.customFields };
       if (value) customFields[fieldKey] = value;

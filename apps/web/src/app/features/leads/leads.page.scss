@@ -381,23 +381,13 @@
 }
 
 .stage-select,
-.filter-panel select,
-.lead-card select {
+.filter-panel .mat-mdc-select,
+.lead-card .mat-mdc-select {
   min-height: 2rem;
-  appearance: none;
-  padding: 0 1.9rem 0 0.625rem;
   border: 1px solid var(--lead-border-strong);
   border-radius: 0.45rem;
   color: #dce5f0;
   background-color: #111c2a;
-  background-image:
-    linear-gradient(45deg, transparent 50%, #8fa0b8 50%),
-    linear-gradient(135deg, #8fa0b8 50%, transparent 50%);
-  background-position:
-    calc(100% - 0.85rem) 50%,
-    calc(100% - 0.6rem) 50%;
-  background-size: 0.25rem 0.25rem;
-  background-repeat: no-repeat;
   font: inherit;
   font-size: 0.6875rem;
 }
@@ -521,7 +511,7 @@
   padding: 0.75rem 0.875rem 0;
 }
 
-.filter-panel select {
+.filter-panel .mat-mdc-select {
   width: 100%;
   min-height: 2.5rem;
 }

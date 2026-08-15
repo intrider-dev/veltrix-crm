@@ -139,7 +139,7 @@ legend,
   min-width: 0;
   margin-bottom: 1.25rem;
 }
-.select-field select {
+.select-field .mat-mdc-select {
   min-height: 3.5rem;
   padding: 0 0.75rem;
   border: 1px solid var(--border-strong);
@@ -148,7 +148,7 @@ legend,
   background: var(--surface-raised);
   font: inherit;
 }
-.select-field select:focus-visible {
+.select-field .mat-mdc-select:focus-visible {
   outline: 2px solid var(--brand);
   outline-offset: 2px;
 }

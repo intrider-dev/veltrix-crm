@@ -44,7 +44,7 @@
   font-size: 0.75rem;
 }
 
-.native-field select {
+.native-field .mat-mdc-select {
   min-height: 3.5rem;
   padding: 0 0.7rem;
   border: 1px solid var(--border);
@@ -440,12 +440,12 @@ progress {
 .create-resource .native-field,
 .translation-editor .native-field,
 .filters input,
-.filters select,
+.filters .mat-mdc-select,
 .create-resource input,
-.create-resource select,
+.create-resource .mat-mdc-select,
 .translation-editor input,
 .translation-editor textarea,
-.translation-editor select {
+.translation-editor .mat-mdc-select {
   min-width: 0;
   width: 100%;
 }

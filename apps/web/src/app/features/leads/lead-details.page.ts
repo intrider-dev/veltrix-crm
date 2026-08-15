@@ -3,6 +3,7 @@ import { FormField, form, required, validate } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { Router, RouterLink } from '@angular/router';
 
 import type { LeadInput, LeadStage } from '../../core/api/api.types';
@@ -27,6 +28,7 @@ import { LeadDetailsStore } from './lead-details.store';
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
     PhoneInputComponent,
     RecordAssignmentsComponent,
     RouterLink,
@@ -108,11 +110,16 @@ import { LeadDetailsStore } from './lead-details.store';
                   /></mat-form-field>
                   <label class="native-field"
                     ><span>{{ i18n.t('leads.stage') }}</span
-                    ><select [formField]="leadForm.stageId">
+                    ><mat-select
+                      panelClass="crm-select-panel"
+                      class="crm-select"
+                      [aria-label]="i18n.t('leads.stage')"
+                      [formField]="leadForm.stageId"
+                    >
                       @for (stage of openStages(); track stage.id) {
-                        <option [value]="stage.id">{{ stage.displayName }}</option>
+                        <mat-option [value]="stage.id">{{ stage.displayName }}</mat-option>
                       }
-                    </select></label
+                    </mat-select></label
                   >
                 </div>
                 <app-custom-field-editor

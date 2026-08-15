@@ -4,6 +4,7 @@ import { FormField, form, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { Router, RouterLink } from '@angular/router';
 
 import type {
@@ -51,6 +52,7 @@ interface AssignmentEditorModel {
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
     RouterLink,
   ],
   providers: [ProjectDetailsStore],
@@ -105,24 +107,40 @@ interface AssignmentEditorModel {
                 <div class="form-grid">
                   <label class="native-field"
                     ><span>{{ i18n.t('common.field.status') }}</span
-                    ><select [formField]="projectForm.status">
-                      <option value="planned">{{ i18n.t('projects.status.planned') }}</option>
-                      <option value="active">{{ i18n.t('projects.status.active') }}</option>
-                      <option value="on_hold">{{ i18n.t('projects.status.on_hold') }}</option>
-                      <option value="completed">{{ i18n.t('projects.status.completed') }}</option>
-                      <option value="archived">{{ i18n.t('projects.status.archived') }}</option>
-                    </select></label
+                    ><mat-select
+                      panelClass="crm-select-panel"
+                      [aria-label]="i18n.t('common.field.status')"
+                      [formField]="projectForm.status"
+                    >
+                      <mat-option value="planned">{{
+                        i18n.t('projects.status.planned')
+                      }}</mat-option>
+                      <mat-option value="active">{{ i18n.t('projects.status.active') }}</mat-option>
+                      <mat-option value="on_hold">{{
+                        i18n.t('projects.status.on_hold')
+                      }}</mat-option>
+                      <mat-option value="completed">{{
+                        i18n.t('projects.status.completed')
+                      }}</mat-option>
+                      <mat-option value="archived">{{
+                        i18n.t('projects.status.archived')
+                      }}</mat-option>
+                    </mat-select></label
                   >
                   <label class="native-field"
                     ><span>{{ i18n.t('projects.visibility.workspace') }}</span
-                    ><select [formField]="projectForm.visibility">
-                      <option value="workspace">
+                    ><mat-select
+                      panelClass="crm-select-panel"
+                      [aria-label]="i18n.t('projects.visibility.workspace')"
+                      [formField]="projectForm.visibility"
+                    >
+                      <mat-option value="workspace">
                         {{ i18n.t('projects.visibility.workspace') }}
-                      </option>
-                      <option value="restricted">
+                      </mat-option>
+                      <mat-option value="restricted">
                         {{ i18n.t('projects.visibility.restricted') }}
-                      </option>
-                    </select></label
+                      </mat-option>
+                    </mat-select></label
                   >
                   <label class="native-field"
                     ><span>{{ i18n.t('projects.plannedStart') }}</span
@@ -163,20 +181,34 @@ interface AssignmentEditorModel {
                   /></label>
                   <label class="native-field"
                     ><span>{{ i18n.t('projects.tasks.assignee') }}</span
-                    ><select [formField]="taskForm.assigneeId">
-                      <option value="">—</option>
+                    ><mat-select
+                      panelClass="crm-select-panel"
+                      [aria-label]="i18n.t('projects.tasks.assignee')"
+                      [formField]="taskForm.assigneeId"
+                    >
+                      <mat-option value="">—</mat-option>
                       @for (member of store.members(); track member.id) {
-                        <option [value]="member.userId">{{ member.displayName }}</option>
+                        <mat-option [value]="member.userId">{{ member.displayName }}</mat-option>
                       }
-                    </select></label
+                    </mat-select></label
                   >
                   <label class="native-field"
                     ><span>{{ i18n.t('projects.tasks.priority.title') }}</span
-                    ><select [formField]="taskForm.priority">
-                      <option value="low">{{ i18n.t('projects.tasks.priority.low') }}</option>
-                      <option value="normal">{{ i18n.t('projects.tasks.priority.normal') }}</option>
-                      <option value="high">{{ i18n.t('projects.tasks.priority.high') }}</option>
-                    </select></label
+                    ><mat-select
+                      panelClass="crm-select-panel"
+                      [aria-label]="i18n.t('projects.tasks.priority.title')"
+                      [formField]="taskForm.priority"
+                    >
+                      <mat-option value="low">{{
+                        i18n.t('projects.tasks.priority.low')
+                      }}</mat-option>
+                      <mat-option value="normal">{{
+                        i18n.t('projects.tasks.priority.normal')
+                      }}</mat-option>
+                      <mat-option value="high">{{
+                        i18n.t('projects.tasks.priority.high')
+                      }}</mat-option>
+                    </mat-select></label
                   >
                   <div class="form-actions">
                     <button mat-flat-button type="submit" [disabled]="store.saving()">
@@ -252,39 +284,55 @@ interface AssignmentEditorModel {
                 <form class="assignment-form" (submit)="addAssignment($event)">
                   <label class="native-field"
                     ><span>{{ i18n.t('projects.assignments.kind') }}</span
-                    ><select [formField]="assignmentForm.kind">
-                      <option value="responsible">
-                        {{ i18n.t('projects.assignments.responsible') }}
-                      </option>
-                      <option value="watcher">{{ i18n.t('projects.assignments.watcher') }}</option>
-                    </select></label
-                  >
-                  <label class="native-field"
-                    ><span>{{ i18n.t('projects.assignments.subject') }}</span
-                    ><select
-                      [formField]="assignmentForm.subjectType"
-                      (change)="assignmentModel.update((value) => ({ ...value, subjectId: '' }))"
+                    ><mat-select
+                      panelClass="crm-select-panel"
+                      [aria-label]="i18n.t('projects.assignments.kind')"
+                      [formField]="assignmentForm.kind"
                     >
-                      <option value="user">{{ i18n.t('projects.assignments.user') }}</option>
-                      <option value="department">
-                        {{ i18n.t('projects.assignments.department') }}
-                      </option>
-                    </select></label
+                      <mat-option value="responsible">
+                        {{ i18n.t('projects.assignments.responsible') }}
+                      </mat-option>
+                      <mat-option value="watcher">{{
+                        i18n.t('projects.assignments.watcher')
+                      }}</mat-option>
+                    </mat-select></label
                   >
                   <label class="native-field"
                     ><span>{{ i18n.t('projects.assignments.subject') }}</span
-                    ><select [formField]="assignmentForm.subjectId">
-                      <option value="">—</option>
+                    ><mat-select
+                      panelClass="crm-select-panel"
+                      [aria-label]="i18n.t('projects.assignments.subject')"
+                      [formField]="assignmentForm.subjectType"
+                      (selectionChange)="
+                        assignmentModel.update((value) => ({ ...value, subjectId: '' }))
+                      "
+                    >
+                      <mat-option value="user">{{
+                        i18n.t('projects.assignments.user')
+                      }}</mat-option>
+                      <mat-option value="department">
+                        {{ i18n.t('projects.assignments.department') }}
+                      </mat-option>
+                    </mat-select></label
+                  >
+                  <label class="native-field"
+                    ><span>{{ i18n.t('projects.assignments.subject') }}</span
+                    ><mat-select
+                      panelClass="crm-select-panel"
+                      [aria-label]="i18n.t('projects.assignments.subject')"
+                      [formField]="assignmentForm.subjectId"
+                    >
+                      <mat-option value="">—</mat-option>
                       @if (assignmentModel().subjectType === 'user') {
                         @for (member of store.members(); track member.id) {
-                          <option [value]="member.userId">{{ member.displayName }}</option>
+                          <mat-option [value]="member.userId">{{ member.displayName }}</mat-option>
                         }
                       } @else {
                         @for (department of store.departments(); track department.id) {
-                          <option [value]="department.id">{{ department.name }}</option>
+                          <mat-option [value]="department.id">{{ department.name }}</mat-option>
                         }
                       }
-                    </select></label
+                    </mat-select></label
                   >
                   <button mat-stroked-button type="submit" [disabled]="store.saving()">
                     <app-icon name="add" />{{ i18n.t('projects.assignments.add') }}

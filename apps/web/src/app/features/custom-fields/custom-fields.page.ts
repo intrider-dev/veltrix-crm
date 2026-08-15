@@ -4,6 +4,7 @@ import { FormField, form, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 
 import type { CustomFieldDefinitionInput, CustomFieldValueType } from '../../core/api/api.types';
 import { Permissions } from '../../core/auth/permissions';
@@ -13,7 +14,14 @@ import { CustomFieldsStore } from './custom-fields.store';
 
 @Component({
   selector: 'app-custom-fields-page',
-  imports: [ErrorPanelComponent, FormField, MatButtonModule, MatFormFieldModule, MatInputModule],
+  imports: [
+    ErrorPanelComponent,
+    FormField,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+  ],
   providers: [CustomFieldsStore],
   template: `
     <div class="page settings-feature">
@@ -36,12 +44,17 @@ import { CustomFieldsStore } from './custom-fields.store';
           <form class="feature-form" (submit)="create($event)" novalidate>
             <label class="native-field"
               ><span>{{ i18n.t('customFields.entity') }}</span
-              ><select [formField]="fieldForm.entityType">
-                <option value="contact">{{ i18n.t('web.entity.contact') }}</option>
-                <option value="company">{{ i18n.t('web.entity.company') }}</option>
-                <option value="lead">{{ i18n.t('web.entity.lead') }}</option>
-                <option value="deal">{{ i18n.t('web.entity.deal') }}</option>
-              </select></label
+              ><mat-select
+                panelClass="crm-select-panel"
+                class="crm-select"
+                [aria-label]="i18n.t('customFields.entity')"
+                [formField]="fieldForm.entityType"
+              >
+                <mat-option value="contact">{{ i18n.t('web.entity.contact') }}</mat-option>
+                <mat-option value="company">{{ i18n.t('web.entity.company') }}</mat-option>
+                <mat-option value="lead">{{ i18n.t('web.entity.lead') }}</mat-option>
+                <mat-option value="deal">{{ i18n.t('web.entity.deal') }}</mat-option>
+              </mat-select></label
             >
             <mat-form-field appearance="outline"
               ><mat-label>{{ i18n.t('customFields.key') }}</mat-label
@@ -53,11 +66,16 @@ import { CustomFieldsStore } from './custom-fields.store';
             /></mat-form-field>
             <label class="native-field"
               ><span>{{ i18n.t('customFields.type') }}</span
-              ><select [formField]="fieldForm.valueType">
+              ><mat-select
+                panelClass="crm-select-panel"
+                class="crm-select"
+                [aria-label]="i18n.t('customFields.type')"
+                [formField]="fieldForm.valueType"
+              >
                 @for (type of valueTypes; track type) {
-                  <option [value]="type">{{ i18n.t(typeKey(type)) }}</option>
+                  <mat-option [value]="type">{{ i18n.t(typeKey(type)) }}</mat-option>
                 }
-              </select></label
+              </mat-select></label
             >
             <label class="check-field"
               ><input type="checkbox" [formField]="fieldForm.required" />{{

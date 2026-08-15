@@ -4,6 +4,7 @@ import { FormField, email, form, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 
 import type {
   WorkspaceMember,
@@ -17,7 +18,14 @@ import { MembersStore } from './members.store';
 
 @Component({
   selector: 'app-members-page',
-  imports: [ErrorPanelComponent, FormField, MatButtonModule, MatFormFieldModule, MatInputModule],
+  imports: [
+    ErrorPanelComponent,
+    FormField,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+  ],
   providers: [MembersStore],
   template: `
     <div class="page settings-feature">
@@ -43,11 +51,15 @@ import { MembersStore } from './members.store';
               /></mat-form-field>
               <label class="native-field"
                 ><span>{{ i18n.t('members.role') }}</span
-                ><select [formField]="inviteForm.role">
+                ><mat-select
+                  panelClass="crm-select-panel"
+                  [aria-label]="i18n.t('members.role')"
+                  [formField]="inviteForm.role"
+                >
                   @for (role of roles; track role) {
-                    <option [value]="role">{{ i18n.t(roleKey(role)) }}</option>
+                    <mat-option [value]="role">{{ i18n.t(roleKey(role)) }}</mat-option>
                   }
-                </select></label
+                </mat-select></label
               >
               <button mat-flat-button type="submit" [disabled]="store.saving()">
                 {{ i18n.t('members.sendInvite') }}
@@ -94,25 +106,29 @@ import { MembersStore } from './members.store';
                       i18n.t('members.role')
                     }}</label>
                     @if (permissions.allows('roles.write') && member.role !== 'owner') {
-                      <select
+                      <mat-select
+                        panelClass="crm-select-panel"
+                        [aria-label]="i18n.t('members.role')"
                         [id]="'role-' + member.id"
                         [value]="member.roleId"
-                        (change)="assignRole(member, $event)"
+                        (selectionChange)="assignRole(member, $event.value)"
                       >
                         @for (role of assignableRoles(); track role.id) {
-                          <option [value]="role.id">{{ roleLabel(role) }}</option>
+                          <mat-option [value]="role.id">{{ roleLabel(role) }}</mat-option>
                         }
-                      </select>
+                      </mat-select>
                     } @else if (member.role !== 'owner') {
-                      <select
+                      <mat-select
+                        panelClass="crm-select-panel"
+                        [aria-label]="i18n.t('members.role')"
                         [id]="'role-' + member.id"
                         [value]="member.role"
-                        (change)="changeRole(member, $event)"
+                        (selectionChange)="changeRole(member, $event.value)"
                       >
                         @for (role of roles; track role) {
-                          <option [value]="role">{{ i18n.t(roleKey(role)) }}</option>
+                          <mat-option [value]="role">{{ i18n.t(roleKey(role)) }}</mat-option>
                         }
-                      </select>
+                      </mat-select>
                     } @else {
                       <span class="status-pill">{{ i18n.t(roleKey(member.role)) }}</span>
                     }
@@ -140,18 +156,28 @@ import { MembersStore } from './members.store';
             <h2>{{ i18n.t('members.addToDepartment') }}</h2>
             <label class="native-field"
               ><span>{{ i18n.t('members.department') }}</span
-              ><select [value]="departmentId()" (change)="departmentId.set(selectValue($event))">
+              ><mat-select
+                panelClass="crm-select-panel"
+                [aria-label]="i18n.t('members.department')"
+                [value]="departmentId()"
+                (selectionChange)="departmentId.set($event.value)"
+              >
                 @for (department of store.departments(); track department.id) {
-                  <option [value]="department.id">{{ department.name }}</option>
+                  <mat-option [value]="department.id">{{ department.name }}</mat-option>
                 }
-              </select></label
+              </mat-select></label
             ><label class="native-field"
               ><span>{{ i18n.t('members.member') }}</span
-              ><select [value]="membershipId()" (change)="membershipId.set(selectValue($event))">
+              ><mat-select
+                panelClass="crm-select-panel"
+                [aria-label]="i18n.t('members.member')"
+                [value]="membershipId()"
+                (selectionChange)="membershipId.set($event.value)"
+              >
                 @for (member of store.members(); track member.id) {
-                  <option [value]="member.id">{{ member.displayName }}</option>
+                  <mat-option [value]="member.id">{{ member.displayName }}</mat-option>
                 }
-              </select></label
+              </mat-select></label
             ><button mat-stroked-button type="button" (click)="addToDepartment()">
               {{ i18n.t('common.action.add') }}
             </button>
@@ -228,7 +254,7 @@ import { MembersStore } from './members.store';
       flex-wrap: wrap;
       justify-content: flex-end;
     }
-    .member-actions select {
+    .member-actions .mat-mdc-select {
       min-height: 2.35rem;
       padding: 0 2.2rem 0 0.7rem;
       border: 1px solid var(--border);
@@ -290,11 +316,8 @@ export class MembersPage implements OnInit {
   roleKey(role: WorkspaceRole): `members.role.${WorkspaceRole}` {
     return `members.role.${role}`;
   }
-  selectValue(event: Event): string {
-    return (event.target as HTMLSelectElement).value;
-  }
-  changeRole(member: WorkspaceMember, event: Event): void {
-    void this.store.changeRole(member, this.selectValue(event) as WorkspaceRole);
+  changeRole(member: WorkspaceMember, role: WorkspaceRole): void {
+    void this.store.changeRole(member, role);
   }
   assignableRoles(): readonly WorkspaceRoleDefinition[] {
     return this.store.roles().filter((role) => role.baseRole !== 'owner');
@@ -302,8 +325,7 @@ export class MembersPage implements OnInit {
   roleLabel(role: WorkspaceRoleDefinition): string {
     return role.system ? this.i18n.t(this.roleKey(role.baseRole)) : role.name;
   }
-  assignRole(member: WorkspaceMember, event: Event): void {
-    const roleId = this.selectValue(event);
+  assignRole(member: WorkspaceMember, roleId: string): void {
     const role = this.store.roles().find((item) => item.id === roleId);
     if (role) void this.store.assignRole(member, role);
   }

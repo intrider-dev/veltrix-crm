@@ -173,30 +173,90 @@ h1 {
 }
 
 .locale-control {
+  position: relative;
   display: flex;
   min-height: 2.75rem;
   align-items: center;
   gap: 0.55rem;
-  padding-inline: 0.85rem 0.35rem;
+  padding-inline: 0.85rem 0.25rem;
   border: 1px solid #243146;
   border-radius: 0.65rem;
   color: #c9d3e6;
   background: #0d1624;
 }
 
-.locale-control select {
+.locale-trigger {
+  display: flex;
   min-width: 7.5rem;
+  min-height: 2.25rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.45rem 0.55rem;
   border: 0;
-  padding: 0.6rem 1.8rem 0.6rem 0.2rem;
   color: inherit;
   background: transparent;
   font: inherit;
   cursor: pointer;
 }
 
-.locale-control select:focus-visible {
+.locale-trigger:focus-visible {
   outline: 2px solid #8b7cff;
-  outline-offset: 3px;
+  outline-offset: 1px;
+}
+
+.locale-chevron {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-inline-end: 1.5px solid currentColor;
+  border-block-end: 1.5px solid currentColor;
+  transform: translateY(-20%) rotate(45deg);
+}
+
+.locale-menu {
+  position: absolute;
+  z-index: 20;
+  inset: calc(100% + 0.375rem) 0 auto auto;
+  display: grid;
+  width: max(100%, 10rem);
+  padding: 0.375rem;
+  border: 1px solid #2b384b;
+  border-radius: 0.625rem;
+  background: #0b1320;
+  box-shadow: 0 0.75rem 2rem rgb(0 0 0 / 32%);
+}
+
+.locale-menu button {
+  display: flex;
+  min-height: 2.5rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-inline: 0.75rem;
+  border: 0;
+  border-radius: 0.4375rem;
+  color: #9ba6b7;
+  background: transparent;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.locale-menu button:hover,
+.locale-menu button:focus-visible,
+.locale-menu button[aria-pressed='true'] {
+  color: #f2f5f9;
+  background: rgb(112 97 242 / 20%);
+}
+
+.locale-menu button:focus-visible {
+  outline: 2px solid #8b7cff;
+  outline-offset: -2px;
+}
+
+.locale-menu app-icon {
+  width: 1rem;
+  height: 1rem;
 }
 
 .auth-card {

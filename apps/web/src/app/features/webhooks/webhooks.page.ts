@@ -4,6 +4,7 @@ import { FormField, form, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 
 import type { WebhookDelivery, WebhookSubscription } from '../../core/api/api.types';
 import { Permissions } from '../../core/auth/permissions';
@@ -16,7 +17,14 @@ type CopyState = 'idle' | 'copied' | 'failed';
 
 @Component({
   selector: 'app-webhooks-page',
-  imports: [ErrorPanelComponent, FormField, MatButtonModule, MatFormFieldModule, MatInputModule],
+  imports: [
+    ErrorPanelComponent,
+    FormField,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+  ],
   providers: [WebhooksStore],
   templateUrl: './webhooks.page.html',
   styleUrl: './webhooks.page.scss',
@@ -61,8 +69,7 @@ export class WebhooksPage implements OnInit, OnDestroy {
     }
   }
 
-  selectSubscription(event: Event): void {
-    const value = (event.target as HTMLSelectElement).value;
+  selectSubscription(value: string): void {
     void this.store.filterDeliveries(value || null);
   }
 

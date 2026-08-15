@@ -20,6 +20,7 @@ import { FormField, email, form, required, validate } from '@angular/forms/signa
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
@@ -49,6 +50,7 @@ import { LeadsStore } from './leads.store';
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
     PhoneInputComponent,
     RecordAssignmentsComponent,
     RouterLink,
@@ -177,11 +179,15 @@ import { LeadsStore } from './leads.store';
               </mat-form-field>
               <label class="native-field">
                 <span>{{ i18n.t('leads.stage') }}</span>
-                <select [formField]="leadForm.stageId">
+                <mat-select
+                  panelClass="crm-select-panel"
+                  [aria-label]="i18n.t('leads.stage')"
+                  [formField]="leadForm.stageId"
+                >
                   @for (stage of editableStages(); track stage.id) {
-                    <option [value]="stage.id">{{ stageLabel(stage) }}</option>
+                    <mat-option [value]="stage.id">{{ stageLabel(stage) }}</mat-option>
                   }
-                </select>
+                </mat-select>
               </label>
             </div>
             <footer class="entity-create-actions">
@@ -267,17 +273,19 @@ import { LeadsStore } from './leads.store';
                             <label class="visually-hidden" [for]="'lead-status-' + lead.id">{{
                               i18n.t('leads.stage')
                             }}</label>
-                            <select
+                            <mat-select
+                              panelClass="crm-select-panel"
                               class="stage-select"
+                              [aria-label]="i18n.t('leads.stage')"
                               [id]="'lead-status-' + lead.id"
                               [ngModel]="lead.stageId"
                               [disabled]="store.isMoving(lead.id)"
                               (ngModelChange)="moveFromSelect(lead, $event)"
                             >
                               @for (stage of editableStages(); track stage.id) {
-                                <option [value]="stage.id">{{ stageLabel(stage) }}</option>
+                                <mat-option [value]="stage.id">{{ stageLabel(stage) }}</mat-option>
                               }
-                            </select>
+                            </mat-select>
                           } @else {
                             <span class="status-pill">{{ leadStageLabel(lead) }}</span>
                           }
@@ -344,21 +352,31 @@ import { LeadsStore } from './leads.store';
             </div>
             <label class="native-field">
               <span>{{ i18n.t('common.field.status') }}</span>
-              <select [value]="store.status()" (change)="setFilterStatus($event)">
-                <option value="">{{ i18n.t('leads.status.all') }}</option>
+              <mat-select
+                panelClass="crm-select-panel"
+                [aria-label]="i18n.t('common.field.status')"
+                [value]="store.status()"
+                (selectionChange)="setFilterStatus($event.value)"
+              >
+                <mat-option value="">{{ i18n.t('leads.status.all') }}</mat-option>
                 @for (status of filterStatuses; track status) {
-                  <option [value]="status">{{ i18n.t(statusKey(status)) }}</option>
+                  <mat-option [value]="status">{{ i18n.t(statusKey(status)) }}</mat-option>
                 }
-              </select>
+              </mat-select>
             </label>
             <label class="native-field">
               <span>{{ i18n.t('leads.stage') }}</span>
-              <select [value]="store.stageId()" (change)="setFilterStage($event)">
-                <option value="">{{ i18n.t('leads.filters.allStages') }}</option>
+              <mat-select
+                panelClass="crm-select-panel"
+                [aria-label]="i18n.t('leads.stage')"
+                [value]="store.stageId()"
+                (selectionChange)="setFilterStage($event.value)"
+              >
+                <mat-option value="">{{ i18n.t('leads.filters.allStages') }}</mat-option>
                 @for (stage of store.stages(); track stage.id) {
-                  <option [value]="stage.id">{{ stageLabel(stage) }}</option>
+                  <mat-option [value]="stage.id">{{ stageLabel(stage) }}</mat-option>
                 }
-              </select>
+              </mat-select>
             </label>
             <p>{{ i18n.t('leads.filters.serverHint') }}</p>
             <button class="apply-filters" mat-flat-button type="button" (click)="applyFilters()">
@@ -430,16 +448,18 @@ import { LeadsStore } from './leads.store';
                       <label class="visually-hidden" [for]="'kanban-stage-' + lead.id">{{
                         i18n.t('leads.stage')
                       }}</label>
-                      <select
+                      <mat-select
+                        panelClass="crm-select-panel"
+                        [aria-label]="i18n.t('leads.stage')"
                         [id]="'kanban-stage-' + lead.id"
                         [ngModel]="lead.stageId"
                         [disabled]="!permissions.allows('leads.update')"
                         (ngModelChange)="moveFromSelect(lead, $event)"
                       >
                         @for (target of editableStages(); track target.id) {
-                          <option [value]="target.id">{{ stageLabel(target) }}</option>
+                          <mat-option [value]="target.id">{{ stageLabel(target) }}</mat-option>
                         }
-                      </select>
+                      </mat-select>
                     } @else {
                       <span class="status-pill">{{ leadStageLabel(lead) }}</span>
                     }
@@ -608,7 +628,7 @@ import { LeadsStore } from './leads.store';
       color: var(--text-muted);
       font-size: 0.75rem;
     }
-    .lead-card select {
+    .lead-card .mat-mdc-select {
       width: 100%;
       margin-top: 0.65rem;
     }
@@ -736,24 +756,12 @@ import { LeadsStore } from './leads.store';
       color: var(--text-muted);
       font-size: 0.78rem;
     }
-    article select {
+    article .mat-mdc-select {
       min-height: 2.25rem;
-      appearance: none;
-      padding-inline: 0.7rem 2.1rem;
       border: 1px solid var(--border);
       border-radius: var(--control-radius);
       color: var(--text);
       background: var(--surface-raised);
-      background-image:
-        linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
-        linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
-      background-position:
-        calc(100% - 0.9rem) 50%,
-        calc(100% - 0.65rem) 50%;
-      background-size:
-        0.28rem 0.28rem,
-        0.28rem 0.28rem;
-      background-repeat: no-repeat;
     }
     @media (max-width: 760px) {
       .record-list article {
@@ -837,12 +845,12 @@ export class LeadsPage implements OnInit {
     return (event.target as HTMLInputElement).value;
   }
 
-  setFilterStatus(event: Event): void {
-    this.store.status.set((event.target as HTMLSelectElement).value as LeadStatus | '');
+  setFilterStatus(status: LeadStatus | ''): void {
+    this.store.status.set(status);
   }
 
-  setFilterStage(event: Event): void {
-    this.store.stageId.set((event.target as HTMLSelectElement).value);
+  setFilterStage(stageId: string): void {
+    this.store.stageId.set(stageId);
   }
 
   applyFilters(): void {

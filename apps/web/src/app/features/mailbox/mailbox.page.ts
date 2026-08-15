@@ -117,6 +117,7 @@ import { MailboxStore } from './mailbox.store';
             <mat-form-field appearance="outline">
               <mat-label>{{ i18n.t('mailbox.imapPort') }}</mat-label>
               <mat-select
+                panelClass="crm-select-panel"
                 [value]="accountModel().imapPort"
                 (selectionChange)="setAccountField('imapPort', $event.value)"
               >
@@ -127,6 +128,7 @@ import { MailboxStore } from './mailbox.store';
             <mat-form-field appearance="outline">
               <mat-label>{{ i18n.t('mailbox.security') }}</mat-label>
               <mat-select
+                panelClass="crm-select-panel"
                 [value]="accountModel().imapSecurity"
                 (selectionChange)="setAccountField('imapSecurity', $event.value)"
               >
@@ -145,6 +147,7 @@ import { MailboxStore } from './mailbox.store';
             <mat-form-field appearance="outline">
               <mat-label>{{ i18n.t('mailbox.smtpPort') }}</mat-label>
               <mat-select
+                panelClass="crm-select-panel"
                 [value]="accountModel().smtpPort"
                 (selectionChange)="setAccountField('smtpPort', $event.value)"
               >
@@ -155,6 +158,7 @@ import { MailboxStore } from './mailbox.store';
             <mat-form-field appearance="outline">
               <mat-label>{{ i18n.t('mailbox.security') }}</mat-label>
               <mat-select
+                panelClass="crm-select-panel"
                 [value]="accountModel().smtpSecurity"
                 (selectionChange)="setAccountField('smtpSecurity', $event.value)"
               >
@@ -245,6 +249,7 @@ import { MailboxStore } from './mailbox.store';
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <mat-label>{{ i18n.t('mailbox.account') }}</mat-label>
             <mat-select
+              panelClass="crm-select-panel"
               [value]="store.selectedAccountId()"
               (selectionChange)="store.selectAccount($event.value)"
             >

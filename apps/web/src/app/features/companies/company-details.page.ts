@@ -4,6 +4,7 @@ import { FormField, form, readonly as readonlyField, required } from '@angular/f
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { Router, RouterLink } from '@angular/router';
 
 import type { Activity, CreateActivity, UpdateCompany } from '../../core/api/api.types';
@@ -25,6 +26,7 @@ import { CompanyDetailsStore } from './company-details.store';
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
     RouterLink,
   ],
   providers: [CompanyDetailsStore],
@@ -108,10 +110,15 @@ import { CompanyDetailsStore } from './company-details.store';
                 </mat-form-field>
                 <label class="select-field">
                   <span>{{ i18n.t('common.field.status') }}</span>
-                  <select [formField]="companyForm.status">
-                    <option value="active">{{ i18n.t('common.status.active') }}</option>
-                    <option value="inactive">{{ i18n.t('common.status.inactive') }}</option>
-                  </select>
+                  <mat-select
+                    panelClass="crm-select-panel"
+                    class="crm-select"
+                    [aria-label]="i18n.t('common.field.status')"
+                    [formField]="companyForm.status"
+                  >
+                    <mat-option value="active">{{ i18n.t('common.status.active') }}</mat-option>
+                    <mat-option value="inactive">{{ i18n.t('common.status.inactive') }}</mat-option>
+                  </mat-select>
                 </label>
               </div>
               <fieldset>
@@ -165,12 +172,19 @@ import { CompanyDetailsStore } from './company-details.store';
               <form class="activity-form" (submit)="addActivity($event)">
                 <label class="select-field">
                   <span>{{ i18n.t('web.activity.type') }}</span>
-                  <select [formField]="activityForm.type">
-                    <option value="task">{{ i18n.t('activities.activity.task') }}</option>
-                    <option value="call">{{ i18n.t('activities.activity.call') }}</option>
-                    <option value="meeting">{{ i18n.t('activities.activity.meeting') }}</option>
-                    <option value="note">{{ i18n.t('activities.activity.note') }}</option>
-                  </select>
+                  <mat-select
+                    panelClass="crm-select-panel"
+                    class="crm-select"
+                    [aria-label]="i18n.t('web.activity.type')"
+                    [formField]="activityForm.type"
+                  >
+                    <mat-option value="task">{{ i18n.t('activities.activity.task') }}</mat-option>
+                    <mat-option value="call">{{ i18n.t('activities.activity.call') }}</mat-option>
+                    <mat-option value="meeting">{{
+                      i18n.t('activities.activity.meeting')
+                    }}</mat-option>
+                    <mat-option value="note">{{ i18n.t('activities.activity.note') }}</mat-option>
+                  </mat-select>
                 </label>
                 <mat-form-field appearance="outline">
                   <mat-label>{{ i18n.t('activities.activity.title') }}</mat-label>

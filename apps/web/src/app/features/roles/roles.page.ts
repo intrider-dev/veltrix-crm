@@ -4,6 +4,7 @@ import { FormField, form, required } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 
 import type {
   AssignableWorkspaceRole,
@@ -49,7 +50,14 @@ const editablePermissions: readonly Permission[] = [
 
 @Component({
   selector: 'app-roles-page',
-  imports: [ErrorPanelComponent, FormField, MatButtonModule, MatFormFieldModule, MatInputModule],
+  imports: [
+    ErrorPanelComponent,
+    FormField,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+  ],
   providers: [RolesStore],
   template: `
     <div class="page settings-feature">
@@ -89,11 +97,17 @@ const editablePermissions: readonly Permission[] = [
               </mat-form-field>
               <label class="native-field">
                 <span>{{ i18n.t('roles.base') }}</span>
-                <select [value]="model().baseRole" (change)="setBaseRole($event)">
+                <mat-select
+                  panelClass="crm-select-panel"
+                  class="crm-select"
+                  [aria-label]="i18n.t('roles.base')"
+                  [value]="model().baseRole"
+                  (selectionChange)="setBaseRole($event.value)"
+                >
                   @for (role of baseRoles; track role) {
-                    <option [value]="role">{{ i18n.t(systemRoleKey(role)) }}</option>
+                    <mat-option [value]="role">{{ i18n.t(systemRoleKey(role)) }}</mat-option>
                   }
-                </select>
+                </mat-select>
                 <small>{{ i18n.t('roles.baseHint') }}</small>
               </label>
             </div>
@@ -334,8 +348,7 @@ export class RolesPage implements OnInit {
     this.editing.set(null);
   }
 
-  setBaseRole(event: Event): void {
-    const baseRole = (event.target as HTMLSelectElement).value as AssignableWorkspaceRole;
+  setBaseRole(baseRole: AssignableWorkspaceRole): void {
     const available = new Set(this.systemPermissions(baseRole));
     this.model.update((model) => ({
       ...model,

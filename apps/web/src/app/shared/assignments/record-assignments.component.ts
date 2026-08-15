@@ -10,6 +10,8 @@ import {
 } from '@angular/core';
 import type { ElementRef } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import type { MatSelect } from '@angular/material/select';
+import { MatSelectModule } from '@angular/material/select';
 
 import { ApiClient } from '../../core/api/api-client.service';
 import type {
@@ -30,7 +32,7 @@ export type AssignmentResourceType = 'lead' | 'deal' | 'task';
 
 @Component({
   selector: 'app-record-assignments',
-  imports: [ErrorPanelComponent, IconComponent, MatButtonModule],
+  imports: [ErrorPanelComponent, IconComponent, MatButtonModule, MatSelectModule],
   template: `
     <section class="assignments" [attr.aria-busy]="loading()">
       <header class="assignment-heading">
@@ -109,26 +111,41 @@ export type AssignmentResourceType = 'lead' | 'deal' | 'task';
           <div class="editor-fields">
             <label class="native-field subject-select">
               <span>{{ i18n.t('assignments.subject') }}</span>
-              <select #subjectSelect [value]="subjectValue()" (change)="setSubject($event)">
-                <option value="">{{ i18n.t('assignments.chooseSubject') }}</option>
+              <mat-select
+                panelClass="crm-select-panel"
+                #subjectSelect
+                class="crm-select"
+                [aria-label]="i18n.t('assignments.subject')"
+                [value]="subjectValue()"
+                (selectionChange)="setSubject($event.value)"
+              >
+                <mat-option value="">{{ i18n.t('assignments.chooseSubject') }}</mat-option>
                 @for (option of options(); track option.type + ':' + option.id) {
-                  <option [value]="option.type + ':' + option.id">
+                  <mat-option [value]="option.type + ':' + option.id">
                     {{
                       option.type === 'user'
                         ? i18n.t('assignments.user')
                         : i18n.t('assignments.department')
                     }}
                     · {{ option.name }}
-                  </option>
+                  </mat-option>
                 }
-              </select>
+              </mat-select>
             </label>
             <label class="native-field">
               <span>{{ i18n.t('assignments.kind') }}</span>
-              <select [value]="kind()" (change)="setKind($event)">
-                <option value="responsible">{{ i18n.t('assignments.kind.responsible') }}</option>
-                <option value="watcher">{{ i18n.t('assignments.kind.watcher') }}</option>
-              </select>
+              <mat-select
+                panelClass="crm-select-panel"
+                class="crm-select"
+                [aria-label]="i18n.t('assignments.kind')"
+                [value]="kind()"
+                (selectionChange)="setKind($event.value)"
+              >
+                <mat-option value="responsible">{{
+                  i18n.t('assignments.kind.responsible')
+                }}</mat-option>
+                <mat-option value="watcher">{{ i18n.t('assignments.kind.watcher') }}</mat-option>
+              </mat-select>
             </label>
           </div>
           @if (kind() === 'responsible') {
@@ -315,7 +332,7 @@ export class RecordAssignmentsComponent {
   readonly editorOpen = signal(false);
   readonly addParticipantKey = 'assignments.addParticipant' as AppMessageKey;
   private readonly addTrigger = viewChild<ElementRef<HTMLButtonElement>>('addTrigger');
-  private readonly subjectSelect = viewChild<ElementRef<HTMLSelectElement>>('subjectSelect');
+  private readonly subjectSelect = viewChild<MatSelect>('subjectSelect');
 
   constructor() {
     effect(() => {
@@ -325,7 +342,7 @@ export class RecordAssignmentsComponent {
       void this.load();
     });
     effect(() => {
-      if (this.editorOpen()) this.subjectSelect()?.nativeElement.focus();
+      if (this.editorOpen()) this.subjectSelect()?.focus();
     });
   }
 
@@ -374,14 +391,13 @@ export class RecordAssignmentsComponent {
     }
   }
 
-  setKind(event: Event): void {
-    const kind = (event.target as HTMLSelectElement).value as 'responsible' | 'watcher';
+  setKind(kind: 'responsible' | 'watcher'): void {
     this.kind.set(kind);
     if (kind === 'watcher') this.primary.set(false);
   }
 
-  setSubject(event: Event): void {
-    this.subjectValue.set((event.target as HTMLSelectElement).value);
+  setSubject(subject: string): void {
+    this.subjectValue.set(subject);
   }
 
   setPrimary(event: Event): void {

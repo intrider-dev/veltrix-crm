@@ -20,19 +20,30 @@
       <form (submit)="createResource($event)" novalidate>
         <label class="native-field">
           <span>{{ i18n.t('translations.sourceLocale') }}</span>
-          <select [formField]="createForm.sourceLocale" (change)="changeCreateSourceLocale($event)">
+          <mat-select
+            panelClass="crm-select-panel"
+            class="crm-select"
+            [aria-label]="i18n.t('translations.sourceLocale')"
+            [formField]="createForm.sourceLocale"
+            (selectionChange)="changeCreateSourceLocale($event.value)"
+          >
             @for (locale of store.supportedLocales(); track locale) {
-              <option [value]="locale">{{ localeName(locale) }}</option>
+              <mat-option [value]="locale">{{ localeName(locale) }}</mat-option>
             }
-          </select>
+          </mat-select>
         </label>
         <label class="native-field">
           <span>{{ i18n.t('translations.locale') }}</span>
-          <select [formField]="createForm.locale">
+          <mat-select
+            panelClass="crm-select-panel"
+            class="crm-select"
+            [aria-label]="i18n.t('translations.locale')"
+            [formField]="createForm.locale"
+          >
             @for (locale of createTargetLocales(); track locale) {
-              <option [value]="locale">{{ localeName(locale) }}</option>
+              <mat-option [value]="locale">{{ localeName(locale) }}</mat-option>
             }
-          </select>
+          </mat-select>
         </label>
         @if (createTargetLocales().length === 0) {
           <p class="no-target-locale" role="status">
@@ -61,10 +72,15 @@
         </mat-form-field>
         <label class="native-field">
           <span>{{ i18n.t('translations.status') }}</span>
-          <select [formField]="createForm.status">
-            <option value="draft">{{ i18n.t('translations.draft') }}</option>
-            <option value="published">{{ i18n.t('translations.published') }}</option>
-          </select>
+          <mat-select
+            panelClass="crm-select-panel"
+            class="crm-select"
+            [aria-label]="i18n.t('translations.status')"
+            [formField]="createForm.status"
+          >
+            <mat-option value="draft">{{ i18n.t('translations.draft') }}</mat-option>
+            <mat-option value="published">{{ i18n.t('translations.published') }}</mat-option>
+          </mat-select>
         </label>
         <div class="create-actions">
           <button mat-button type="button" (click)="createOpen.set(false)">
@@ -113,7 +129,11 @@
   <form class="panel filters" role="search" (submit)="applyFilters($event)">
     <mat-form-field appearance="outline" subscriptSizing="dynamic">
       <mat-label>{{ i18n.t('translations.locale') }}</mat-label>
-      <mat-select [value]="store.locale()" (selectionChange)="changeLocale($event.value)">
+      <mat-select
+        panelClass="crm-select-panel"
+        [value]="store.locale()"
+        (selectionChange)="changeLocale($event.value)"
+      >
         @for (locale of targetLocales(); track locale) {
           <mat-option [value]="locale">{{ localeName(locale) }}</mat-option>
         }
@@ -121,7 +141,11 @@
     </mat-form-field>
     <mat-form-field appearance="outline" subscriptSizing="dynamic">
       <mat-label>{{ i18n.t('translations.namespace') }}</mat-label>
-      <mat-select [value]="store.namespace()" (selectionChange)="changeNamespace($event.value)">
+      <mat-select
+        panelClass="crm-select-panel"
+        [value]="store.namespace()"
+        (selectionChange)="changeNamespace($event.value)"
+      >
         <mat-option value="">{{ i18n.t('translations.allNamespaces') }}</mat-option>
         @for (namespace of store.namespaces(); track namespace) {
           <mat-option [value]="namespace">{{ namespace }}</mat-option>
@@ -130,7 +154,11 @@
     </mat-form-field>
     <mat-form-field appearance="outline" subscriptSizing="dynamic">
       <mat-label>{{ i18n.t('translations.status') }}</mat-label>
-      <mat-select [value]="store.status()" (selectionChange)="changeStatus($event.value)">
+      <mat-select
+        panelClass="crm-select-panel"
+        [value]="store.status()"
+        (selectionChange)="changeStatus($event.value)"
+      >
         <mat-option value="">{{ i18n.t('translations.allStatuses') }}</mat-option>
         <mat-option value="missing">{{ i18n.t('translations.missing') }}</mat-option>
         <mat-option value="draft">{{ i18n.t('translations.draft') }}</mat-option>
@@ -257,6 +285,7 @@
           <mat-form-field appearance="outline">
             <mat-label>{{ i18n.t('translations.status') }}</mat-label>
             <mat-select
+              panelClass="crm-select-panel"
               [value]="editorModel().status"
               (selectionChange)="setEditorStatus($event.value)"
             >

@@ -211,6 +211,7 @@ import { ChatDockStore } from './chat-dock.store';
             <mat-form-field appearance="outline" subscriptSizing="dynamic">
               <mat-label>{{ i18n.t('chat.chooseMember') }}</mat-label>
               <mat-select
+                panelClass="crm-select-panel"
                 #memberSelect
                 [value]="selectedMemberId()"
                 (selectionChange)="selectedMemberId.set($event.value)"

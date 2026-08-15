@@ -1,4 +1,5 @@
 import { CdkTrapFocus } from '@angular/cdk/a11y';
+import { OverlayContainer } from '@angular/cdk/overlay';
 import type { ElementRef } from '@angular/core';
 import {
   ChangeDetectionStrategy,
@@ -7,6 +8,7 @@ import {
   HostListener,
   Injector,
   computed,
+  effect,
   inject,
   signal,
   viewChild,
@@ -167,7 +169,7 @@ interface NavItem {
                 [value]="activeWorkspace.id"
                 [disabled]="workspaceSwitching()"
                 (selectionChange)="switchWorkspace($event.value)"
-                [attr.aria-label]="i18n.t('common.nav.workspace')"
+                [aria-label]="i18n.t('common.nav.workspace')"
               >
                 @for (item of workspace.workspaces(); track item.id) {
                   <mat-option [value]="item.id" [attr.title]="item.name">{{
@@ -336,11 +338,17 @@ export class AppShellComponent {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly injector = inject(Injector);
+  private readonly overlayContainer = inject(OverlayContainer);
   private readonly searchTerms = new Subject<string>();
   private readonly routeUsesDarkWorkspace = signal(false);
 
   constructor() {
     this.syncWorkspaceAppearance();
+    effect((onCleanup) => {
+      const container = this.overlayContainer.getContainerElement();
+      container.classList.toggle('dark-workspace-overlay', this.darkWorkspaceRoute());
+      onCleanup(() => container.classList.remove('dark-workspace-overlay'));
+    });
     if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
       const mobileQuery = window.matchMedia('(max-width: 820px)');
       const syncMobileViewport = (matches: boolean) => {
