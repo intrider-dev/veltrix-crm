@@ -91,6 +91,13 @@
   display: none;
 }
 
+/* The shared Material icon-button rule centers projected SVGs with a strong
+   display declaration, so desktop navigation chrome needs an explicit override. */
+.mobile-menu.mat-mdc-icon-button,
+.mobile-sidebar-close.mat-mdc-icon-button {
+  display: none !important;
+}
+
 .global-search {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
@@ -322,11 +329,13 @@
 }
 
 .nav-collapsed .sidebar-head {
-  padding-inline: 0.4rem;
+  justify-content: center;
+  padding-inline: 0;
 }
 
 .nav-collapsed .wordmark {
-  width: 2.25rem;
+  width: 1.95rem;
+  flex: 0 0 1.95rem;
 }
 
 .nav-collapsed .workspace-control {
@@ -335,7 +344,11 @@
 
 .nav-collapsed .sidebar nav a,
 .nav-collapsed .collapse-button {
+  width: var(--shell-nav-item-height);
+  align-self: center;
+  justify-self: center;
   justify-content: center;
+  gap: 0;
   padding: 0;
 }
 
@@ -490,6 +503,10 @@ main:focus {
     display: inline-grid;
   }
 
+  .mobile-menu.mat-mdc-icon-button {
+    display: inline-grid !important;
+  }
+
   .global-search {
     justify-self: end;
     grid-template-columns: 1fr;
@@ -529,6 +546,10 @@ main:focus {
 
   .mobile-sidebar-close {
     display: inline-grid;
+  }
+
+  .mobile-sidebar-close.mat-mdc-icon-button {
+    display: inline-grid !important;
   }
 
   .collapse-button {

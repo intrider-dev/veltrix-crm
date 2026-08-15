@@ -151,6 +151,53 @@ for (const route of ["/contacts", "/companies"] as const) {
   });
 }
 
+test("collapsed navigation centers every icon inside its sidebar column", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name === "mobile-390", "desktop and tablet behavior");
+  const assertNoBrowserErrors = failOnBrowserErrors(page);
+  await loginAsDemo(page);
+  await setAppLanguage(page, "en");
+  await page.goto("/dashboard");
+  await waitForAppReady(page);
+
+  const sidebar = page.locator("aside.sidebar");
+  await sidebar.getByRole("button", { name: "Collapse navigation" }).click();
+  await expect(page.locator(".shell")).toHaveClass(/nav-collapsed/);
+  await expect
+    .poll(async () => (await sidebar.boundingBox())?.width ?? 0)
+    .toBeCloseTo(68, 0);
+  await expect(page.locator(".mobile-menu")).toBeHidden();
+  await expect(page.locator(".mobile-sidebar-close")).toBeHidden();
+
+  const sidebarBox = await sidebar.boundingBox();
+  expect(sidebarBox).not.toBeNull();
+  const sidebarCenter =
+    (sidebarBox?.x ?? 0) + (sidebarBox?.width ?? 0) / 2;
+  const iconCenters = await sidebar
+    .locator(".wordmark img, nav a app-icon, .collapse-button app-icon")
+    .evaluateAll((elements) =>
+      elements.map((element) => {
+        const box = element.getBoundingClientRect();
+        return box.x + box.width / 2;
+      }),
+    );
+  expect(iconCenters.length).toBeGreaterThan(2);
+  for (const center of iconCenters) {
+    expect.soft(Math.abs(center - sidebarCenter)).toBeLessThanOrEqual(1);
+  }
+
+  const active = sidebar.locator("nav a.active");
+  const activeBox = await active.boundingBox();
+  expect(activeBox).not.toBeNull();
+  expect(Math.abs((activeBox?.width ?? 0) - (activeBox?.height ?? 0))).toBeLessThanOrEqual(1);
+  expect((activeBox?.x ?? 0)).toBeGreaterThanOrEqual((sidebarBox?.x ?? 0));
+  expect((activeBox?.x ?? 0) + (activeBox?.width ?? 0)).toBeLessThanOrEqual(
+    (sidebarBox?.x ?? 0) + (sidebarBox?.width ?? 0),
+  );
+  assertNoBrowserErrors();
+});
+
 test("chat creation panel stays contained without overlapping controls", async ({
   page,
 }, testInfo) => {
