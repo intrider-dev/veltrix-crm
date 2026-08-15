@@ -221,6 +221,53 @@ input[type='search']::-webkit-search-decoration {
   flex: 0 0 auto;
   color: var(--brand);
 }
+
+/* CDK previews live under `body`, outside feature-level theme inheritance. */
+.crm-kanban-drag-preview {
+  --brand: #7061f2;
+  --surface-raised: #101a27;
+  --surface-subtle: #111b29;
+  --text: #eef3fa;
+  --text-muted: #91a0b5;
+  --border: #1d2b3d;
+  --border-strong: #2a3c53;
+  --lead-border-strong: #2a3c53;
+  --deal-surface: #0b131e;
+  --deal-raised: #101a27;
+  --deal-hover: #142238;
+  --deal-border: #1d2b3d;
+  --deal-border-strong: #2a3c53;
+  --deal-text: #eef3fa;
+  --deal-muted: #91a0b5;
+  --deal-accent: #6382ff;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+
+  color: #eef3fa;
+  color-scheme: dark;
+  background: #101a27;
+  box-shadow:
+    0 1.25rem 3rem rgb(0 0 0 / 34%),
+    0 0 0 1px rgb(112 97 242 / 22%);
+  cursor: grabbing;
+  opacity: 0.98;
+  will-change: transform;
+}
+
+.crm-kanban-drag-preview .drag-handle {
+  cursor: grabbing;
+}
+
+.deal-card.cdk-drag-placeholder {
+  border-color: color-mix(in srgb, var(--deal-accent) 72%, var(--deal-border));
+  background: color-mix(in srgb, var(--deal-accent) 8%, var(--deal-raised));
+  box-shadow: none;
+  opacity: 0.72;
+}
+
+.deal-card.cdk-drag-placeholder > * {
+  visibility: hidden;
+}
+
 h1,
 h2,
 h3,

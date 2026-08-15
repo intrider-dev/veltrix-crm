@@ -45,8 +45,10 @@ test("desktop Kanban persists an actual pointer drag between stages", async ({
   const handle = card.locator(".drag-handle");
   const dropZone = targetStage.locator(".drop-zone");
   await handle.scrollIntoViewIfNeeded();
+  const cardBox = await card.boundingBox();
   const sourceBox = await handle.boundingBox();
   const targetBox = await dropZone.boundingBox();
+  expect(cardBox, "source card bounding box").not.toBeNull();
   expect(sourceBox, "drag handle bounding box").not.toBeNull();
   expect(targetBox, "target stage bounding box").not.toBeNull();
 
@@ -64,7 +66,9 @@ test("desktop Kanban persists an actual pointer drag between stages", async ({
     targetBox!.y + targetBox!.height - 8,
     viewport!.height - 8,
   );
-  expect(targetBottom, "visible target drop-zone bottom").toBeGreaterThan(targetTop);
+  expect(targetBottom, "visible target drop-zone bottom").toBeGreaterThan(
+    targetTop,
+  );
   const targetY = Math.min(Math.max(sourceY, targetTop), targetBottom);
 
   const moveResponse = page.waitForResponse(
@@ -75,6 +79,28 @@ test("desktop Kanban persists an actual pointer drag between stages", async ({
   await page.mouse.move(sourceX, sourceY);
   await page.mouse.down();
   await page.mouse.move(sourceX + 20, sourceY + 20, { steps: 5 });
+  const preview = page.locator(".crm-kanban-drag-preview.cdk-drag-preview");
+  await expect(preview).toBeVisible();
+  const previewBox = await preview.boundingBox();
+  const placeholderBox = await page
+    .locator(".deal-card.cdk-drag-placeholder")
+    .boundingBox();
+  expect(previewBox, "drag preview bounding box").not.toBeNull();
+  expect(placeholderBox, "drag placeholder bounding box").not.toBeNull();
+  expect(previewBox!.width).toBeCloseTo(cardBox!.width, 1);
+  expect(previewBox!.height).toBeCloseTo(cardBox!.height, 1);
+  expect(placeholderBox!.width).toBeCloseTo(cardBox!.width, 1);
+  expect(placeholderBox!.height).toBeCloseTo(cardBox!.height, 1);
+  expect(previewBox!.x - cardBox!.x).toBeCloseTo(20, 0);
+  expect(previewBox!.y - cardBox!.y).toBeCloseTo(20, 0);
+  await expect
+    .poll(() =>
+      preview.evaluate((element) => {
+        const style = getComputedStyle(element);
+        return [style.backgroundColor, style.color, style.colorScheme];
+      }),
+    )
+    .toEqual(["rgb(16, 26, 39)", "rgb(238, 243, 250)", "dark"]);
   await page.mouse.move(targetX, targetY, { steps: 20 });
   await page.mouse.up();
   expect((await moveResponse).status()).toBe(200);

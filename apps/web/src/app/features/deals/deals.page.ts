@@ -2,7 +2,6 @@ import { CdkTrapFocus } from '@angular/cdk/a11y';
 import {
   CdkDrag,
   CdkDragHandle,
-  CdkDragPlaceholder,
   CdkDropList,
   CdkDropListGroup,
   type CdkDragDrop,
@@ -40,7 +39,6 @@ import { DealsStore } from './deals.store';
     CdkTrapFocus,
     CdkDrag,
     CdkDragHandle,
-    CdkDragPlaceholder,
     CdkDropList,
     CdkDropListGroup,
     ErrorPanelComponent,
@@ -182,6 +180,7 @@ import { DealsStore } from './deals.store';
                         class="deal-card"
                         cdkDrag
                         [cdkDragData]="deal"
+                        cdkDragPreviewClass="crm-kanban-drag-preview"
                         [cdkDragDisabled]="!permissions.allows('deals.update')"
                       >
                         <div class="drag-handle" cdkDragHandle aria-hidden="true">
@@ -221,7 +220,6 @@ import { DealsStore } from './deals.store';
                             }
                           </select></label
                         >
-                        <div class="deal-placeholder" *cdkDragPlaceholder></div>
                       </article>
                     } @empty {
                       <p class="stage-empty">{{ i18n.t('sales.pipeline.empty') }}</p>

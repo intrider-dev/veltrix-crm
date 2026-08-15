@@ -2,7 +2,6 @@ import { CdkTrapFocus } from '@angular/cdk/a11y';
 import {
   CdkDrag,
   CdkDragHandle,
-  CdkDragPlaceholder,
   CdkDropList,
   CdkDropListGroup,
   type CdkDragDrop,
@@ -41,7 +40,6 @@ import { LeadsStore } from './leads.store';
     CdkTrapFocus,
     CdkDrag,
     CdkDragHandle,
-    CdkDragPlaceholder,
     CdkDropList,
     CdkDropListGroup,
     ErrorPanelComponent,
@@ -405,6 +403,7 @@ import { LeadsStore } from './leads.store';
                     class="lead-card"
                     cdkDrag
                     [cdkDragData]="lead"
+                    cdkDragPreviewClass="crm-kanban-drag-preview"
                     [cdkDragDisabled]="
                       !permissions.allows('leads.update') || lead.status === 'converted'
                     "
@@ -444,7 +443,6 @@ import { LeadsStore } from './leads.store';
                     } @else {
                       <span class="status-pill">{{ leadStageLabel(lead) }}</span>
                     }
-                    <div class="lead-placeholder" *cdkDragPlaceholder></div>
                   </article>
                 } @empty {
                   <p class="stage-empty">{{ i18n.t('leads.emptyStage') }}</p>
@@ -590,6 +588,14 @@ import { LeadsStore } from './leads.store';
       border-radius: 0.65rem;
       background: var(--surface-raised);
     }
+    .lead-card h3 a {
+      color: inherit;
+      text-decoration: none;
+    }
+    .lead-card h3 a:hover {
+      text-decoration: underline;
+      text-underline-offset: 0.18em;
+    }
     .lead-card h3 {
       margin: 0;
       font-size: 0.9rem;
@@ -609,20 +615,44 @@ import { LeadsStore } from './leads.store';
     .drag-handle {
       position: absolute;
       inset: 0.25rem 0.25rem auto auto;
+      display: grid;
+      width: 1.75rem;
+      height: 1.75rem;
+      padding: 0;
+      place-items: center;
       border: 0;
+      border-radius: 0.4rem;
       color: var(--text-muted);
       background: transparent;
       cursor: grab;
+      line-height: 1;
     }
-    .lead-placeholder {
-      min-height: 6rem;
-      border: 1px dashed var(--brand);
-      border-radius: 0.65rem;
+    .drag-handle:active {
+      cursor: grabbing;
+    }
+    .lead-card.cdk-drag-placeholder {
+      border-color: color-mix(in srgb, var(--brand) 72%, var(--border));
+      background: color-mix(in srgb, var(--brand) 8%, var(--surface-raised));
+      box-shadow: none;
+      opacity: 0.72;
+    }
+    .lead-card.cdk-drag-placeholder > * {
+      visibility: hidden;
+    }
+    .lead-card.cdk-drag-animating,
+    .lead-drop-zone.cdk-drop-list-dragging .lead-card:not(.cdk-drag-placeholder) {
+      transition: transform 160ms var(--ease-out);
     }
     .stage-empty {
       padding: 1rem;
       color: var(--text-muted);
       text-align: center;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .lead-card.cdk-drag-animating,
+      .lead-drop-zone.cdk-drop-list-dragging .lead-card:not(.cdk-drag-placeholder) {
+        transition-duration: 1ms;
+      }
     }
     .lead-gantt {
       padding: 1rem;
