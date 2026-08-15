@@ -502,14 +502,14 @@ h1 {
 
 .task-list strong,
 .task-list span,
-.activity-list strong,
-.activity-list span,
-.activity-list small {
+.activity-copy strong,
+.activity-copy span,
+.activity-copy small {
   display: block;
 }
 
 .task-list strong,
-.activity-list strong {
+.activity-copy strong {
   overflow: hidden;
   color: var(--text);
   font-size: 0.74rem;
@@ -574,9 +574,12 @@ h1 {
 }
 
 .activity-icon {
+  display: inline-grid;
   width: 1.8rem;
   height: 1.8rem;
   margin-top: 0.05rem;
+  overflow: hidden;
+  place-items: center;
   border-radius: 50%;
 }
 
@@ -585,15 +588,19 @@ h1 {
   height: 0.85rem;
 }
 
-.activity-list span,
-.activity-list small {
+.activity-copy {
+  min-width: 0;
+}
+
+.activity-copy span,
+.activity-copy small {
   margin-top: 0.18rem;
   color: var(--text-muted);
   font-size: 0.63rem;
   line-height: 1.35;
 }
 
-.activity-list small {
+.activity-copy small {
   color: var(--text-faint);
 }
 
