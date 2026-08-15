@@ -3,6 +3,9 @@
   --calendar-subtle: color-mix(in srgb, var(--surface-subtle) 92%, #07111f);
   --calendar-border: color-mix(in srgb, var(--border) 78%, transparent);
   --calendar-muted: var(--text-muted);
+  --entity-create-border: var(--calendar-border);
+  --entity-create-surface: var(--calendar-surface);
+  --entity-create-text: #f4f7fb;
   display: block;
   color: #f4f7fb;
 }
@@ -116,41 +119,6 @@
 .period-navigation button,
 .calendar-actions .export-action {
   color: #dce5f3;
-}
-
-.editor {
-  overflow: hidden;
-  border: 1px solid var(--calendar-border);
-  border-radius: var(--radius-panel, 0.875rem);
-  background: var(--calendar-surface);
-}
-
-.editor > header {
-  display: flex;
-  min-height: 3.5rem;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem 1.25rem;
-  border-bottom: 1px solid var(--calendar-border);
-}
-
-.editor h2 {
-  margin: 0;
-  font-size: 1rem;
-}
-
-.feature-form {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.25rem 1rem;
-  padding: 1.25rem;
-}
-
-.form-actions {
-  display: flex;
-  grid-column: 1 / -1;
-  justify-content: flex-end;
-  gap: 0.625rem;
 }
 
 .calendar-workspace {
@@ -532,9 +500,6 @@
     justify-content: flex-start;
     max-width: none;
   }
-  .feature-form {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
   .calendar-surface {
     overflow-x: auto;
   }
@@ -573,13 +538,6 @@
   }
   .create-action {
     grid-column: 1 / -1;
-  }
-  .feature-form {
-    grid-template-columns: 1fr;
-    padding: 1rem;
-  }
-  .form-actions {
-    grid-column: 1;
   }
   .surface-heading {
     position: sticky;

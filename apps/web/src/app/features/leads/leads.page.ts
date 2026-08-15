@@ -1,3 +1,4 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import {
   CdkDrag,
   CdkDragHandle,
@@ -10,6 +11,7 @@ import type { ElementRef, OnInit } from '@angular/core';
 import {
   ChangeDetectionStrategy,
   Component,
+  HostListener,
   Injector,
   inject,
   signal,
@@ -35,6 +37,7 @@ import { LeadsStore } from './leads.store';
 @Component({
   selector: 'app-leads-page',
   imports: [
+    CdkTrapFocus,
     CdkDrag,
     CdkDragHandle,
     CdkDragPlaceholder,
@@ -75,7 +78,7 @@ import { LeadsStore } from './leads.store';
         </form>
         <div class="header-actions">
           @if (permissions.allows('leads.create')) {
-            <button mat-flat-button type="button" (click)="openCreate()">
+            <button #leadCreateTrigger mat-flat-button type="button" (click)="openCreate()">
               <app-icon name="add" />{{ i18n.t('leads.add') }}
             </button>
           }
@@ -107,69 +110,89 @@ import { LeadsStore } from './leads.store';
       }
 
       @if (createOpen()) {
-        <section class="panel editor" aria-labelledby="new-lead-title">
+        <button
+          class="entity-drawer-scrim"
+          type="button"
+          (click)="closeCreate()"
+          [attr.aria-label]="i18n.t('common.action.close')"
+        ></button>
+        <aside
+          class="entity-create-drawer"
+          role="dialog"
+          aria-modal="true"
+          cdkTrapFocus
+          [cdkTrapFocusAutoCapture]="true"
+          aria-labelledby="new-lead-title"
+        >
           <header>
             <h2 id="new-lead-title">{{ i18n.t('leads.createTitle') }}</h2>
-            <button mat-button type="button" (click)="createOpen.set(false)">
-              {{ i18n.t('common.action.close') }}
+            <button
+              mat-icon-button
+              type="button"
+              (click)="closeCreate()"
+              [attr.aria-label]="i18n.t('common.action.close')"
+            >
+              <app-icon name="close" />
             </button>
           </header>
-          <form class="feature-form" (submit)="create($event)" novalidate>
-            @if (store.formError()) {
-              <app-error-panel class="form-error" [error]="store.formError()" [retryable]="false" />
-            }
-            <mat-form-field appearance="outline">
-              <mat-label>{{ i18n.t('common.field.name') }}</mat-label>
-              <input #nameInput matInput [formField]="leadForm.name" autocomplete="off" />
-              @if (leadForm.name().touched() && leadForm.name().invalid()) {
-                <mat-error>{{ i18n.t('auth.validation.required') }}</mat-error>
+          <form class="entity-create-form" (submit)="create($event)" novalidate>
+            <div class="entity-create-body">
+              @if (store.formError()) {
+                <app-error-panel
+                  class="form-error"
+                  [error]="store.formError()"
+                  [retryable]="false"
+                />
               }
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>{{ i18n.t('common.field.email') }}</mat-label>
-              <input matInput type="email" [formField]="leadForm.email" inputmode="email" />
-              @if (leadForm.email().touched() && leadForm.email().invalid()) {
-                <mat-error>{{ i18n.t('auth.validation.email') }}</mat-error>
-              }
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>{{ i18n.t('common.field.phone') }}</mat-label>
-              <input matInput [formField]="leadForm.phone" inputmode="tel" />
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>{{ i18n.t('leads.company') }}</mat-label>
-              <input matInput [formField]="leadForm.companyName" />
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>{{ i18n.t('leads.jobTitle') }}</mat-label>
-              <input matInput [formField]="leadForm.jobTitle" />
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>{{ i18n.t('leads.source') }}</mat-label>
-              <input matInput [formField]="leadForm.source" />
-            </mat-form-field>
-            <label class="native-field">
-              <span>{{ i18n.t('leads.stage') }}</span>
-              <select [formField]="leadForm.stageId">
-                @for (stage of editableStages(); track stage.id) {
-                  <option [value]="stage.id">{{ stageLabel(stage) }}</option>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ i18n.t('common.field.name') }}</mat-label>
+                <input #nameInput matInput [formField]="leadForm.name" autocomplete="off" />
+                @if (leadForm.name().touched() && leadForm.name().invalid()) {
+                  <mat-error>{{ i18n.t('auth.validation.required') }}</mat-error>
                 }
-              </select>
-            </label>
-            <div class="form-actions">
-              <button mat-button type="button" (click)="createOpen.set(false)">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ i18n.t('common.field.email') }}</mat-label>
+                <input matInput type="email" [formField]="leadForm.email" inputmode="email" />
+                @if (leadForm.email().touched() && leadForm.email().invalid()) {
+                  <mat-error>{{ i18n.t('auth.validation.email') }}</mat-error>
+                }
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ i18n.t('common.field.phone') }}</mat-label>
+                <input matInput [formField]="leadForm.phone" inputmode="tel" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ i18n.t('leads.company') }}</mat-label>
+                <input matInput [formField]="leadForm.companyName" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ i18n.t('leads.jobTitle') }}</mat-label>
+                <input matInput [formField]="leadForm.jobTitle" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ i18n.t('leads.source') }}</mat-label>
+                <input matInput [formField]="leadForm.source" />
+              </mat-form-field>
+              <label class="native-field">
+                <span>{{ i18n.t('leads.stage') }}</span>
+                <select [formField]="leadForm.stageId">
+                  @for (stage of editableStages(); track stage.id) {
+                    <option [value]="stage.id">{{ stageLabel(stage) }}</option>
+                  }
+                </select>
+              </label>
+            </div>
+            <footer class="entity-create-actions">
+              <button mat-button type="button" (click)="closeCreate()">
                 {{ i18n.t('common.action.cancel') }}
               </button>
-              <button
-                mat-flat-button
-                type="submit"
-                [disabled]="store.saving() || leadForm().invalid()"
-              >
+              <button mat-flat-button type="submit" [disabled]="store.saving()">
                 {{ i18n.t(store.saving() ? 'web.form.saving' : 'common.action.create') }}
               </button>
-            </div>
+            </footer>
           </form>
-        </section>
+        </aside>
       }
 
       @if (store.viewMode() === 'list') {
@@ -515,25 +538,6 @@ import { LeadsStore } from './leads.store';
   `,
   styleUrl: './leads.page.scss',
   styles: `
-    .editor > header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0.75rem 1rem;
-      border-bottom: 1px solid var(--border);
-    }
-    .editor h2 {
-      margin: 0;
-      font-size: 1rem;
-    }
-    .feature-form {
-      grid-template-columns: repeat(3, minmax(11rem, 1fr));
-      min-width: 0;
-      padding: 1rem;
-    }
-    .form-error {
-      grid-column: 1 / -1;
-    }
     .record-list article {
       display: flex;
       align-items: center;
@@ -719,9 +723,6 @@ import { LeadsStore } from './leads.store';
       background-repeat: no-repeat;
     }
     @media (max-width: 760px) {
-      .feature-form {
-        grid-template-columns: 1fr;
-      }
       .record-list article {
         align-items: stretch;
         flex-direction: column;
@@ -756,6 +757,7 @@ export class LeadsPage implements OnInit {
     email(schema.email);
   });
   readonly nameInput = viewChild<ElementRef<HTMLInputElement>>('nameInput');
+  readonly leadCreateTrigger = viewChild<ElementRef<HTMLButtonElement>>('leadCreateTrigger');
   private readonly injector = inject(Injector);
 
   ngOnInit(): void {
@@ -764,8 +766,20 @@ export class LeadsPage implements OnInit {
 
   openCreate(): void {
     this.store.formError.set(null);
+    this.leadForm().reset();
     this.createOpen.set(true);
     focusAfterNextRender(this.injector, () => this.nameInput()?.nativeElement);
+  }
+
+  closeCreate(): void {
+    this.createOpen.set(false);
+    this.leadForm().reset();
+    focusAfterNextRender(this.injector, () => this.leadCreateTrigger()?.nativeElement);
+  }
+
+  @HostListener('document:keydown.escape')
+  closeCreateFromKeyboard(): void {
+    if (this.createOpen()) this.closeCreate();
   }
 
   filter(event: Event): void {
@@ -949,7 +963,7 @@ export class LeadsPage implements OnInit {
       source: '',
       stageId: this.defaultStageId(),
     });
-    this.createOpen.set(false);
+    this.closeCreate();
   }
 
   private async initialize(): Promise<void> {

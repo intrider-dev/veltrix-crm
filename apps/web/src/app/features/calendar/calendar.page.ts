@@ -1,7 +1,9 @@
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import type { ElementRef, OnInit } from '@angular/core';
 import {
   ChangeDetectionStrategy,
   Component,
+  HostListener,
   Injector,
   computed,
   inject,
@@ -32,6 +34,7 @@ type VisibilityScope = CalendarActivity['visibilityScope'];
 @Component({
   selector: 'app-calendar-page',
   imports: [
+    CdkTrapFocus,
     ErrorPanelComponent,
     CalendarEventLegendComponent,
     CalendarMonthEventComponent,
@@ -117,7 +120,13 @@ type VisibilityScope = CalendarActivity['visibilityScope'];
             </a>
           }
           @if (permissions.allows('records.create')) {
-            <button mat-flat-button type="button" class="create-action" (click)="openCreate()">
+            <button
+              #calendarCreateTrigger
+              mat-flat-button
+              type="button"
+              class="create-action"
+              (click)="openCreate()"
+            >
               <app-icon name="add" />{{ i18n.t('calendar.add') }}
             </button>
           }
@@ -127,100 +136,118 @@ type VisibilityScope = CalendarActivity['visibilityScope'];
       @if (store.error()) {
         <app-error-panel [error]="store.error()" (retry)="store.load()" />
       }
-      @if (validationError()) {
-        <div class="error-panel" role="alert">{{ i18n.t('calendar.endAfterStart') }}</div>
-      }
 
       @if (createOpen()) {
-        <section class="panel editor" aria-labelledby="calendar-create-title">
+        <button
+          class="entity-drawer-scrim"
+          type="button"
+          (click)="closeCreate()"
+          [attr.aria-label]="i18n.t('common.action.close')"
+        ></button>
+        <aside
+          class="entity-create-drawer"
+          role="dialog"
+          aria-modal="true"
+          cdkTrapFocus
+          [cdkTrapFocusAutoCapture]="true"
+          aria-labelledby="calendar-create-title"
+        >
           <header>
             <h2 id="calendar-create-title">{{ i18n.t('calendar.createTitle') }}</h2>
             <button
-              mat-button
+              mat-icon-button
               type="button"
-              class="icon-button"
               (click)="closeCreate()"
               [attr.aria-label]="i18n.t('common.action.close')"
             >
               <app-icon name="close" />
             </button>
           </header>
-          <form class="feature-form" (submit)="create($event)" novalidate>
-            <mat-form-field appearance="outline">
-              <mat-label>{{ i18n.t('activities.activity.title') }}</mat-label>
-              <input #titleInput matInput [formField]="activityForm.title" />
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>{{ i18n.t('web.activity.type') }}</mat-label>
-              <mat-select [formField]="activityForm.type">
-                <mat-option value="task">{{ i18n.t('activities.activity.task') }}</mat-option>
-                <mat-option value="call">{{ i18n.t('activities.activity.call') }}</mat-option>
-                <mat-option value="meeting">{{ i18n.t('activities.activity.meeting') }}</mat-option>
-              </mat-select>
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>{{ i18n.t('calendar.start') }}</mat-label>
-              <input matInput type="datetime-local" [formField]="activityForm.start" />
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>{{ i18n.t('calendar.end') }}</mat-label>
-              <input matInput type="datetime-local" [formField]="activityForm.end" />
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>{{ i18n.t('calendar.location') }}</mat-label>
-              <input matInput [formField]="activityForm.location" />
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>{{ i18n.t('calendar.audience') }}</mat-label>
-              <mat-select
-                [formField]="activityForm.visibilityScope"
-                (selectionChange)="scopeChanged()"
-              >
-                <mat-option value="workspace">{{
-                  i18n.t('calendar.audience.workspace')
-                }}</mat-option>
-                <mat-option value="user">{{ i18n.t('calendar.audience.user') }}</mat-option>
-                @if (store.departments().length) {
-                  <mat-option value="department">{{
-                    i18n.t('calendar.audience.department')
+          <form class="entity-create-form" (submit)="create($event)" novalidate>
+            <div class="entity-create-body">
+              @if (validationError()) {
+                <div class="error-panel" role="alert">{{ i18n.t('calendar.endAfterStart') }}</div>
+              }
+              <mat-form-field appearance="outline">
+                <mat-label>{{ i18n.t('activities.activity.title') }}</mat-label>
+                <input #titleInput matInput [formField]="activityForm.title" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ i18n.t('web.activity.type') }}</mat-label>
+                <mat-select [formField]="activityForm.type">
+                  <mat-option value="task">{{ i18n.t('activities.activity.task') }}</mat-option>
+                  <mat-option value="call">{{ i18n.t('activities.activity.call') }}</mat-option>
+                  <mat-option value="meeting">{{
+                    i18n.t('activities.activity.meeting')
                   }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-            @if (model().visibilityScope === 'user') {
+                </mat-select>
+              </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>{{ i18n.t('calendar.targetUser') }}</mat-label>
-                <mat-select [formField]="activityForm.scopeUserId">
-                  @if (store.currentUser(); as currentUser) {
-                    <mat-option [value]="currentUser.id">{{ currentUser.displayName }}</mat-option>
+                <mat-label>{{ i18n.t('calendar.start') }}</mat-label>
+                <input matInput type="datetime-local" [formField]="activityForm.start" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ i18n.t('calendar.end') }}</mat-label>
+                <input matInput type="datetime-local" [formField]="activityForm.end" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ i18n.t('calendar.location') }}</mat-label>
+                <input matInput [formField]="activityForm.location" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ i18n.t('calendar.audience') }}</mat-label>
+                <mat-select
+                  [formField]="activityForm.visibilityScope"
+                  (selectionChange)="scopeChanged()"
+                >
+                  <mat-option value="workspace">{{
+                    i18n.t('calendar.audience.workspace')
+                  }}</mat-option>
+                  <mat-option value="user">{{ i18n.t('calendar.audience.user') }}</mat-option>
+                  @if (store.departments().length) {
+                    <mat-option value="department">{{
+                      i18n.t('calendar.audience.department')
+                    }}</mat-option>
                   }
-                  @for (member of store.members(); track member.id) {
-                    @if (member.userId !== store.currentUser()?.id) {
-                      <mat-option [value]="member.userId">{{ member.displayName }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+              @if (model().visibilityScope === 'user') {
+                <mat-form-field appearance="outline">
+                  <mat-label>{{ i18n.t('calendar.targetUser') }}</mat-label>
+                  <mat-select [formField]="activityForm.scopeUserId">
+                    @if (store.currentUser(); as currentUser) {
+                      <mat-option [value]="currentUser.id">{{
+                        currentUser.displayName
+                      }}</mat-option>
                     }
-                  }
-                </mat-select>
-              </mat-form-field>
-            } @else if (model().visibilityScope === 'department') {
-              <mat-form-field appearance="outline">
-                <mat-label>{{ i18n.t('calendar.targetDepartment') }}</mat-label>
-                <mat-select [formField]="activityForm.scopeDepartmentId">
-                  @for (department of store.departments(); track department.id) {
-                    <mat-option [value]="department.id">{{ department.name }}</mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
-            }
-            <div class="form-actions">
+                    @for (member of store.members(); track member.id) {
+                      @if (member.userId !== store.currentUser()?.id) {
+                        <mat-option [value]="member.userId">{{ member.displayName }}</mat-option>
+                      }
+                    }
+                  </mat-select>
+                </mat-form-field>
+              } @else if (model().visibilityScope === 'department') {
+                <mat-form-field appearance="outline">
+                  <mat-label>{{ i18n.t('calendar.targetDepartment') }}</mat-label>
+                  <mat-select [formField]="activityForm.scopeDepartmentId">
+                    @for (department of store.departments(); track department.id) {
+                      <mat-option [value]="department.id">{{ department.name }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+              }
+            </div>
+            <footer class="entity-create-actions">
               <button mat-button type="button" (click)="closeCreate()">
                 {{ i18n.t('common.action.cancel') }}
               </button>
               <button mat-flat-button type="submit" [disabled]="store.saving()">
                 {{ i18n.t(store.saving() ? 'web.form.saving' : 'common.action.create') }}
               </button>
-            </div>
+            </footer>
           </form>
-        </section>
+        </aside>
       }
 
       <div class="calendar-workspace">
@@ -464,7 +491,10 @@ export class CalendarPage implements OnInit {
     required(schema.end);
   });
   readonly titleInput = viewChild<ElementRef<HTMLInputElement>>('titleInput');
+  readonly calendarCreateTrigger =
+    viewChild<ElementRef<HTMLButtonElement>>('calendarCreateTrigger');
   private readonly injector = inject(Injector);
+  private createReturnFocus: HTMLElement | null = null;
 
   ngOnInit(): void {
     void this.store.load();
@@ -472,6 +502,9 @@ export class CalendarPage implements OnInit {
   }
 
   openCreate(date = new Date()): void {
+    const activeElement = globalThis.document?.activeElement;
+    this.createReturnFocus = activeElement instanceof HTMLElement ? activeElement : null;
+    this.activityForm().reset();
     this.validationError.set(false);
     const start = new Date(date);
     const now = new Date();
@@ -496,8 +529,17 @@ export class CalendarPage implements OnInit {
   }
 
   closeCreate(): void {
+    const returnFocus = this.createReturnFocus ?? this.calendarCreateTrigger()?.nativeElement;
+    this.createReturnFocus = null;
     this.createOpen.set(false);
+    this.activityForm().reset();
     this.validationError.set(false);
+    focusAfterNextRender(this.injector, () => returnFocus);
+  }
+
+  @HostListener('document:keydown.escape')
+  closeCreateFromKeyboard(): void {
+    if (this.createOpen()) this.closeCreate();
   }
 
   periodLabel(): string {
