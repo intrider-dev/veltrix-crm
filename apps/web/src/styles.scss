@@ -1002,6 +1002,7 @@ app-chat-dock :where(.conversation-list, .message-pane) {
     :is(.contact-search, .header-search, .deal-search) {
     min-height: var(--control-height);
     padding-inline: var(--control-inline-padding);
+    padding-right: 3px;
   }
 
   :is(app-contacts-page, app-leads-page, app-deals-page, app-activities-page)
