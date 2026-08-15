@@ -249,12 +249,6 @@ legend,
 .body-skeleton {
   min-height: 24rem;
 }
-button {
-  transition: transform 140ms cubic-bezier(0.23, 1, 0.32, 1);
-}
-button:active {
-  transform: scale(0.98);
-}
 @media (max-width: 900px) {
   .details-grid {
     // A zero minimum keeps Material form-field intrinsic widths from widening

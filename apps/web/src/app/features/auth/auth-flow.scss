@@ -54,23 +54,22 @@ mat-form-field,
   font-size: 0.85rem;
 }
 
-.password-label-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 0.15rem;
-}
-
-.password-label-row a,
+.forgot-link,
 .account-switch a {
   color: #9d87ff;
   text-decoration: none;
 }
 
-.password-label-row a:hover,
+.forgot-link:hover,
 .account-switch a:hover {
   text-decoration: underline;
   text-underline-offset: 0.2rem;
+}
+
+.forgot-link {
+  justify-self: end;
+  margin-top: -0.65rem;
+  font-size: 0.85rem;
 }
 
 .visibility-button {

@@ -73,10 +73,9 @@ import { AuthShellComponent } from './auth-shell.component';
             }
           </mat-form-field>
 
-          <div class="password-label-row field-label">
-            <label for="login-password">{{ i18n.t('auth.login.password') }}</label>
-            <a routerLink="/password-reset">{{ i18n.t('auth.login.forgot') }}</a>
-          </div>
+          <label class="field-label" for="login-password">{{
+            i18n.t('auth.login.password')
+          }}</label>
           <mat-form-field appearance="outline" class="password-field" [hideRequiredMarker]="true">
             <input
               id="login-password"
@@ -101,6 +100,7 @@ import { AuthShellComponent } from './auth-shell.component';
               <mat-error>{{ i18n.t('auth.validation.required') }}</mat-error>
             }
           </mat-form-field>
+          <a class="forgot-link" routerLink="/password-reset">{{ i18n.t('auth.login.forgot') }}</a>
 
           @if (error()) {
             <div class="form-error" role="alert">{{ error() }}</div>

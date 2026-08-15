@@ -15,6 +15,8 @@ describe('ToastService', () => {
 
     expect(service.items().map((item) => item.messageKey)).toEqual(['test.3', 'test.2', 'test.1']);
     service.dismiss(ids[2]);
+    expect(service.items().find((item) => item.id === ids[2])?.exiting).toBe(true);
+    vi.advanceTimersByTime(140);
     expect(service.items().map((item) => item.messageKey)).toEqual(['test.3', 'test.1']);
   });
 
@@ -24,6 +26,8 @@ describe('ToastService', () => {
     service.show({ messageKey: 'test.expiring', messageParams: {} }, 1000);
 
     vi.advanceTimersByTime(1000);
+    expect(service.items()[0]?.exiting).toBe(true);
+    vi.advanceTimersByTime(140);
     expect(service.items()).toEqual([]);
   });
 
@@ -47,6 +51,7 @@ describe('ToastService', () => {
     service.invokeAction(toast);
 
     expect(action).toHaveBeenCalledOnce();
+    vi.advanceTimersByTime(140);
     expect(service.items()).toEqual([]);
   });
 

@@ -20,6 +20,7 @@ import { ToastService, type AppToast } from './toast.service';
         <article
           class="toast"
           [class.error]="toast.tone === 'error'"
+          [class.exiting]="toast.exiting"
           [attr.role]="toast.tone === 'error' ? 'alert' : 'status'"
         >
           <p>{{ message(toast) }}</p>
@@ -74,11 +75,21 @@ import { ToastService, type AppToast } from './toast.service';
       backdrop-filter: blur(14px);
       pointer-events: auto;
       color: var(--text);
-      transition: transform 180ms var(--ease-out);
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      transition:
+        opacity var(--motion-exit) var(--ease-out),
+        transform var(--motion-standard) var(--ease-out);
 
       @starting-style {
+        opacity: 0;
         transform: translateY(-0.5rem) scale(0.98);
       }
+    }
+    .toast.exiting {
+      opacity: 0;
+      transform: translateY(-0.35rem) scale(0.98);
+      pointer-events: none;
     }
     .toast::before {
       position: absolute;

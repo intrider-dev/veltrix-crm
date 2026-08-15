@@ -661,7 +661,7 @@ import { LeadsStore } from './leads.store';
     }
     .lead-card.cdk-drag-animating,
     .lead-drop-zone.cdk-drop-list-dragging .lead-card:not(.cdk-drag-placeholder) {
-      transition: transform 160ms var(--ease-out);
+      transition: transform var(--motion-standard) var(--ease-out);
     }
     .stage-empty {
       padding: 1rem;

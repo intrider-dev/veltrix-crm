@@ -100,6 +100,11 @@ $system-font:
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --motion-press: 120ms;
+  --motion-fast: 140ms;
+  --motion-standard: 180ms;
+  --motion-panel: 220ms;
+  --motion-exit: 140ms;
   color-scheme: light;
   font-family: $system-font;
   font-synthesis: none;
@@ -218,6 +223,36 @@ textarea {
 button {
   -webkit-tap-highlight-color: transparent;
 }
+
+/*
+ * Shared motion primitives. Press feedback uses the independent scale property
+ * so it never overwrites a component's positioning transform.
+ */
+:where(button, [role='button']):not(
+  :disabled,
+  [aria-disabled='true'],
+  .mat-mdc-button-base,
+  .drawer-scrim,
+  .entity-drawer-scrim,
+  .scrim,
+  .palette-backdrop
+) {
+  transition-property: scale;
+  transition-duration: var(--motion-press);
+  transition-timing-function: var(--ease-out);
+}
+
+:where(button, [role='button']):not(
+    :disabled,
+    [aria-disabled='true'],
+    .mat-mdc-button-base,
+    .drawer-scrim,
+    .entity-drawer-scrim,
+    .scrim,
+    .palette-backdrop
+  ):active {
+  scale: 0.96;
+}
 input[type='search']::-webkit-search-cancel-button,
 input[type='search']::-webkit-search-decoration {
   appearance: none;
@@ -227,10 +262,13 @@ input[type='search']::-webkit-search-decoration {
   border-radius: var(--radius-control) !important;
   font-weight: 650;
   letter-spacing: -0.01em;
-  transition: transform 130ms var(--ease-out);
+  transition:
+    transform var(--motion-press) var(--ease-out),
+    filter var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
 }
 .mat-mdc-button-base:active:not([disabled]) {
-  transform: scale(0.97);
+  transform: scale(0.96);
 }
 .mat-mdc-button-base app-icon {
   flex: 0 0 auto;
@@ -265,10 +303,13 @@ input[type='search']::-webkit-search-decoration {
   flex: 0 0 1.25rem;
   color: var(--text-muted);
   transform: none;
-  transition: color 140ms var(--ease-out);
+  transition:
+    color var(--motion-fast) var(--ease-out),
+    rotate var(--motion-standard) var(--ease-out);
 }
 .workspace-select.mat-select-open .mat-mdc-select-arrow-wrapper {
   color: var(--text);
+  rotate: 180deg;
 }
 .workspace-select-panel.mat-mdc-select-panel,
 .crm-select-panel.mat-mdc-select-panel {
@@ -281,6 +322,31 @@ input[type='search']::-webkit-search-decoration {
   box-shadow:
     0 0.75rem 2rem rgb(0 0 0 / 28%),
     0 0.125rem 0.5rem rgb(0 0 0 / 18%);
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transform-origin: top center;
+  transition:
+    opacity var(--motion-standard) var(--ease-out),
+    transform var(--motion-standard) var(--ease-out);
+
+  @starting-style {
+    opacity: 0;
+    transform: translateY(-0.25rem) scale(0.98);
+  }
+}
+
+.mat-mdc-menu-panel {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transform-origin: top right;
+  transition:
+    opacity var(--motion-standard) var(--ease-out),
+    transform var(--motion-standard) var(--ease-out);
+
+  @starting-style {
+    opacity: 0;
+    transform: translateY(-0.25rem) scale(0.98);
+  }
 }
 .workspace-select-panel .mat-mdc-option,
 .crm-select-panel .mat-mdc-option {
@@ -403,6 +469,16 @@ p {
   max-width: 100rem;
   margin-inline: auto;
 }
+
+/* Keep state changes smooth without animating page geometry or delaying navigation. */
+:where(.panel, .summary-card, .metric-card, tbody tr, [role='row'], .status-pill) {
+  transition:
+    color var(--motion-fast) var(--ease-out),
+    background-color var(--motion-fast) var(--ease-out),
+    border-color var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out),
+    opacity var(--motion-standard) var(--ease-out);
+}
 .page-header {
   display: flex;
   align-items: flex-start;
@@ -438,6 +514,12 @@ p {
   color: var(--text-muted);
   background: color-mix(in srgb, var(--surface-subtle) 60%, transparent);
   text-align: center;
+  opacity: 1;
+  transition: opacity var(--motion-standard) var(--ease-out);
+
+  @starting-style {
+    opacity: 0;
+  }
 }
 .skeleton {
   min-height: 1rem;
@@ -461,6 +543,16 @@ p {
   border-radius: var(--radius-control);
   color: var(--danger);
   background: var(--danger-surface);
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity var(--motion-standard) var(--ease-out),
+    transform var(--motion-standard) var(--ease-out);
+
+  @starting-style {
+    opacity: 0;
+    transform: translateY(-0.25rem);
+  }
 }
 .feature-toolbar {
   display: flex;
@@ -496,6 +588,11 @@ p {
   border-radius: var(--control-radius);
   color: var(--text);
   background-color: var(--surface-raised);
+  transition:
+    color var(--motion-fast) var(--ease-out),
+    background-color var(--motion-fast) var(--ease-out),
+    border-color var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
 }
 .filter-field > input {
   padding-inline: var(--control-inline-padding);
@@ -557,6 +654,11 @@ p {
   background: transparent;
   box-shadow: none;
   white-space: nowrap;
+  transition:
+    color var(--motion-fast) var(--ease-out),
+    background-color var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out),
+    transform var(--motion-press) var(--ease-out);
 }
 .segmented-control > button:is(.active, .selected, [aria-pressed='true']) {
   color: var(--text);
@@ -579,6 +681,11 @@ p {
   border-radius: var(--control-radius);
   color: var(--text);
   background: var(--surface-raised);
+  transition:
+    color var(--motion-fast) var(--ease-out),
+    background-color var(--motion-fast) var(--ease-out),
+    border-color var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
 }
 .native-field > .mat-mdc-select,
 label > .mat-mdc-select,
@@ -594,6 +701,11 @@ label > .mat-mdc-select,
   border-radius: var(--control-radius);
   color: var(--text);
   background: var(--surface-raised);
+  transition:
+    color var(--motion-fast) var(--ease-out),
+    background-color var(--motion-fast) var(--ease-out),
+    border-color var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
 }
 .native-field > .mat-mdc-select .mat-mdc-select-trigger,
 label > .mat-mdc-select .mat-mdc-select-trigger,
@@ -660,7 +772,7 @@ label > .mat-mdc-select:focus-visible,
   border: 0;
   background: rgb(4 9 20 / 58%);
   opacity: 1;
-  transition: opacity 180ms var(--ease-out);
+  transition: opacity var(--motion-standard) var(--ease-out);
 }
 .entity-create-drawer {
   position: fixed;
@@ -676,7 +788,7 @@ label > .mat-mdc-select:focus-visible,
   background: var(--entity-create-surface, var(--surface-raised));
   box-shadow: -1rem 0 3rem rgb(0 0 0 / 28%);
   transform: translateX(0);
-  transition: transform 220ms var(--ease-drawer);
+  transition: transform var(--motion-panel) var(--ease-drawer);
 }
 @starting-style {
   .entity-drawer-scrim {
@@ -684,6 +796,98 @@ label > .mat-mdc-select:focus-visible,
   }
   .entity-create-drawer {
     transform: translateX(100%);
+  }
+}
+
+/* Legacy feature drawers share the same spatial motion as the canonical drawer. */
+.drawer-scrim {
+  opacity: 1;
+  transition: opacity var(--motion-standard) var(--ease-out);
+}
+
+:where(.create-drawer, .create-panel, .chat-dock) {
+  transform: translateX(0);
+  transition:
+    opacity var(--motion-standard) var(--ease-out),
+    transform var(--motion-panel) var(--ease-drawer),
+    visibility 0s linear;
+}
+
+:where(.small-dialog, .new-conversation, .call-panel) {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transform-origin: center;
+  transition:
+    opacity var(--motion-standard) var(--ease-out),
+    transform var(--motion-panel) var(--ease-out);
+}
+
+app-chat-dock .chat-launcher {
+  opacity: 1;
+  transition:
+    opacity var(--motion-fast) var(--ease-out),
+    transform var(--motion-press) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
+
+  @starting-style {
+    opacity: 0;
+    transform: translateY(0.375rem) scale(0.96);
+  }
+}
+
+app-chat-dock .chat-dock {
+  box-shadow: -1rem 0 3rem rgb(0 0 0 / 22%);
+  opacity: 0;
+  transform: translateX(100%);
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity var(--motion-exit) var(--ease-out),
+    transform var(--motion-panel) var(--ease-drawer),
+    visibility 0s linear var(--motion-panel);
+  will-change: transform;
+}
+
+app-chat-dock .chat-dock.open {
+  opacity: 1;
+  transform: translateX(0);
+  visibility: visible;
+  pointer-events: auto;
+  transition:
+    opacity var(--motion-standard) var(--ease-out),
+    transform var(--motion-panel) var(--ease-drawer),
+    visibility 0s linear;
+}
+
+app-chat-dock :where(.icon-button, .conversation-list > button) {
+  transition:
+    color var(--motion-fast) var(--ease-out),
+    background-color var(--motion-fast) var(--ease-out),
+    scale var(--motion-press) var(--ease-out);
+}
+
+app-chat-dock :where(.conversation-list, .message-pane) {
+  opacity: 1;
+  transition: opacity var(--motion-fast) var(--ease-out);
+
+  @starting-style {
+    opacity: 0;
+  }
+}
+
+@starting-style {
+  .drawer-scrim {
+    opacity: 0;
+  }
+
+  :where(.create-drawer, .create-panel, .chat-dock) {
+    opacity: 0.96;
+    transform: translateX(100%);
+  }
+
+  :where(.small-dialog, .new-conversation, .call-panel) {
+    opacity: 0;
+    transform: translateY(0.375rem) scale(0.98);
   }
 }
 .entity-create-drawer > header {
@@ -870,6 +1074,15 @@ label > .mat-mdc-select:focus-visible,
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  :where(button, [role='button']):active,
+  .sidebar nav a:active {
+    scale: 1 !important;
+  }
+
+  .mat-mdc-button-base:active:not([disabled]) {
+    transform: none !important;
   }
 }
 

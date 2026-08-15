@@ -61,446 +61,447 @@ import { ChatDockStore } from './chat-dock.store';
       </button>
     }
 
-    @if (open()) {
-      <aside
-        class="chat-dock"
-        role="dialog"
-        [attr.aria-modal]="mobileViewport()"
-        [cdkTrapFocus]="mobileViewport()"
-        [cdkTrapFocusAutoCapture]="mobileViewport()"
-        [attr.aria-label]="i18n.t('chat.title')"
-      >
-        <header class="dock-header">
-          @if (store.activeConversation(); as conversation) {
-            <button
-              class="icon-button back-to-list"
-              type="button"
-              (click)="backToList()"
-              [attr.aria-label]="i18n.t('chat.title')"
-            >
-              <app-icon name="back" />
-            </button>
-            <span class="conversation-avatar compact">{{
-              initials(conversationName(conversation))
-            }}</span>
-            <div class="conversation-heading">
-              <strong>{{ conversationName(conversation) }}</strong>
-              <small>{{ memberSummary(conversation) }}</small>
-            </div>
-            <div class="call-actions">
-              <button
-                class="icon-button"
-                type="button"
-                [disabled]="callActionDisabled()"
-                [title]="i18n.t(store.callsEnabled() ? 'chat.audioCall' : 'chat.callUnavailable')"
-                (click)="startCall('audio')"
-              >
-                <app-icon name="phone" />
-              </button>
-              <button
-                class="icon-button"
-                type="button"
-                [disabled]="callActionDisabled()"
-                [title]="i18n.t(store.callsEnabled() ? 'chat.videoCall' : 'chat.callUnavailable')"
-                (click)="startCall('video')"
-              >
-                <app-icon name="video" />
-              </button>
-            </div>
-          } @else {
-            <div class="conversation-heading root-heading">
-              <strong>{{ i18n.t('chat.title') }}</strong>
-              <small>{{ i18n.plural('common.resultCount', store.conversations().length) }}</small>
-            </div>
-            <button
-              #newChatButton
-              class="icon-button new-chat"
-              type="button"
-              (click)="openCreate()"
-              [attr.aria-label]="i18n.t('chat.addDirect')"
-            >
-              <app-icon name="add" />
-            </button>
-          }
+    <aside
+      class="chat-dock"
+      [class.open]="open()"
+      role="dialog"
+      [attr.aria-modal]="mobileViewport() && open()"
+      [attr.aria-hidden]="open() ? null : 'true'"
+      [attr.inert]="open() ? null : ''"
+      [cdkTrapFocus]="mobileViewport() && open()"
+      [cdkTrapFocusAutoCapture]="mobileViewport() && open()"
+      [attr.aria-label]="i18n.t('chat.title')"
+    >
+      <header class="dock-header">
+        @if (store.activeConversation(); as conversation) {
           <button
-            class="icon-button close-chat"
+            class="icon-button back-to-list"
             type="button"
-            (click)="closeDock()"
-            [attr.aria-label]="i18n.t('chat.close')"
+            (click)="backToList()"
+            [attr.aria-label]="i18n.t('chat.title')"
           >
-            <app-icon name="close" />
+            <app-icon name="back" />
           </button>
-        </header>
-
-        @if (store.error()) {
-          <app-error-panel [error]="store.error()" (retry)="retryActiveState()" />
-        }
-
-        @if (store.incomingCall(); as call) {
-          <section class="incoming-call" aria-live="assertive">
-            <span class="incoming-call-icon"
-              ><app-icon [name]="call.kind === 'video' ? 'video' : 'phone'"
-            /></span>
-            <span>
-              <strong>{{
-                i18n.t(call.kind === 'video' ? 'chat.incomingVideoCall' : 'chat.incomingAudioCall')
-              }}</strong>
-              <small>{{ i18n.t('chat.incomingCallHint') }}</small>
-            </span>
-            <button mat-button type="button" (click)="declineCall()">
-              {{ i18n.t('chat.decline') }}
+          <span class="conversation-avatar compact">{{
+            initials(conversationName(conversation))
+          }}</span>
+          <div class="conversation-heading">
+            <strong>{{ conversationName(conversation) }}</strong>
+            <small>{{ memberSummary(conversation) }}</small>
+          </div>
+          <div class="call-actions">
+            <button
+              class="icon-button"
+              type="button"
+              [disabled]="callActionDisabled()"
+              [title]="i18n.t(store.callsEnabled() ? 'chat.audioCall' : 'chat.callUnavailable')"
+              (click)="startCall('audio')"
+            >
+              <app-icon name="phone" />
             </button>
-            <button mat-flat-button type="button" (click)="acceptCall()">
-              {{ i18n.t('chat.accept') }}
+            <button
+              class="icon-button"
+              type="button"
+              [disabled]="callActionDisabled()"
+              [title]="i18n.t(store.callsEnabled() ? 'chat.videoCall' : 'chat.callUnavailable')"
+              (click)="startCall('video')"
+            >
+              <app-icon name="video" />
             </button>
-          </section>
-        }
-
-        @if (displayedCall(); as activeCall) {
-          <section class="call-panel" [attr.aria-label]="i18n.t('chat.activeCall')">
-            <header>
-              <strong>{{
-                i18n.t(activeCall.kind === 'video' ? 'chat.videoCall' : 'chat.audioCall')
-              }}</strong>
-              <span>{{ callStatusLabel() }}</span>
-            </header>
-            <div #callMedia class="call-media" [class.audio-only]="activeCall.kind !== 'video'">
-              @if (activeCall.kind !== 'video') {
-                <span class="call-avatar"><app-icon name="phone" /></span>
-              }
-            </div>
-            <div class="call-controls">
-              <button mat-button type="button" (click)="callSession.toggleMicrophone()">
-                {{ i18n.t(callSession.microphoneEnabled() ? 'chat.mute' : 'chat.unmute') }}
-              </button>
-              @if (activeCall.kind === 'video') {
-                <button mat-button type="button" (click)="callSession.toggleCamera()">
-                  {{ i18n.t(callSession.cameraEnabled() ? 'chat.cameraOff' : 'chat.cameraOn') }}
-                </button>
-              }
-              <button mat-flat-button type="button" class="hang-up" (click)="leaveCall()">
-                {{ i18n.t('chat.hangUp') }}
-              </button>
-            </div>
-          </section>
-        }
-
-        @if (createOpen()) {
-          <section
-            class="new-conversation"
-            role="dialog"
-            aria-modal="true"
-            cdkTrapFocus
-            [cdkTrapFocusAutoCapture]="true"
-            [attr.aria-label]="i18n.t('chat.addDirect')"
-          >
-            <header>
-              <div>
-                <strong>{{ i18n.t('chat.addDirect') }}</strong>
-                <small>{{ i18n.t('chat.chooseMember') }}</small>
-              </div>
-              <button
-                class="icon-button"
-                type="button"
-                (click)="closeCreate()"
-                [attr.aria-label]="i18n.t('common.action.cancel')"
-              >
-                <app-icon name="close" />
-              </button>
-            </header>
-            <mat-form-field appearance="outline" subscriptSizing="dynamic">
-              <mat-label>{{ i18n.t('chat.chooseMember') }}</mat-label>
-              <mat-select
-                panelClass="crm-select-panel"
-                #memberSelect
-                [value]="selectedMemberId()"
-                (selectionChange)="selectedMemberId.set($event.value)"
-              >
-                @for (member of availableMembers(); track member.userId) {
-                  <mat-option [value]="member.userId">{{ member.displayName }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-            @if (store.loading()) {
-              <div class="loading-state" aria-hidden="true"><app-icon name="clock" /></div>
-            }
-            <footer>
-              <button mat-button type="button" (click)="closeCreate()">
-                {{ i18n.t('common.action.cancel') }}
-              </button>
-              <button
-                mat-flat-button
-                type="button"
-                [disabled]="!selectedMemberId() || store.sending()"
-                (click)="startDirect(selectedMemberId())"
-              >
-                {{ i18n.t('common.action.create') }}
-              </button>
-            </footer>
-          </section>
-        }
-
-        @if (!store.activeConversationId()) {
-          <div class="conversation-list" [attr.aria-busy]="store.loading()">
-            @if (store.loading() && store.conversations().length === 0) {
-              <div class="loading-state" aria-hidden="true"><app-icon name="clock" /></div>
-            } @else {
-              @for (conversation of store.conversations(); track conversation.id) {
-                <button type="button" (click)="selectConversation(conversation.id)">
-                  <span class="conversation-avatar">{{
-                    initials(conversationName(conversation))
-                  }}</span>
-                  <span class="conversation-copy">
-                    <strong>{{ conversationName(conversation) }}</strong>
-                    <small>{{ memberSummary(conversation) }}</small>
-                  </span>
-                  @if (conversation.unreadCount > 0) {
-                    <span class="conversation-unread">{{ conversation.unreadCount }}</span>
-                  } @else if (conversation.lastMessageAt) {
-                    <time [attr.datetime]="conversation.lastMessageAt">{{
-                      i18n.date(conversation.lastMessageAt, { hour: '2-digit', minute: '2-digit' })
-                    }}</time>
-                  }
-                </button>
-              } @empty {
-                <div class="empty-state">
-                  <span class="empty-state-icon"><app-icon name="chat" /></span>
-                  <strong>{{ i18n.t('chat.empty') }}</strong>
-                  <button mat-flat-button type="button" (click)="openCreate()">
-                    <app-icon name="add" />{{ i18n.t('chat.addDirect') }}
-                  </button>
-                </div>
-              }
-            }
           </div>
         } @else {
-          <div class="message-pane">
-            @if (pinnedMessages()[0]; as pinned) {
-              <button class="pinned-strip" type="button" (click)="scrollToMessage(pinned.id)">
-                <span><app-icon name="pin" /></span>
-                <span
-                  ><strong>{{ i18n.t('chat.pinned') }}</strong
-                  ><small>{{ pinned.body }}</small></span
-                >
-                @if (pinnedMessages().length > 1) {
-                  <b>{{ pinnedMessages().length }}</b>
-                }
+          <div class="conversation-heading root-heading">
+            <strong>{{ i18n.t('chat.title') }}</strong>
+            <small>{{ i18n.plural('common.resultCount', store.conversations().length) }}</small>
+          </div>
+          <button
+            #newChatButton
+            class="icon-button new-chat"
+            type="button"
+            (click)="openCreate()"
+            [attr.aria-label]="i18n.t('chat.addDirect')"
+          >
+            <app-icon name="add" />
+          </button>
+        }
+        <button
+          class="icon-button close-chat"
+          type="button"
+          (click)="closeDock()"
+          [attr.aria-label]="i18n.t('chat.close')"
+        >
+          <app-icon name="close" />
+        </button>
+      </header>
+
+      @if (store.error()) {
+        <app-error-panel [error]="store.error()" (retry)="retryActiveState()" />
+      }
+
+      @if (store.incomingCall(); as call) {
+        <section class="incoming-call" aria-live="assertive">
+          <span class="incoming-call-icon"
+            ><app-icon [name]="call.kind === 'video' ? 'video' : 'phone'"
+          /></span>
+          <span>
+            <strong>{{
+              i18n.t(call.kind === 'video' ? 'chat.incomingVideoCall' : 'chat.incomingAudioCall')
+            }}</strong>
+            <small>{{ i18n.t('chat.incomingCallHint') }}</small>
+          </span>
+          <button mat-button type="button" (click)="declineCall()">
+            {{ i18n.t('chat.decline') }}
+          </button>
+          <button mat-flat-button type="button" (click)="acceptCall()">
+            {{ i18n.t('chat.accept') }}
+          </button>
+        </section>
+      }
+
+      @if (displayedCall(); as activeCall) {
+        <section class="call-panel" [attr.aria-label]="i18n.t('chat.activeCall')">
+          <header>
+            <strong>{{
+              i18n.t(activeCall.kind === 'video' ? 'chat.videoCall' : 'chat.audioCall')
+            }}</strong>
+            <span>{{ callStatusLabel() }}</span>
+          </header>
+          <div #callMedia class="call-media" [class.audio-only]="activeCall.kind !== 'video'">
+            @if (activeCall.kind !== 'video') {
+              <span class="call-avatar"><app-icon name="phone" /></span>
+            }
+          </div>
+          <div class="call-controls">
+            <button mat-button type="button" (click)="callSession.toggleMicrophone()">
+              {{ i18n.t(callSession.microphoneEnabled() ? 'chat.mute' : 'chat.unmute') }}
+            </button>
+            @if (activeCall.kind === 'video') {
+              <button mat-button type="button" (click)="callSession.toggleCamera()">
+                {{ i18n.t(callSession.cameraEnabled() ? 'chat.cameraOff' : 'chat.cameraOn') }}
               </button>
             }
-            @if (store.nextCursor()) {
-              <button mat-button type="button" class="load-older" (click)="loadOlder()">
-                {{ i18n.t('chat.loadOlder') }}
-              </button>
-            }
-            <div
-              class="message-list"
-              role="log"
-              aria-live="polite"
-              aria-relevant="additions"
-              [attr.aria-busy]="store.loading()"
-            >
-              @if (store.loading() && store.messages().length === 0) {
-                <div class="loading-state" aria-hidden="true"><app-icon name="clock" /></div>
-              } @else {
-                @for (message of store.messages(); track message.id; let index = $index) {
-                  <article
-                    class="message-row"
-                    [id]="'chat-message-' + message.id"
-                    [class.own]="isOwn(message)"
-                    [class.grouped]="isGrouped(message, index)"
-                  >
-                    @if (!isOwn(message) && !isGrouped(message, index)) {
-                      <span class="message-avatar">{{ initials(message.senderDisplayName) }}</span>
-                    }
-                    <div class="message-content">
-                      @if (!isGrouped(message, index)) {
-                        <header>
-                          @if (!isOwn(message)) {
-                            <strong>{{ message.senderDisplayName }}</strong>
-                          }
-                          <time [attr.datetime]="message.createdAt">{{
-                            i18n.date(message.createdAt, { hour: '2-digit', minute: '2-digit' })
-                          }}</time>
-                        </header>
-                      }
-                      <div class="message-bubble">
-                        @if (message.body) {
-                          <p>{{ message.body }}</p>
-                        }
-                        @for (attachment of attachmentsFor(message); track attachment.id) {
-                          @if (isAudio(attachment) && mediaUrl(attachment.id)) {
-                            <div class="media-card voice-card">
-                              <span class="media-kind"><app-icon name="microphone" /></span>
-                              <audio
-                                controls
-                                preload="metadata"
-                                [src]="mediaUrl(attachment.id)"
-                              ></audio>
-                              <button
-                                class="media-download"
-                                type="button"
-                                (click)="store.download(attachment)"
-                                [attr.aria-label]="i18n.t('chat.attach')"
-                              >
-                                <app-icon name="download" />
-                              </button>
-                            </div>
-                          } @else if (isVideo(attachment) && mediaUrl(attachment.id)) {
-                            <div class="media-card video-card">
-                              <video
-                                controls
-                                preload="metadata"
-                                playsinline
-                                [src]="mediaUrl(attachment.id)"
-                              ></video>
-                              <button
-                                class="media-download overlay"
-                                type="button"
-                                (click)="store.download(attachment)"
-                                [attr.aria-label]="i18n.t('chat.attach')"
-                              >
-                                <app-icon name="download" />
-                              </button>
-                            </div>
-                          } @else if (isAudio(attachment) || isVideo(attachment)) {
-                            <button
-                              type="button"
-                              class="media-placeholder"
-                              [disabled]="mediaLoading().has(attachment.id)"
-                              (click)="loadMedia(attachment)"
-                            >
-                              <span
-                                ><app-icon [name]="isVideo(attachment) ? 'video' : 'play'"
-                              /></span>
-                              <span
-                                ><strong>{{ attachment.displayName }}</strong
-                                ><small>{{ i18n.t('chat.loadMedia') }}</small></span
-                              >
-                              <small>{{ formatBytes(attachment.sizeBytes) }}</small>
-                            </button>
-                          } @else {
-                            <button
-                              type="button"
-                              class="file-attachment"
-                              [disabled]="attachment.scanState === 'rejected'"
-                              (click)="store.download(attachment)"
-                            >
-                              <span><app-icon name="file" /></span>
-                              <span
-                                ><strong>{{ attachment.displayName }}</strong
-                                ><small>{{ formatBytes(attachment.sizeBytes) }}</small></span
-                              >
-                              <app-icon name="download" />
-                            </button>
-                          }
-                        }
-                      </div>
-                      <footer>
-                        <span class="message-meta">
-                          @if (message.pinned) {
-                            <app-icon name="pin" />
-                          }
-                          @if (isOwn(message)) {
-                            <span [title]="i18n.t('chat.accepted')">
-                              <app-icon name="check" />
-                              <span class="visually-hidden">{{ i18n.t('chat.accepted') }}</span>
-                            </span>
-                          }
-                        </span>
-                        @for (reaction of groupedReactions(message); track reaction.emoji) {
-                          <button
-                            class="reaction-chip"
-                            type="button"
-                            (click)="store.react(message.id, reaction.emoji)"
-                            [attr.aria-label]="i18n.t('chat.reaction', { emoji: reaction.emoji })"
-                          >
-                            {{ reaction.emoji }} <span>{{ reaction.count }}</span>
-                          </button>
-                        }
-                        <span class="message-actions">
-                          <button
-                            type="button"
-                            (click)="store.react(message.id, likeEmoji)"
-                            [attr.aria-label]="i18n.t('chat.reaction', { emoji: likeEmoji })"
-                          >
-                            <app-icon name="like" />
-                          </button>
-                          <button
-                            type="button"
-                            (click)="store.react(message.id, heartEmoji)"
-                            [attr.aria-label]="i18n.t('chat.reaction', { emoji: heartEmoji })"
-                          >
-                            <app-icon name="reaction" />
-                          </button>
-                          <button
-                            type="button"
-                            (click)="store.pin(message)"
-                            [attr.aria-label]="i18n.t('chat.pin')"
-                          >
-                            <app-icon name="pin" />
-                          </button>
-                        </span>
-                      </footer>
-                    </div>
-                  </article>
-                } @empty {
-                  <div class="empty-state messages-empty">
-                    <span class="empty-state-icon"><app-icon name="chat" /></span>
-                    <strong>{{ i18n.t('chat.emptyMessages') }}</strong>
-                  </div>
-                }
-              }
+            <button mat-flat-button type="button" class="hang-up" (click)="leaveCall()">
+              {{ i18n.t('chat.hangUp') }}
+            </button>
+          </div>
+        </section>
+      }
+
+      @if (createOpen()) {
+        <section
+          class="new-conversation"
+          role="dialog"
+          aria-modal="true"
+          cdkTrapFocus
+          [cdkTrapFocusAutoCapture]="true"
+          [attr.aria-label]="i18n.t('chat.addDirect')"
+        >
+          <header>
+            <div>
+              <strong>{{ i18n.t('chat.addDirect') }}</strong>
+              <small>{{ i18n.t('chat.chooseMember') }}</small>
             </div>
-            <form class="composer" (submit)="send($event)">
-              @if (selectedFile(); as file) {
-                <div class="selected-file">
-                  <span><app-icon name="file" /></span>
-                  <strong>{{ file.name }}</strong>
-                  <small>{{ formatBytes(file.size) }}</small>
-                  <button
-                    type="button"
-                    (click)="selectedFile.set(null)"
-                    [attr.aria-label]="i18n.t('common.action.cancel')"
-                  >
-                    <app-icon name="close" />
-                  </button>
-                </div>
+            <button
+              class="icon-button"
+              type="button"
+              (click)="closeCreate()"
+              [attr.aria-label]="i18n.t('common.action.cancel')"
+            >
+              <app-icon name="close" />
+            </button>
+          </header>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ i18n.t('chat.chooseMember') }}</mat-label>
+            <mat-select
+              panelClass="crm-select-panel"
+              #memberSelect
+              [value]="selectedMemberId()"
+              (selectionChange)="selectedMemberId.set($event.value)"
+            >
+              @for (member of availableMembers(); track member.userId) {
+                <mat-option [value]="member.userId">{{ member.displayName }}</mat-option>
               }
-              <div class="composer-box">
-                <label class="composer-action" [title]="i18n.t('chat.attach')">
-                  <input
-                    type="file"
-                    [disabled]="store.loading()"
-                    [attr.aria-label]="i18n.t('chat.attach')"
-                    (change)="chooseFile($event)"
-                  />
-                  <app-icon name="attachment" />
-                </label>
-                <textarea
-                  #messageComposer
-                  rows="1"
-                  [disabled]="store.loading()"
-                  [value]="draft()"
-                  (input)="draft.set(messageValue($event))"
-                  (keydown)="composerKeydown($event)"
-                  [placeholder]="i18n.t('chat.message')"
-                ></textarea>
-                <button
-                  class="send-action"
-                  type="submit"
-                  [disabled]="
-                    store.loading() || store.sending() || (!draft().trim() && !selectedFile())
-                  "
-                  [attr.aria-label]="i18n.t('chat.send')"
-                >
-                  <app-icon [name]="store.sending() ? 'clock' : 'send'" />
+            </mat-select>
+          </mat-form-field>
+          @if (store.loading()) {
+            <div class="loading-state" aria-hidden="true"><app-icon name="clock" /></div>
+          }
+          <footer>
+            <button mat-button type="button" (click)="closeCreate()">
+              {{ i18n.t('common.action.cancel') }}
+            </button>
+            <button
+              mat-flat-button
+              type="button"
+              [disabled]="!selectedMemberId() || store.sending()"
+              (click)="startDirect(selectedMemberId())"
+            >
+              {{ i18n.t('common.action.create') }}
+            </button>
+          </footer>
+        </section>
+      }
+
+      @if (!store.activeConversationId()) {
+        <div class="conversation-list" [attr.aria-busy]="store.loading()">
+          @if (store.loading() && store.conversations().length === 0) {
+            <div class="loading-state" aria-hidden="true"><app-icon name="clock" /></div>
+          } @else {
+            @for (conversation of store.conversations(); track conversation.id) {
+              <button type="button" (click)="selectConversation(conversation.id)">
+                <span class="conversation-avatar">{{
+                  initials(conversationName(conversation))
+                }}</span>
+                <span class="conversation-copy">
+                  <strong>{{ conversationName(conversation) }}</strong>
+                  <small>{{ memberSummary(conversation) }}</small>
+                </span>
+                @if (conversation.unreadCount > 0) {
+                  <span class="conversation-unread">{{ conversation.unreadCount }}</span>
+                } @else if (conversation.lastMessageAt) {
+                  <time [attr.datetime]="conversation.lastMessageAt">{{
+                    i18n.date(conversation.lastMessageAt, { hour: '2-digit', minute: '2-digit' })
+                  }}</time>
+                }
+              </button>
+            } @empty {
+              <div class="empty-state">
+                <span class="empty-state-icon"><app-icon name="chat" /></span>
+                <strong>{{ i18n.t('chat.empty') }}</strong>
+                <button mat-flat-button type="button" (click)="openCreate()">
+                  <app-icon name="add" />{{ i18n.t('chat.addDirect') }}
                 </button>
               </div>
-            </form>
+            }
+          }
+        </div>
+      } @else {
+        <div class="message-pane">
+          @if (pinnedMessages()[0]; as pinned) {
+            <button class="pinned-strip" type="button" (click)="scrollToMessage(pinned.id)">
+              <span><app-icon name="pin" /></span>
+              <span
+                ><strong>{{ i18n.t('chat.pinned') }}</strong
+                ><small>{{ pinned.body }}</small></span
+              >
+              @if (pinnedMessages().length > 1) {
+                <b>{{ pinnedMessages().length }}</b>
+              }
+            </button>
+          }
+          @if (store.nextCursor()) {
+            <button mat-button type="button" class="load-older" (click)="loadOlder()">
+              {{ i18n.t('chat.loadOlder') }}
+            </button>
+          }
+          <div
+            class="message-list"
+            role="log"
+            aria-live="polite"
+            aria-relevant="additions"
+            [attr.aria-busy]="store.loading()"
+          >
+            @if (store.loading() && store.messages().length === 0) {
+              <div class="loading-state" aria-hidden="true"><app-icon name="clock" /></div>
+            } @else {
+              @for (message of store.messages(); track message.id; let index = $index) {
+                <article
+                  class="message-row"
+                  [id]="'chat-message-' + message.id"
+                  [class.own]="isOwn(message)"
+                  [class.grouped]="isGrouped(message, index)"
+                >
+                  @if (!isOwn(message) && !isGrouped(message, index)) {
+                    <span class="message-avatar">{{ initials(message.senderDisplayName) }}</span>
+                  }
+                  <div class="message-content">
+                    @if (!isGrouped(message, index)) {
+                      <header>
+                        @if (!isOwn(message)) {
+                          <strong>{{ message.senderDisplayName }}</strong>
+                        }
+                        <time [attr.datetime]="message.createdAt">{{
+                          i18n.date(message.createdAt, { hour: '2-digit', minute: '2-digit' })
+                        }}</time>
+                      </header>
+                    }
+                    <div class="message-bubble">
+                      @if (message.body) {
+                        <p>{{ message.body }}</p>
+                      }
+                      @for (attachment of attachmentsFor(message); track attachment.id) {
+                        @if (isAudio(attachment) && mediaUrl(attachment.id)) {
+                          <div class="media-card voice-card">
+                            <span class="media-kind"><app-icon name="microphone" /></span>
+                            <audio
+                              controls
+                              preload="metadata"
+                              [src]="mediaUrl(attachment.id)"
+                            ></audio>
+                            <button
+                              class="media-download"
+                              type="button"
+                              (click)="store.download(attachment)"
+                              [attr.aria-label]="i18n.t('chat.attach')"
+                            >
+                              <app-icon name="download" />
+                            </button>
+                          </div>
+                        } @else if (isVideo(attachment) && mediaUrl(attachment.id)) {
+                          <div class="media-card video-card">
+                            <video
+                              controls
+                              preload="metadata"
+                              playsinline
+                              [src]="mediaUrl(attachment.id)"
+                            ></video>
+                            <button
+                              class="media-download overlay"
+                              type="button"
+                              (click)="store.download(attachment)"
+                              [attr.aria-label]="i18n.t('chat.attach')"
+                            >
+                              <app-icon name="download" />
+                            </button>
+                          </div>
+                        } @else if (isAudio(attachment) || isVideo(attachment)) {
+                          <button
+                            type="button"
+                            class="media-placeholder"
+                            [disabled]="mediaLoading().has(attachment.id)"
+                            (click)="loadMedia(attachment)"
+                          >
+                            <span
+                              ><app-icon [name]="isVideo(attachment) ? 'video' : 'play'"
+                            /></span>
+                            <span
+                              ><strong>{{ attachment.displayName }}</strong
+                              ><small>{{ i18n.t('chat.loadMedia') }}</small></span
+                            >
+                            <small>{{ formatBytes(attachment.sizeBytes) }}</small>
+                          </button>
+                        } @else {
+                          <button
+                            type="button"
+                            class="file-attachment"
+                            [disabled]="attachment.scanState === 'rejected'"
+                            (click)="store.download(attachment)"
+                          >
+                            <span><app-icon name="file" /></span>
+                            <span
+                              ><strong>{{ attachment.displayName }}</strong
+                              ><small>{{ formatBytes(attachment.sizeBytes) }}</small></span
+                            >
+                            <app-icon name="download" />
+                          </button>
+                        }
+                      }
+                    </div>
+                    <footer>
+                      <span class="message-meta">
+                        @if (message.pinned) {
+                          <app-icon name="pin" />
+                        }
+                        @if (isOwn(message)) {
+                          <span [title]="i18n.t('chat.accepted')">
+                            <app-icon name="check" />
+                            <span class="visually-hidden">{{ i18n.t('chat.accepted') }}</span>
+                          </span>
+                        }
+                      </span>
+                      @for (reaction of groupedReactions(message); track reaction.emoji) {
+                        <button
+                          class="reaction-chip"
+                          type="button"
+                          (click)="store.react(message.id, reaction.emoji)"
+                          [attr.aria-label]="i18n.t('chat.reaction', { emoji: reaction.emoji })"
+                        >
+                          {{ reaction.emoji }} <span>{{ reaction.count }}</span>
+                        </button>
+                      }
+                      <span class="message-actions">
+                        <button
+                          type="button"
+                          (click)="store.react(message.id, likeEmoji)"
+                          [attr.aria-label]="i18n.t('chat.reaction', { emoji: likeEmoji })"
+                        >
+                          <app-icon name="like" />
+                        </button>
+                        <button
+                          type="button"
+                          (click)="store.react(message.id, heartEmoji)"
+                          [attr.aria-label]="i18n.t('chat.reaction', { emoji: heartEmoji })"
+                        >
+                          <app-icon name="reaction" />
+                        </button>
+                        <button
+                          type="button"
+                          (click)="store.pin(message)"
+                          [attr.aria-label]="i18n.t('chat.pin')"
+                        >
+                          <app-icon name="pin" />
+                        </button>
+                      </span>
+                    </footer>
+                  </div>
+                </article>
+              } @empty {
+                <div class="empty-state messages-empty">
+                  <span class="empty-state-icon"><app-icon name="chat" /></span>
+                  <strong>{{ i18n.t('chat.emptyMessages') }}</strong>
+                </div>
+              }
+            }
           </div>
-        }
-      </aside>
-    }
+          <form class="composer" (submit)="send($event)">
+            @if (selectedFile(); as file) {
+              <div class="selected-file">
+                <span><app-icon name="file" /></span>
+                <strong>{{ file.name }}</strong>
+                <small>{{ formatBytes(file.size) }}</small>
+                <button
+                  type="button"
+                  (click)="selectedFile.set(null)"
+                  [attr.aria-label]="i18n.t('common.action.cancel')"
+                >
+                  <app-icon name="close" />
+                </button>
+              </div>
+            }
+            <div class="composer-box">
+              <label class="composer-action" [title]="i18n.t('chat.attach')">
+                <input
+                  type="file"
+                  [disabled]="store.loading()"
+                  [attr.aria-label]="i18n.t('chat.attach')"
+                  (change)="chooseFile($event)"
+                />
+                <app-icon name="attachment" />
+              </label>
+              <textarea
+                #messageComposer
+                rows="1"
+                [disabled]="store.loading()"
+                [value]="draft()"
+                (input)="draft.set(messageValue($event))"
+                (keydown)="composerKeydown($event)"
+                [placeholder]="i18n.t('chat.message')"
+              ></textarea>
+              <button
+                class="send-action"
+                type="submit"
+                [disabled]="
+                  store.loading() || store.sending() || (!draft().trim() && !selectedFile())
+                "
+                [attr.aria-label]="i18n.t('chat.send')"
+              >
+                <app-icon [name]="store.sending() ? 'clock' : 'send'" />
+              </button>
+            </div>
+          </form>
+        </div>
+      }
+    </aside>
   `,
   styleUrl: './chat-dock.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

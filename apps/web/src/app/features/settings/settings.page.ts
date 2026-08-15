@@ -300,11 +300,9 @@ import { IconComponent } from '../../shared/icon/icon.component';
       background: var(--surface-raised);
       cursor: pointer;
       transition:
-        transform 120ms var(--ease-out),
-        border-color 140ms var(--ease-out);
-    }
-    .choice-grid button:active {
-      transform: scale(0.97);
+        border-color var(--motion-fast) var(--ease-out),
+        background-color var(--motion-fast) var(--ease-out),
+        color var(--motion-fast) var(--ease-out);
     }
     .choice-grid button.active {
       border-color: var(--brand);

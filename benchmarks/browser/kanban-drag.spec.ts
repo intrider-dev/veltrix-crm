@@ -93,6 +93,10 @@ test("desktop Kanban persists an actual pointer drag between stages", async ({
   expect(placeholderBox!.height).toBeCloseTo(cardBox!.height, 1);
   expect(previewBox!.x - cardBox!.x).toBeCloseTo(20, 0);
   expect(previewBox!.y - cardBox!.y).toBeCloseTo(20, 0);
+  const sourceTheme = await card.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return [style.backgroundColor, style.color, style.colorScheme];
+  });
   await expect
     .poll(() =>
       preview.evaluate((element) => {
@@ -100,7 +104,7 @@ test("desktop Kanban persists an actual pointer drag between stages", async ({
         return [style.backgroundColor, style.color, style.colorScheme];
       }),
     )
-    .toEqual(["rgb(16, 26, 39)", "rgb(238, 243, 250)", "dark"]);
+    .toEqual(sourceTheme);
   await page.mouse.move(targetX, targetY, { steps: 20 });
   await page.mouse.up();
   expect((await moveResponse).status()).toBe(200);

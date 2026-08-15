@@ -442,14 +442,35 @@ AG Grid Community remains the accessible list engine and stays lazy with the rou
 
 Motion is functional and infrequent:
 
-- button press: 100-160ms;
-- tooltip or small popover: 125-180ms;
-- select/menu: 150-200ms;
-- drawer/dialog: 180-240ms;
-- easing: `cubic-bezier(0.23, 1, 0.32, 1)` for entry and response;
-- animate only transform and opacity when practical;
-- no animation for repeated keyboard commands;
-- reduced-motion removes positional movement while preserving helpful fades.
+| Token               | Value   | Purpose                                     |
+| ------------------- | ------- | ------------------------------------------- |
+| `--motion-press`    | `120ms` | Pointer press feedback                      |
+| `--motion-fast`     | `140ms` | Hover, focus, color, border, and icon state |
+| `--motion-standard` | `180ms` | Selects, menus, toast, and content feedback |
+| `--motion-panel`    | `220ms` | Drawers, sheets, and spatial movement       |
+| `--motion-exit`     | `140ms` | Soft exit without delaying the next action  |
+
+Use `cubic-bezier(0.23, 1, 0.32, 1)` for entry and immediate response,
+`cubic-bezier(0.77, 0, 0.175, 1)` for movement already on screen, and
+`cubic-bezier(0.32, 0.72, 0, 1)` for drawers. Pointer press feedback is exactly
+`scale(0.96)` and never changes layout.
+
+- Animate only `transform`, `scale`, `opacity`, `color`, `background-color`,
+  `border-color`, and `box-shadow` unless the interaction cannot be expressed
+  without layout animation.
+- Never use `transition: all`, animate a full page on initial load, or delay a
+  repeated keyboard command.
+- Menus and selects enter from their trigger edge; centered dialogs remain
+  centered; right-side drawers enter and leave through the right edge.
+- Drag previews preserve the pickup offset and exact card dimensions and never
+  transition pointer tracking. Only displaced siblings and the final drop
+  settle with a transform transition.
+- Toasts enter from above and retain their DOM position for a short exit so a
+  dismissal never produces an abrupt disappearance.
+- Motion is never the only state cue. Selection, success, warning, error, and
+  loading states also use stable text, color, iconography, or geometry.
+- `prefers-reduced-motion` removes positional movement and continuous skeleton
+  motion while preserving immediate state changes and useful visual contrast.
 
 ## 9. Accessibility
 

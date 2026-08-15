@@ -13,14 +13,17 @@ export interface AppToast {
   readonly href?: string;
   readonly actionLabelKey?: AppMessageKey;
   readonly action?: () => void;
+  readonly exiting?: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
 export class ToastService {
+  private static readonly exitDurationMs = 140;
   private readonly timers = new Map<string, ReturnType<typeof setTimeout>>();
+  private readonly exitTimers = new Map<string, ReturnType<typeof setTimeout>>();
   readonly items = signal<readonly AppToast[]>([]);
 
-  show(input: Omit<AppToast, 'id'>, durationMs = 6500): string {
+  show(input: Omit<AppToast, 'id' | 'exiting'>, durationMs = 6500): string {
     const id = crypto.randomUUID();
     const next = [{ id, ...input }, ...this.items()];
     for (const dropped of next.slice(3)) this.clearTimer(dropped.id);
@@ -47,7 +50,16 @@ export class ToastService {
 
   dismiss(id: string): void {
     this.clearTimer(id);
-    this.items.update((items) => items.filter((item) => item.id !== id));
+    const item = this.items().find((candidate) => candidate.id === id);
+    if (!item || item.exiting) return;
+    this.items.update((items) =>
+      items.map((candidate) => (candidate.id === id ? { ...candidate, exiting: true } : candidate)),
+    );
+    const timer = setTimeout(() => {
+      this.items.update((items) => items.filter((candidate) => candidate.id !== id));
+      this.exitTimers.delete(id);
+    }, ToastService.exitDurationMs);
+    this.exitTimers.set(id, timer);
   }
 
   invokeAction(toast: AppToast): void {

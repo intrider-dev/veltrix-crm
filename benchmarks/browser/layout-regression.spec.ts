@@ -96,20 +96,16 @@ for (const route of ["/contacts", "/companies"] as const) {
     await expect(search).toBeVisible();
     await expect(toolbar.locator(".filter-search button")).toHaveCount(0);
 
-    const selectStyle = await toolbar
-      .locator("select")
-      .first()
-      .evaluate((element) => {
-        const style = getComputedStyle(element);
-        return {
-          appearance: style.appearance,
-          backgroundPosition: style.backgroundPosition,
-          paddingRight: Number.parseFloat(style.paddingRight),
-        };
-      });
-    expect(selectStyle.appearance).toBe("none");
-    expect(selectStyle.backgroundPosition).toContain("calc(100% -");
-    expect(selectStyle.paddingRight).toBeGreaterThanOrEqual(32);
+    const select = toolbar.locator("mat-select").first();
+    const selectBox = await select.boundingBox();
+    const arrowBox = await select.locator("svg").boundingBox();
+    expect(selectBox).not.toBeNull();
+    expect(arrowBox).not.toBeNull();
+    expect(
+      (selectBox?.x ?? 0) +
+        (selectBox?.width ?? 0) -
+        ((arrowBox?.x ?? 0) + (arrowBox?.width ?? 0)),
+    ).toBeGreaterThanOrEqual(8);
 
     const segmented =
       route === "/contacts"
@@ -193,15 +189,19 @@ test("mobile navigation contains focus and restores its trigger", async ({
 
   const trigger = page.getByRole("button", { name: "Open navigation" });
   const navigation = page.locator("aside.sidebar");
-  await expect(navigation).toHaveCount(0);
+  await expect(navigation).toHaveAttribute("aria-hidden", "true");
+  await expect(navigation).toHaveAttribute("inert", "");
   await trigger.click();
   await expect(trigger).toHaveAttribute("aria-expanded", "true");
-  await expect(navigation).toHaveCount(1);
+  await expect(navigation).not.toHaveAttribute("aria-hidden", "true");
+  await expect(navigation).not.toHaveAttribute("inert", "");
   await expect(
     navigation.getByRole("button", { name: "Close navigation" }),
   ).toBeFocused();
   await page.keyboard.press("Escape");
   await expect(trigger).toHaveAttribute("aria-expanded", "false");
+  await expect(navigation).toHaveAttribute("aria-hidden", "true");
+  await expect(navigation).toHaveAttribute("inert", "");
   await expect(trigger).toBeFocused();
   assertNoBrowserErrors();
 });

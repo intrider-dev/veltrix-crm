@@ -8,6 +8,7 @@
   grid-template: var(--shell-bar-height) minmax(0, 1fr) / 14rem minmax(0, 1fr);
   min-height: 100dvh;
   background: var(--surface-canvas);
+  transition: grid-template-columns var(--motion-panel) var(--ease-in-out);
 }
 
 .shell.dark-theme {
@@ -107,8 +108,7 @@
   cursor: pointer;
   transition:
     border-color 140ms var(--ease-out),
-    background-color 140ms var(--ease-out),
-    transform 120ms var(--ease-out);
+    background-color 140ms var(--ease-out);
 }
 
 .global-search app-icon {
@@ -270,7 +270,18 @@
   transition:
     color 140ms var(--ease-out),
     background-color 140ms var(--ease-out),
-    transform 120ms var(--ease-out);
+    scale var(--motion-press) var(--ease-out);
+}
+
+.sidebar nav span,
+.collapse-button span {
+  max-width: 10rem;
+  overflow: hidden;
+  opacity: 1;
+  white-space: nowrap;
+  transition:
+    max-width var(--motion-standard) var(--ease-in-out),
+    opacity var(--motion-fast) var(--ease-out);
 }
 
 .sidebar nav a::before {
@@ -302,10 +313,8 @@
   margin-top: auto;
 }
 
-.sidebar nav a:active,
-.collapse-button:active,
-.global-search:active {
-  transform: scale(0.98);
+.sidebar nav a:active {
+  scale: 0.96;
 }
 
 .nav-collapsed {
@@ -332,11 +341,16 @@
 
 .nav-collapsed .sidebar nav span,
 .nav-collapsed .collapse-button span {
-  display: none;
+  max-width: 0;
+  opacity: 0;
 }
 
 .nav-collapsed .collapse-button app-icon {
   transform: rotate(180deg);
+}
+
+.collapse-button app-icon {
+  transition: transform var(--motion-standard) var(--ease-in-out);
 }
 
 main {
@@ -498,12 +512,19 @@ main:focus {
     width: min(18rem, 88vw);
     min-height: 100dvh;
     transform: translateX(-100%);
-    transition: transform 220ms var(--ease-drawer);
+    visibility: hidden;
+    transition:
+      transform var(--motion-panel) var(--ease-drawer),
+      visibility 0s linear var(--motion-panel);
     box-shadow: var(--shadow-xl);
   }
 
   .mobile-open .sidebar {
     transform: translateX(0);
+    visibility: visible;
+    transition:
+      transform var(--motion-panel) var(--ease-drawer),
+      visibility 0s linear;
   }
 
   .mobile-sidebar-close {
@@ -521,6 +542,14 @@ main:focus {
     display: block;
     border: 0;
     background: rgb(3 16 12 / 48%);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--motion-standard) var(--ease-out);
+  }
+
+  .mobile-open .scrim {
+    opacity: 1;
+    pointer-events: auto;
   }
 
   main {

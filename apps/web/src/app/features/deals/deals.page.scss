@@ -618,7 +618,7 @@
 
 .cdk-drag-animating,
 .cdk-drop-list-dragging .deal-card:not(.cdk-drag-placeholder) {
-  transition: transform 160ms var(--ease-out);
+  transition: transform var(--motion-standard) var(--ease-out);
 }
 
 @media (max-width: 1180px) {

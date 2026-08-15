@@ -486,13 +486,6 @@
   font-size: 1.15rem;
 }
 
-button {
-  transition: transform 140ms cubic-bezier(0.23, 1, 0.32, 1);
-}
-button:active {
-  transform: scale(0.98);
-}
-
 @media (max-width: 1240px) {
   .company-workspace {
     grid-template-areas: 'toolbar' 'error' 'list' 'preview';
@@ -590,12 +583,6 @@ button:active {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  button {
-    transition: none;
-  }
-  button:active {
-    transform: none;
-  }
 }
 @media (forced-colors: active) {
   .company-status,

@@ -272,12 +272,6 @@ export type AssignmentResourceType = 'lead' | 'deal' | 'task';
       margin: 0;
       accent-color: var(--brand);
     }
-    button {
-      transition: transform 140ms cubic-bezier(0.23, 1, 0.32, 1);
-    }
-    button:active {
-      transform: scale(0.98);
-    }
     @media (max-width: 700px) {
       .assignment-heading {
         align-items: stretch;
@@ -298,12 +292,6 @@ export type AssignmentResourceType = 'lead' | 'deal' | 'task';
       }
     }
     @media (prefers-reduced-motion: reduce) {
-      button {
-        transition: none;
-      }
-      button:active {
-        transform: none;
-      }
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
