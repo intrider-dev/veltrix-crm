@@ -158,13 +158,17 @@ interface NavItem {
             @if (workspace.active(); as activeWorkspace) {
               <mat-select
                 class="workspace-select"
+                panelClass="workspace-select-panel"
+                disableOptionCentering
                 [value]="activeWorkspace.id"
                 [disabled]="workspaceSwitching()"
                 (selectionChange)="switchWorkspace($event.value)"
                 [attr.aria-label]="i18n.t('common.nav.workspace')"
               >
                 @for (item of workspace.workspaces(); track item.id) {
-                  <mat-option [value]="item.id">{{ item.name }}</mat-option>
+                  <mat-option [value]="item.id" [attr.title]="item.name">{{
+                    item.name
+                  }}</mat-option>
                 }
               </mat-select>
             } @else {
@@ -394,6 +398,8 @@ export class AppShellComponent {
       if (this.commandOpen()) this.closeCommandPalette();
       else this.openCommandPalette();
     } else if (event.key === 'Escape') {
+      const target = event.target instanceof Element ? event.target : null;
+      if (target?.closest('[role="combobox"][aria-expanded="true"]')) return;
       if (this.commandOpen()) this.closeCommandPalette();
       else if (this.mobileOpen()) this.closeMobileNavigation();
     }
