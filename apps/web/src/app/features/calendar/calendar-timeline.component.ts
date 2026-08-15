@@ -53,11 +53,15 @@ type VisibilityScope = CalendarActivity['visibilityScope'];
                     <span class="event-type">{{ i18n.t(typeKey(item.type)) }}</span>
                     <time [attr.datetime]="item.occurredAt">{{ eventTimeRange(item) }}</time>
                   </div>
-                  <strong>{{ item.title }}</strong>
-                  <span class="event-meta">{{ i18n.t(scopeKey(item.visibilityScope)) }}</span>
-                  @if (item.location) {
-                    <small>{{ item.location }}</small>
-                  }
+                  <div class="event-details">
+                    <strong>{{ item.title }}</strong>
+                    <span class="event-context">
+                      <span class="event-meta">{{ i18n.t(scopeKey(item.visibilityScope)) }}</span>
+                      @if (item.location) {
+                        <small>{{ item.location }}</small>
+                      }
+                    </span>
+                  </div>
                 </article>
               }
             </section>
