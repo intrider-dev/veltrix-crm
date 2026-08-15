@@ -51,11 +51,11 @@ import { ReportsStore } from './reports.store';
           </section>
         } @else if (store.report(); as report) {
           <section class="metric-grid" [attr.aria-label]="i18n.t('reports.overview')">
-            <article class="panel metric-card">
+            <article class="panel metric-card metric-card--accent metric-card--brand">
               <span>{{ i18n.t('reports.wonValue') }}</span
               ><strong>{{ i18n.money(report.overview.wonValueMinor, store.currency()) }}</strong>
             </article>
-            <article class="panel metric-card">
+            <article class="panel metric-card metric-card--accent metric-card--signal">
               <span>{{ i18n.t('reports.wonLost') }}</span
               ><strong>{{ report.overview.wonCount }} / {{ report.overview.lostCount }}</strong>
             </article>
@@ -165,16 +165,58 @@ import { ReportsStore } from './reports.store';
       border: 0;
       box-shadow: var(--shadow-sm);
     }
-    .metric-card:first-child {
+    .metric-card--brand {
       color: white;
       background: var(--brand);
     }
-    .metric-card:nth-child(2) {
+    .metric-card--signal {
       color: var(--on-signal);
       background: var(--signal);
     }
-    .metric-card:first-child span,
-    .metric-card:nth-child(2) span {
+    .metric-card--accent {
+      position: relative;
+      isolation: isolate;
+      overflow: hidden;
+    }
+    .metric-card--accent > * {
+      position: relative;
+      z-index: 1;
+    }
+    .metric-card--accent::before,
+    .metric-card--accent::after {
+      position: absolute;
+      z-index: 0;
+      content: '';
+      pointer-events: none;
+    }
+    .metric-card--accent::before {
+      right: -3rem;
+      bottom: -5rem;
+      width: 8rem;
+      height: 8rem;
+      border: 1px solid color-mix(in srgb, currentcolor 27%, transparent);
+      border-radius: 44% 56% 52% 48%;
+      box-shadow:
+        0 0 0 1rem color-mix(in srgb, currentcolor 7%, transparent),
+        0 0 0 2rem color-mix(in srgb, currentcolor 4%, transparent);
+      opacity: 0.8;
+      transform: rotate(-24deg);
+    }
+    .metric-card--accent::after {
+      right: 0.5rem;
+      bottom: -2.65rem;
+      width: 4.5rem;
+      height: 4.5rem;
+      border-radius: 50%;
+      background: radial-gradient(
+        circle at 35% 30%,
+        color-mix(in srgb, currentcolor 30%, transparent),
+        color-mix(in srgb, currentcolor 8%, transparent) 45%,
+        transparent 68%
+      );
+      opacity: 0.85;
+    }
+    .metric-card--accent span {
       color: inherit;
       opacity: 0.78;
     }
@@ -328,7 +370,7 @@ import { ReportsStore } from './reports.store';
       border-radius: var(--radius-panel, 0.875rem);
       box-shadow: none;
     }
-    .metric-card:not(:first-child):not(:nth-child(2)) {
+    .metric-card:not(.metric-card--accent) {
       border-color: var(--workspace-border);
       background: var(--workspace-surface);
     }
@@ -419,9 +461,12 @@ import { ReportsStore } from './reports.store';
     }
     @media (forced-colors: active) {
       .segmented .active,
-      .metric-card:first-child,
-      .metric-card:nth-child(2) {
+      .metric-card--accent {
         border: 1px solid CanvasText;
+      }
+      .metric-card--accent::before,
+      .metric-card--accent::after {
+        display: none;
       }
     }
   `,
