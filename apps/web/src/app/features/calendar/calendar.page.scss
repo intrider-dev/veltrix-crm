@@ -1,13 +1,13 @@
 :host {
-  --calendar-surface: color-mix(in srgb, var(--surface-raised) 93%, #07111f);
-  --calendar-subtle: color-mix(in srgb, var(--surface-subtle) 92%, #07111f);
+  --calendar-surface: var(--surface-raised);
+  --calendar-subtle: var(--surface-subtle);
   --calendar-border: color-mix(in srgb, var(--border) 78%, transparent);
   --calendar-muted: var(--text-muted);
   --entity-create-border: var(--calendar-border);
   --entity-create-surface: var(--calendar-surface);
-  --entity-create-text: #f4f7fb;
+  --entity-create-text: var(--text);
   display: block;
-  color: #f4f7fb;
+  color: var(--text);
 }
 
 .calendar-page {
@@ -103,7 +103,7 @@
 
 .period-navigation button,
 .calendar-actions .export-action {
-  color: #dce5f3;
+  color: var(--text);
 }
 
 .calendar-workspace {

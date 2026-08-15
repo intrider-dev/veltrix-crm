@@ -1,10 +1,10 @@
 :host {
-  --contact-surface: #0b131e;
-  --contact-raised: #101a27;
-  --contact-border: #1d2b3d;
-  --contact-border-strong: #2a3c53;
-  --contact-text: #eef3fa;
-  --contact-muted: #91a0b5;
+  --contact-surface: var(--surface-raised);
+  --contact-raised: var(--surface-subtle);
+  --contact-border: var(--border);
+  --contact-border-strong: var(--border-strong);
+  --contact-text: var(--text);
+  --contact-muted: var(--text-muted);
 
   display: block;
   min-width: 0;
@@ -48,8 +48,8 @@
   padding: 0.2rem 0.45rem;
   border: 1px solid var(--contact-border);
   border-radius: 0.4rem;
-  color: #b7c3d4;
-  background: #111c2a;
+  color: var(--contact-muted);
+  background: var(--contact-raised);
   font-size: 0.7rem;
   font-weight: 700;
   text-align: center;
@@ -70,7 +70,7 @@
   padding: 0 0.45rem 0 0.75rem;
   border: 1px solid var(--contact-border);
   border-radius: 0.6rem;
-  background: rgb(11 19 30 / 78%);
+  background: color-mix(in srgb, var(--contact-surface) 86%, transparent);
 }
 
 .contact-search:focus-within {
@@ -101,8 +101,8 @@
   place-items: center;
   border: 0;
   border-radius: 0.45rem;
-  color: #afbeff;
-  background: #17274f;
+  color: var(--brand);
+  background: var(--brand-soft);
   cursor: pointer;
 }
 
@@ -124,8 +124,8 @@
 }
 
 .header-actions .mat-mdc-outlined-button {
-  color: #b9c8ff;
-  border-color: #435477;
+  color: var(--brand);
+  border-color: var(--contact-border-strong);
 }
 
 .contact-summary {
@@ -241,7 +241,7 @@
 
 .contacts-filter-toolbar > button {
   width: 100%;
-  color: #b9c8ff;
+  color: var(--brand);
 }
 
 .list-toolbar {
@@ -333,12 +333,12 @@
 }
 
 .error-message {
-  border-color: rgb(255 112 112 / 34%);
-  background: #321b20;
+  border-color: color-mix(in srgb, var(--danger) 34%, transparent);
+  background: var(--danger-surface);
 }
 
 .success-message {
-  background: #143326;
+  background: color-mix(in srgb, var(--brand) 14%, var(--contact-surface));
 }
 
 .bulk-bar {
@@ -396,7 +396,7 @@ ag-grid-angular {
 
 .load-more {
   margin: 0.75rem auto;
-  color: #b9c8ff;
+  color: var(--brand);
 }
 
 .trash-panel > header {
@@ -443,7 +443,7 @@ td {
 
 th {
   color: var(--contact-muted);
-  background: #0c1520;
+  background: var(--contact-raised);
   font-size: 0.7rem;
 }
 
@@ -514,7 +514,7 @@ th {
   padding: 0.75rem;
   border-radius: 0.45rem;
   color: #ffaaa0;
-  background: #321b20;
+  background: var(--danger-surface);
 }
 
 .draft-status {

@@ -1,6 +1,6 @@
 :host {
   --timeline-border: color-mix(in srgb, var(--border) 78%, transparent);
-  --timeline-surface: color-mix(in srgb, var(--surface-raised) 93%, #07111f);
+  --timeline-surface: var(--surface-raised);
   --timeline-muted: var(--text-muted);
   display: block;
 }

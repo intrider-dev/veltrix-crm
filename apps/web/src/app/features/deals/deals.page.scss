@@ -1,13 +1,4 @@
 :host {
-  --deal-surface: #0b131e;
-  --deal-raised: #101a27;
-  --deal-hover: #142238;
-  --deal-border: #1d2b3d;
-  --deal-border-strong: #2a3c53;
-  --deal-text: #eef3fa;
-  --deal-muted: #91a0b5;
-  --deal-accent: #6382ff;
-
   display: block;
   width: 100%;
   min-width: 0;
@@ -38,7 +29,6 @@
 
 .title-line h1 {
   margin: 0;
-  color: var(--deal-text);
   font-size: clamp(1.5rem, 2vw, 2rem);
   line-height: 1.1;
 }
@@ -48,8 +38,8 @@
   padding: 0.2rem 0.45rem;
   border: 1px solid var(--deal-border);
   border-radius: 0.4rem;
-  color: #b4c0d2;
-  background: #111c2a;
+  color: var(--deal-muted);
+  background: var(--deal-raised);
   font-size: 0.7rem;
   font-weight: 700;
   text-align: center;
@@ -73,7 +63,7 @@
 }
 
 .view-tabs button.active {
-  color: #eef3ff;
+  color: var(--deal-text);
 }
 
 .view-tabs button.active::after {
@@ -96,7 +86,7 @@
   padding: 0 0.75rem;
   border: 1px solid var(--deal-border);
   border-radius: 0.6rem;
-  background: rgb(11 19 30 / 78%);
+  background: color-mix(in srgb, var(--deal-surface) 86%, transparent);
 }
 
 .deal-search:focus-within {
@@ -121,7 +111,7 @@
 }
 
 .deal-search input::placeholder {
-  color: #77879d;
+  color: var(--text-faint);
 }
 
 .header-actions {
@@ -165,7 +155,7 @@
 
 .pipeline-control > span,
 .status-filter > span {
-  color: #7f8fa5;
+  color: var(--deal-muted);
   font-size: 0.65rem;
   font-weight: 650;
 }
@@ -208,7 +198,7 @@
 .deal-metrics dd {
   margin: 0;
   overflow: hidden;
-  color: #eef3fa;
+  color: var(--deal-text);
   font-size: 0.95rem;
   font-variant-numeric: tabular-nums;
   font-weight: 720;
@@ -247,9 +237,15 @@
 .stage {
   min-height: 29rem;
   overflow: hidden;
-  border: 1px solid #273958;
+  border: 1px solid var(--deal-border-strong);
   border-radius: 0.65rem;
-  background: linear-gradient(180deg, rgb(44 65 118 / 13%), transparent 12rem), #0b1522;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--deal-accent) 7%, transparent),
+      transparent 12rem
+    ),
+    var(--deal-surface);
   scroll-snap-align: start;
 }
 
@@ -266,7 +262,7 @@
 .stage h2 {
   margin: 0;
   overflow: hidden;
-  color: #dce5f1;
+  color: var(--deal-text);
   font-size: 0.8rem;
   font-weight: 680;
   text-overflow: ellipsis;
@@ -283,7 +279,7 @@
 .stage header strong {
   max-width: 8rem;
   overflow: hidden;
-  color: #b6c1d0;
+  color: var(--deal-muted);
   font-size: 0.67rem;
   font-variant-numeric: tabular-nums;
   text-overflow: ellipsis;
@@ -342,7 +338,7 @@
   min-width: 1.8rem;
   min-height: 1.8rem;
   place-items: center;
-  color: #74849a;
+  color: var(--deal-muted);
 }
 
 .drag-handle {
@@ -438,7 +434,7 @@
 
 .deal-preview dd {
   margin: 0;
-  color: #dce5f0;
+  color: var(--deal-text);
   font-size: 0.72rem;
 }
 
@@ -446,8 +442,8 @@
   display: inline-flex;
   padding: 0.18rem 0.45rem;
   border-radius: 999px;
-  color: #b9c8ff;
-  background: #1a2c59;
+  color: var(--brand);
+  background: var(--brand-soft);
 }
 
 .preview-stage {
@@ -501,7 +497,7 @@
 
 .deal-list th {
   color: var(--deal-muted);
-  background: #0c1520;
+  background: var(--deal-raised);
   font-size: 0.67rem;
 }
 
@@ -548,8 +544,8 @@
     90deg,
     transparent 0,
     transparent calc(10% - 1px),
-    rgb(42 60 83 / 55%) calc(10% - 1px),
-    rgb(42 60 83 / 55%) 10%
+    color-mix(in srgb, var(--deal-border-strong) 55%, transparent) calc(10% - 1px),
+    color-mix(in srgb, var(--deal-border-strong) 55%, transparent) 10%
   );
 }
 

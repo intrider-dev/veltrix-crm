@@ -63,7 +63,7 @@ Do not wrap every section in an outlined card. Related content should usually be
 
 ### Dashboard analytics workspace
 
-The dashboard is a focused dark analytics workspace even when the operational routes use the light theme. This deliberate route-scoped presentation uses near-black navy surfaces, cobalt as its single interactive accent, restrained violet data-series colors, and compact panels that support fast scanning.
+The dashboard is a focused analytics workspace that follows the selected Light, Dark, or System appearance. Semantic canvas, surface, text, and border tokens provide the contrast change; cobalt remains the interactive accent, violet remains reserved for data series, and compact panels support fast scanning in either palette.
 
 - The header greets the signed-in user and pairs the active period with a real navigation action.
 - Four KPI cards use only current API values; growth percentages, revenue history, and comparisons must not be shown until the backend supplies measured time-series data.
@@ -72,11 +72,11 @@ The dashboard is a focused dark analytics workspace even when the operational ro
 - The insight rail contains open tasks ordered by due date and recent activity.
 - Long currency values use tabular numbers and must remain fully visible at the supported desktop widths.
 - At tablet widths the insight rail moves below the primary analytics; at mobile widths every region becomes a single column and wide charts gain a deliberate horizontal viewport.
-- Route-scoped shell colors must preserve WCAG 2.2 AA contrast for search chrome, account controls, navigation, and all chart labels.
+- Both theme palettes must preserve WCAG 2.2 AA contrast for search chrome, account controls, navigation, and all chart labels.
 
 ### Leads operations workspace
 
-The leads route shares the dashboard's dark navy shell but prioritizes rapid qualification over analytics decoration.
+The leads route shares the dashboard's theme-responsive, high-density workspace grammar but prioritizes rapid qualification over analytics decoration.
 
 - The header contains the page identity, loaded-record count, server search, and one primary create action.
 - Stage summaries use counts and proportions from the currently loaded server result only. They are interactive stage filters, never fabricated trend cards.
@@ -407,7 +407,7 @@ Audio and video call controls are visible only when a provider is configured and
 
 ### Deal workspace
 
-The deals route is a dense, dark pipeline workspace rather than a collection of disconnected cards. Its first row keeps the page identity, Kanban/List/Gantt tabs, server-backed search, and the primary create action on one visual axis. A second row contains the active pipeline, four metrics calculated only from records actually loaded by the bounded data source, and the status filter.
+The deals route is a dense, theme-responsive pipeline workspace rather than a collection of disconnected cards. Its first row keeps the page identity, Kanban/List/Gantt tabs, server-backed search, and the primary create action on one visual axis. A second row contains the active pipeline, four metrics calculated only from records actually loaded by the bounded data source, and the status filter.
 
 Kanban columns use restrained stage tinting, compact monetary cards, keyboard-accessible stage selectors, and CDK drag-and-drop with rollback. Selecting a card opens an adjacent quick-view pane; the canonical details route remains the editing surface. On narrower screens the pane moves below the board and the board scrolls horizontally without expanding the document viewport. List and Gantt are alternate views of the same server state, not separate datasets.
 
@@ -415,7 +415,7 @@ Never total unlike currencies into a fictional number. When a loaded result cont
 
 ### Contact workspace
 
-The contacts route uses the same dark, high-density workspace grammar while remaining a server-driven data surface. Page identity, quick search, import/export, and the primary create action form the first row. A restrained summary strip reports only the currently loaded contact page: loaded, active, linked to a company, and carrying an email address. It must never imply workspace totals when the cursor API does not return them.
+The contacts route uses the same theme-responsive, high-density workspace grammar while remaining a server-driven data surface. Page identity, quick search, import/export, and the primary create action form the first row. A restrained summary strip reports only the currently loaded contact page: loaded, active, linked to a company, and carrying an email address. It must never imply workspace totals when the cursor API does not return them.
 
 AG Grid Community remains the accessible list engine and stays lazy with the route. The main table exposes contact, company, phone, email, owner, status, and creation date; selection continues into the existing bulk-action surface. The right rail contains only working server-backed search/status filters and saved views. On compact layouts the filter rail moves below the list rather than compressing the table into unusable columns, while horizontal table overflow remains contained within the grid.
 

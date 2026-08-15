@@ -38,6 +38,29 @@ $system-font:
   --text-faint: light-dark(#586a63, #91a39d);
   --border: light-dark(#d9e0dc, #2a3b36);
   --border-strong: light-dark(#bbc8c2, #40534d);
+  /* Shared dense-workspace aliases keep route styles small and theme-responsive. */
+  --lead-surface: var(--surface-raised);
+  --lead-surface-raised: var(--surface-subtle);
+  --lead-surface-hover: var(--surface-selected);
+  --lead-border: var(--border);
+  --lead-border-strong: var(--border-strong);
+  --lead-text: var(--text);
+  --lead-muted: var(--text-muted);
+  --lead-accent: #6382ff;
+  --lead-accent-strong: #4768ed;
+  --deal-surface: var(--surface-raised);
+  --deal-raised: var(--surface-subtle);
+  --deal-hover: var(--surface-selected);
+  --deal-border: var(--border);
+  --deal-border-strong: var(--border-strong);
+  --deal-text: var(--text);
+  --deal-muted: var(--text-muted);
+  --deal-accent: #6382ff;
+  --task-panel: var(--surface-raised);
+  --task-raised: var(--surface-subtle);
+  --task-border: var(--border);
+  --task-muted: var(--text-muted);
+  --task-accent: #6758f5;
   --danger: light-dark(#ad2e24, #ff9b91);
   --danger-surface: light-dark(#fff0ed, #3a201e);
   --warning: light-dark(#8a5a00, #ffd27a);
@@ -94,16 +117,28 @@ $system-font:
 
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --brand: #77d7bc;
-  --on-brand: #08221a;
-  --signal: #a9ef74;
-  --on-signal: #10271f;
+  --brand: #7061f2;
+  --on-brand: #ffffff;
+  --signal: #806fff;
+  --on-signal: #ffffff;
+  --brand-soft: #252050;
+  --signal-soft: #282153;
+  --surface-canvas: #070d17;
+  --surface-raised: #0b1320;
+  --surface-subtle: #111b29;
+  --surface-selected: #242044;
+  --text: #f2f5f9;
+  --text-muted: #9ba6b7;
+  --text-faint: #8996a9;
+  --border: #1d2837;
+  --border-strong: #2b384b;
+  --focus: rgb(128 111 255 / 62%);
 }
 :root[data-density='compact'] {
   --control-height: 2.1rem;
   --page-gap: 0.85rem;
 }
-.cdk-overlay-container.dark-workspace-overlay {
+.cdk-overlay-container.dark-theme-overlay {
   --brand: #7061f2;
   --on-brand: #ffffff;
   --brand-soft: #252050;
@@ -245,27 +280,10 @@ input[type='search']::-webkit-search-decoration {
 
 /* CDK previews live under `body`, outside feature-level theme inheritance. */
 .crm-kanban-drag-preview {
-  --brand: #7061f2;
-  --surface-raised: #101a27;
-  --surface-subtle: #111b29;
-  --text: #eef3fa;
-  --text-muted: #91a0b5;
-  --border: #1d2b3d;
-  --border-strong: #2a3c53;
-  --lead-border-strong: #2a3c53;
-  --deal-surface: #0b131e;
-  --deal-raised: #101a27;
-  --deal-hover: #142238;
-  --deal-border: #1d2b3d;
-  --deal-border-strong: #2a3c53;
-  --deal-text: #eef3fa;
-  --deal-muted: #91a0b5;
-  --deal-accent: #6382ff;
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
 
-  color: #eef3fa;
-  color-scheme: dark;
-  background: #101a27;
+  color: var(--text);
+  background: var(--surface-subtle);
   box-shadow:
     0 1.25rem 3rem rgb(0 0 0 / 34%),
     0 0 0 1px rgb(112 97 242 / 22%);

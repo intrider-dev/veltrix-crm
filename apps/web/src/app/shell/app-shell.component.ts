@@ -45,7 +45,6 @@ import { focusAfterNextRender } from '../shared/a11y/focus-after-render';
 import { BrandLogoComponent } from '../shared/brand/brand-logo.component';
 import { ToastViewportComponent } from '../shared/feedback/toast-viewport.component';
 import { IconComponent, type IconName } from '../shared/icon/icon.component';
-import { usesDarkWorkspace } from './workspace-appearance';
 
 interface NavItem {
   readonly path: string;
@@ -76,7 +75,7 @@ interface NavItem {
       class="shell"
       [class.nav-collapsed]="collapsed()"
       [class.mobile-open]="mobileOpen()"
-      [class.dark-workspace-route]="darkWorkspaceRoute()"
+      [class.dark-theme]="darkTheme()"
     >
       <header class="topbar">
         <button
@@ -299,9 +298,7 @@ export class AppShellComponent {
   readonly mobileOpen = signal(false);
   readonly mobileViewport = signal(false);
   readonly commandOpen = signal(false);
-  readonly darkWorkspaceRoute = computed(
-    () => this.appearance.dark() || this.routeUsesDarkWorkspace(),
-  );
+  readonly darkTheme = computed(() => this.appearance.dark());
   readonly searchPending = signal(false);
   readonly searchQuery = signal('');
   readonly searchResults = signal<readonly SearchResult[]>([]);
@@ -340,14 +337,12 @@ export class AppShellComponent {
   private readonly injector = inject(Injector);
   private readonly overlayContainer = inject(OverlayContainer);
   private readonly searchTerms = new Subject<string>();
-  private readonly routeUsesDarkWorkspace = signal(false);
 
   constructor() {
-    this.syncWorkspaceAppearance();
     effect((onCleanup) => {
       const container = this.overlayContainer.getContainerElement();
-      container.classList.toggle('dark-workspace-overlay', this.darkWorkspaceRoute());
-      onCleanup(() => container.classList.remove('dark-workspace-overlay'));
+      container.classList.toggle('dark-theme-overlay', this.darkTheme());
+      onCleanup(() => container.classList.remove('dark-theme-overlay'));
     });
     if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
       const mobileQuery = window.matchMedia('(max-width: 820px)');
@@ -366,7 +361,6 @@ export class AppShellComponent {
         takeUntilDestroyed(),
       )
       .subscribe(() => {
-        this.syncWorkspaceAppearance();
         this.mobileOpen.set(false);
         // The shell main element is stable across child-route navigation, so
         // it does not need an Angular after-render registration per route.
@@ -391,10 +385,6 @@ export class AppShellComponent {
         this.searchResults.set(results);
         this.searchPending.set(false);
       });
-  }
-
-  private syncWorkspaceAppearance(): void {
-    this.routeUsesDarkWorkspace.set(usesDarkWorkspace(this.router.url));
   }
 
   readonly initials = () => {

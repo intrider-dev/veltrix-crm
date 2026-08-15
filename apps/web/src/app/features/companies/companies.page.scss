@@ -1,15 +1,15 @@
 :host {
   display: block;
-  --company-panel: #101925;
-  --company-panel-raised: #121d2a;
-  --company-border: #223044;
-  --company-muted: #8f9db1;
+  --company-panel: var(--surface-raised);
+  --company-panel-raised: var(--surface-subtle);
+  --company-border: var(--border);
+  --company-muted: var(--text-muted);
   --company-accent: #6857f5;
 }
 
 .page {
   max-width: 100%;
-  color: #f4f7fb;
+  color: var(--text);
 }
 
 .page-header {
@@ -39,8 +39,8 @@
 .count-badge {
   padding: 0.18rem 0.5rem;
   border-radius: 0.4rem;
-  color: #b6c0cf;
-  background: #172231;
+  color: var(--company-muted);
+  background: var(--surface-subtle);
   font-size: 0.75rem;
   font-weight: 700;
 }
@@ -54,7 +54,7 @@
   padding: 0 0.75rem;
   border: 1px solid var(--company-border);
   border-radius: 0.65rem;
-  background: #0d1622;
+  background: var(--company-panel);
 }
 
 .header-search:focus-within {
@@ -79,7 +79,7 @@
   border: 1px solid var(--company-border);
   border-radius: 0.3rem;
   color: var(--company-muted);
-  background: #131e2c;
+  background: var(--company-panel-raised);
   font: inherit;
   font-size: 0.68rem;
 }
@@ -115,7 +115,11 @@
   padding: 0.9rem;
   border: 1px solid var(--company-border);
   border-radius: 0.8rem;
-  background: linear-gradient(145deg, #131e2b, #0f1824);
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--brand) 4%, var(--company-panel-raised)),
+    var(--company-panel)
+  );
 }
 
 .summary-card small,
@@ -193,12 +197,12 @@
   flex: 0 0 auto;
   padding: 0.2rem;
   border-radius: 0.55rem;
-  background: #0b1420;
+  background: var(--surface-subtle);
 }
 
 .mode-switch button.selected {
-  color: white;
-  background: #24304a;
+  color: var(--text);
+  background: var(--surface-selected);
 }
 
 .filter-field {
@@ -214,9 +218,9 @@
 
 .filter-field .mat-mdc-select {
   min-height: 2.4rem;
-  color: #eaf0f8;
+  color: var(--text);
   border-color: var(--company-border);
-  background-color: #0d1622;
+  background-color: var(--company-panel);
 }
 
 .saved-view-select {
@@ -226,8 +230,8 @@
 
 .company-toolbar button {
   min-height: 2.4rem;
-  border-color: #46546a !important;
-  color: #d8e1ef !important;
+  border-color: var(--border-strong) !important;
+  color: var(--text) !important;
   white-space: nowrap;
 }
 
@@ -268,15 +272,15 @@
 .trash-row {
   min-height: 4.1rem;
   padding: 0.55rem 0.85rem;
-  border-bottom: 1px solid rgb(34 48 68 / 75%);
-  color: #e8eef7;
+  border-bottom: 1px solid var(--company-border);
+  color: var(--text);
   text-decoration: none;
 }
 
 .company-list > a:hover,
 .company-list > a:focus-visible {
   outline: none;
-  background: #152131;
+  background: var(--surface-subtle);
 }
 
 .company-list > a:focus-visible {
@@ -315,7 +319,7 @@
 }
 .company-cell {
   overflow: hidden;
-  color: #b7c2d2;
+  color: var(--text-muted);
   font-size: 0.74rem;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -342,7 +346,7 @@
   padding: 1rem;
   border: 1px solid var(--company-border);
   border-radius: 0.8rem;
-  background: linear-gradient(155deg, var(--company-panel-raised), #0d1622);
+  background: linear-gradient(155deg, var(--company-panel-raised), var(--company-panel));
 }
 
 .company-preview header {
@@ -378,8 +382,8 @@
 }
 .company-preview > a {
   width: 100%;
-  border-color: #46546a !important;
-  color: #dfe7f4 !important;
+  border-color: var(--border-strong) !important;
+  color: var(--text) !important;
 }
 .company-preview > a app-icon {
   margin-left: auto;
@@ -401,8 +405,8 @@
   padding: 0.8rem;
 }
 .load-more button {
-  border-color: #46546a !important;
-  color: #dfe7f4 !important;
+  border-color: var(--border-strong) !important;
+  color: var(--text) !important;
 }
 .list-skeleton {
   display: grid;
@@ -428,7 +432,8 @@
   overflow: auto;
   padding: 1.25rem;
   border-left: 1px solid var(--company-border);
-  background: #111b28;
+  color: var(--text);
+  background: var(--company-panel);
   box-shadow: var(--shadow-xl);
 }
 .create-drawer > header {
@@ -471,7 +476,8 @@
   padding: 1.25rem;
   border: 1px solid var(--company-border);
   border-radius: 1rem;
-  background: #111b28;
+  color: var(--text);
+  background: var(--company-panel);
   box-shadow: var(--shadow-xl);
   transform: translate(-50%, -50%);
 }
