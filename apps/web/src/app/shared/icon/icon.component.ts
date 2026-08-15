@@ -20,6 +20,7 @@ export type IconName =
   | 'language'
   | 'like'
   | 'lead'
+  | 'logout'
   | 'mail'
   | 'microphone'
   | 'menu'
@@ -76,6 +77,9 @@ export type IconName =
         }
         @case ('lead') {
           <path d="M5 19c2-5 4-8 7-8s5 3 7 8M12 11V4M9 7l3-3 3 3" />
+        }
+        @case ('logout') {
+          <path d="M10 5H5v14h5M13 8l4 4-4 4M8 12h9" />
         }
         @case ('calendar') {
           <path d="M4 6h16v14H4zM8 3v6M16 3v6M4 10h16" />

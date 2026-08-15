@@ -319,6 +319,23 @@ input[type='search']::-webkit-search-decoration {
   color: var(--brand);
 }
 
+.account-menu .account-menu__logout {
+  margin-top: 0.25rem;
+  border-top: 1px solid color-mix(in srgb, var(--danger) 18%, var(--border));
+  color: color-mix(in srgb, var(--danger) 82%, var(--text));
+}
+
+.account-menu .account-menu__logout:hover,
+.account-menu .account-menu__logout:focus-visible {
+  background: color-mix(in srgb, var(--danger-surface) 76%, transparent);
+}
+
+.account-menu .account-menu__logout app-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  margin-inline-end: 0.75rem;
+}
+
 /* CDK previews live under `body`, outside feature-level theme inheritance. */
 .crm-kanban-drag-preview {
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);

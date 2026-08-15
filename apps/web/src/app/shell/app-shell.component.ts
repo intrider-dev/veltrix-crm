@@ -119,7 +119,7 @@ interface NavItem {
             <span class="account-name">{{ auth.user()?.displayName }}</span>
           </span>
         </button>
-        <mat-menu #accountMenu="matMenu">
+        <mat-menu #accountMenu="matMenu" class="account-menu">
           <button mat-menu-item type="button" routerLink="/settings/security">
             {{ i18n.t('settings.settings.security') }}
           </button>
@@ -129,8 +129,9 @@ interface NavItem {
           <button mat-menu-item type="button" routerLink="/settings">
             {{ i18n.t('common.nav.settings') }}
           </button>
-          <button mat-menu-item type="button" (click)="logout()">
-            {{ i18n.t('auth.logout.submit') }}
+          <button mat-menu-item type="button" class="account-menu__logout" (click)="logout()">
+            <app-icon name="logout" />
+            <span>{{ i18n.t('auth.logout.submit') }}</span>
           </button>
         </mat-menu>
       </header>
