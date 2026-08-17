@@ -43,7 +43,7 @@
     "benchmark:lighthouse": "node scripts/run-lighthouse.mjs"
   },
   "devDependencies": {
-    "@angular/cli": "22.0.7",
+    "@angular/cli": "22.1.4",
     "@axe-core/playwright": "4.12.1",
     "@playwright/test": "1.61.1",
     "node": "24.15.0",
