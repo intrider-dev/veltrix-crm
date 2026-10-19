@@ -75,8 +75,8 @@ importers:
         specifier: 36.0.1
         version: 36.0.1
       intl-tel-input:
-        specifier: 29.2.3
-        version: 29.2.3
+        specifier: 29.5.5
+        version: 29.5.5
       livekit-client:
         specifier: 2.20.2
         version: 2.20.2(@types/dom-mediacapture-record@1.0.22)
@@ -2495,8 +2495,8 @@ packages:
     resolution: {integrity: sha512-IBTdIkzZNOpqm7q3dRqJvMaldXjDHWkEDfrwGEQTs5eaQMWV+djAhR+wahyNNMAa+qpbDUhBMVt4ZKNwpPm7xQ==}
     engines: {node: ^20.17.0 || >=22.9.0}
 
-  intl-tel-input@29.2.3:
-    resolution: {integrity: sha512-uwDslWntH/G5HuVlCSly8XdRC2iXVnpAEtj5I3JOFTy3G/7PARGsqbakWBBXfjzh3BjXXLOEOZDvqulvPSG0QQ==}
+  intl-tel-input@29.5.5:
+    resolution: {integrity: sha512-dP1der0EqJPkigKjRebwz26teExb03kbShVFNj7ugzPcwkHc39qTHyM8Y+L3SHv/z6bBTNuaSkdGTK6t0HX+Gg==}
 
   ip-address@10.2.0:
     resolution: {integrity: sha512-/+S6j4E9AHvW9SWMSEY9Xfy66O5PWvVEJ08O0y5JGyEKQpojb0K0GKpz/v5HJ/G0vi3D2sjGK78119oXZeE0qA==}
@@ -4289,7 +4289,7 @@ snapshots:
       '@angular/common': 22.0.7(@angular/core@22.0.7(@angular/compiler@22.0.7)(rxjs@7.8.2))(rxjs@7.8.2)
       '@angular/core': 22.0.7(@angular/compiler@22.0.7)(rxjs@7.8.2)
       '@angular/forms': 22.0.7(@angular/common@22.0.7(@angular/core@22.0.7(@angular/compiler@22.0.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.0.7(@angular/compiler@22.0.7)(rxjs@7.8.2))(@angular/platform-browser@22.0.7(@angular/common@22.0.7(@angular/core@22.0.7(@angular/compiler@22.0.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.0.7(@angular/compiler@22.0.7)(rxjs@7.8.2)))(rxjs@7.8.2)
-      intl-tel-input: 29.2.3
+      intl-tel-input: 29.5.5
       rxjs: 7.8.2
 
   '@isaacs/fs-minipass@4.0.1':
@@ -5653,7 +5653,7 @@ snapshots:
 
   ini@6.0.0: {}
 
-  intl-tel-input@29.2.3: {}
+  intl-tel-input@29.5.5: {}
 
   ip-address@10.2.0: {}
 
