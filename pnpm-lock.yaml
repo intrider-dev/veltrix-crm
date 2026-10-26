@@ -60,8 +60,8 @@ importers:
         specifier: 22.0.7
         version: 22.0.7(@angular/core@22.0.7(@angular/compiler@22.0.7)(rxjs@7.8.2))(rxjs@7.8.2)
       '@intl-tel-input/angular':
-        specifier: 29.2.3
-        version: 29.2.3(@angular/common@22.0.7(@angular/core@22.0.7(@angular/compiler@22.0.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.0.7(@angular/compiler@22.0.7)(rxjs@7.8.2))(@angular/forms@22.0.7(@angular/common@22.0.7(@angular/core@22.0.7(@angular/compiler@22.0.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.0.7(@angular/compiler@22.0.7)(rxjs@7.8.2))(@angular/platform-browser@22.0.7(@angular/common@22.0.7(@angular/core@22.0.7(@angular/compiler@22.0.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.0.7(@angular/compiler@22.0.7)(rxjs@7.8.2)))(rxjs@7.8.2))(rxjs@7.8.2)
+        specifier: 29.5.6
+        version: 29.5.6(@angular/common@22.0.7(@angular/core@22.0.7(@angular/compiler@22.0.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.0.7(@angular/compiler@22.0.7)(rxjs@7.8.2))(@angular/forms@22.0.7(@angular/common@22.0.7(@angular/core@22.0.7(@angular/compiler@22.0.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.0.7(@angular/compiler@22.0.7)(rxjs@7.8.2))(@angular/platform-browser@22.0.7(@angular/common@22.0.7(@angular/core@22.0.7(@angular/compiler@22.0.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.0.7(@angular/compiler@22.0.7)(rxjs@7.8.2)))(rxjs@7.8.2))(rxjs@7.8.2)
       '@veltrix-crm/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
@@ -1069,8 +1069,8 @@ packages:
       '@types/node':
         optional: true
 
-  '@intl-tel-input/angular@29.2.3':
-    resolution: {integrity: sha512-oJTl21blc++HIbjaIR218gpB+DslBCJWaHIR2ixI96G6fZs5/wo5Igp45pI8Pmr85HLLf0Jm+Nbp7Ok6saSSWw==}
+  '@intl-tel-input/angular@29.5.6':
+    resolution: {integrity: sha512-zvnnKmclvfFFIMbv6xYbHvM/24F2ohLeYf/exJh7OsWJy2/OdW3+zWSVPOK9JE7gE6tvWHuIAhwxYYoH6LpP3Q==}
     peerDependencies:
       '@angular/common': '>=17'
       '@angular/core': '>=17'
@@ -2497,6 +2497,9 @@ packages:
 
   intl-tel-input@29.2.3:
     resolution: {integrity: sha512-uwDslWntH/G5HuVlCSly8XdRC2iXVnpAEtj5I3JOFTy3G/7PARGsqbakWBBXfjzh3BjXXLOEOZDvqulvPSG0QQ==}
+
+  intl-tel-input@29.5.6:
+    resolution: {integrity: sha512-lUxWy/qRlW80JHPs1KKZizOpHBAFyhqzRzy/vbGUHWKDAD+sk/OCnIDAv4NqayuCX+eH03hHspnpQOwK1L8Gug==}
 
   ip-address@10.2.0:
     resolution: {integrity: sha512-/+S6j4E9AHvW9SWMSEY9Xfy66O5PWvVEJ08O0y5JGyEKQpojb0K0GKpz/v5HJ/G0vi3D2sjGK78119oXZeE0qA==}
@@ -4284,12 +4287,12 @@ snapshots:
 
   '@inquirer/type@4.0.7': {}
 
-  '@intl-tel-input/angular@29.2.3(@angular/common@22.0.7(@angular/core@22.0.7(@angular/compiler@22.0.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.0.7(@angular/compiler@22.0.7)(rxjs@7.8.2))(@angular/forms@22.0.7(@angular/common@22.0.7(@angular/core@22.0.7(@angular/compiler@22.0.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.0.7(@angular/compiler@22.0.7)(rxjs@7.8.2))(@angular/platform-browser@22.0.7(@angular/common@22.0.7(@angular/core@22.0.7(@angular/compiler@22.0.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.0.7(@angular/compiler@22.0.7)(rxjs@7.8.2)))(rxjs@7.8.2))(rxjs@7.8.2)':
+  '@intl-tel-input/angular@29.5.6(@angular/common@22.0.7(@angular/core@22.0.7(@angular/compiler@22.0.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.0.7(@angular/compiler@22.0.7)(rxjs@7.8.2))(@angular/forms@22.0.7(@angular/common@22.0.7(@angular/core@22.0.7(@angular/compiler@22.0.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.0.7(@angular/compiler@22.0.7)(rxjs@7.8.2))(@angular/platform-browser@22.0.7(@angular/common@22.0.7(@angular/core@22.0.7(@angular/compiler@22.0.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.0.7(@angular/compiler@22.0.7)(rxjs@7.8.2)))(rxjs@7.8.2))(rxjs@7.8.2)':
     dependencies:
       '@angular/common': 22.0.7(@angular/core@22.0.7(@angular/compiler@22.0.7)(rxjs@7.8.2))(rxjs@7.8.2)
       '@angular/core': 22.0.7(@angular/compiler@22.0.7)(rxjs@7.8.2)
       '@angular/forms': 22.0.7(@angular/common@22.0.7(@angular/core@22.0.7(@angular/compiler@22.0.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.0.7(@angular/compiler@22.0.7)(rxjs@7.8.2))(@angular/platform-browser@22.0.7(@angular/common@22.0.7(@angular/core@22.0.7(@angular/compiler@22.0.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.0.7(@angular/compiler@22.0.7)(rxjs@7.8.2)))(rxjs@7.8.2)
-      intl-tel-input: 29.2.3
+      intl-tel-input: 29.5.6
       rxjs: 7.8.2
 
   '@isaacs/fs-minipass@4.0.1':
@@ -5654,6 +5657,8 @@ snapshots:
   ini@6.0.0: {}
 
   intl-tel-input@29.2.3: {}
+
+  intl-tel-input@29.5.6: {}
 
   ip-address@10.2.0: {}
 
